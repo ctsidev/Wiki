@@ -46,6 +46,7 @@ This [document](https://uclahs.app.box.com/file/1814822603942 "OHIA Step-by-step
 - How to record the time in Jira/Monday?
 - Time estimates based on volume
 - Capture metadata
+- how long are records to be kept in DataBricks? Is it completely up to OHIA, or are there files/objects that we can delete?
 - Manage queue internally
 
 Existing documetnation pending to reconcile
