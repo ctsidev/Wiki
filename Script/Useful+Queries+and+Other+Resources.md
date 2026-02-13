@@ -1,6 +1,6 @@
 # Useful Queries and Other Resources
 
-*   [AD/POLST](#UsefulQueriesandOtherResources-AD/POLST)
+*   [AD/POLST](#AD/POLST)
     *   *   [(by Fernando Sanz-Vidorreta on 6/26/19)](#UsefulQueriesandOtherResources-\(byon6/2)
     *   [AD/POLST](#UsefulQueriesandOtherResources-AD/POLST)
 *   [Calculate Time on a Ventilator](#UsefulQueriesandOtherResources-Calculat)
