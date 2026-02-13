@@ -2580,6 +2580,9 @@ select created from user\_objects where lower(object\_name)='xdr\_123456\_demo';
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 9/22/20)
 
 The following code allows you to find labs results received through the care Everywhere interface
+there is a practrical application for this for COVID tests in the ETL under
+CTSI_RESEARCH.PKG_COVID_ETL_REDCAP.covid_redcap_amb_covid_labs
+
 ``` sql
 \------------------------------------------------
 
@@ -2769,8 +2772,7 @@ and lab.organization\_id = drv.organization\_id
 
 The following code allows you to find a patient's occupation information (patient\_4.occupation\_c is not currently being used at the time of adding this script here)
 
-##### **Occupation**
-
+```sq;
 SELECT DISTINCT pat.pat\_id
 
 ,pt3.OCCUPATION
@@ -2868,13 +2870,14 @@ hm.QUALIFIED\_HMT\_ID = 770000132 --Colon Ca Screening: COLONOSCOPY
 WHERE x.extract\_date = latest\_measure
 
 ;
-
-# Questionnaires and Answers
+```
+## Questionnaires and Answers
 
 (by [Robert Follett (Unlicensed)](https://uclabip.atlassian.net/wiki/people/557058:fb90de8e-f6e8-4a11-b471-2992e0b019af?ref=confluence) on 02/12/2021)
 
 This code will pull questions and answers from MyChart questionnaires.
 
+```sql
 select distinct coh.study\_id
 
 ,coh.study\_csn
@@ -3138,11 +3141,12 @@ dba\_objects b
 Where A.Object\_Id = B.Object\_Id
 
 and a.os\_user\_name = 'JavierS1';
-
-# Recruitment Request Prioritization
+```
+## Recruitment Request Prioritization
 
 (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 7/16/2021)
 
+```sql
 Criteria to narrow down patient selection to meet disclousure criteria (count).
 
 /\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
@@ -3200,11 +3204,12 @@ and enc.pat\_id is not null
 ;
 
 randomization (pending)
-
-# Bone Marrow Transplant (BMT)
+```
+## Bone Marrow Transplant (BMT)
 
 (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 8/31/2021)
 
+```sql
 Code to find the BMT records.
 
 select distinct coh.pat\_id
@@ -3227,10 +3232,13 @@ where --64 cases
 
 lnk.SUM\_BLK\_TYPE\_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
 
-# Pregnancy/Delivery
+```
+
+## Pregnancy/Delivery
 
 (by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 9/10/2021)
 
+```sql
 Code to find pregnancy data.
 
 \--------------------------------------------------------------------------------
@@ -3449,12 +3457,13 @@ join episode ep on el.episode\_id = ep.episode\_id
 
 and lab.specimn\_taken\_time between ep.ob\_wrk\_edd\_dt - 280 and ep.ob\_wrk\_edd\_dt --280=40 pregnancy weeks \* 7
 
-# Calculate ICU stay times
+```
+## Calculate ICU stay times
 
 ###### (by @jsanz on 9/29/19)
 
 This code will create a table that will calculate the start and end date/times of each ICU that happened during each encounter. If the patient went in and out of the ICU multiple times during the same encounter. Then the record will show multiple entries for that encounter, one per each episode. In order to calculate the aggregated total time that a patient spent in the ICU during a particular encounter, you can calculate the time from start to end, for each individual stay, and add them by encounter. (this last calculation is not in the code below).
-
+```sql
 \--------------------------------------
 
 \-- create ADT table:
@@ -3680,13 +3689,13 @@ END;
 commit;
 
 \-- end covid\_icu;
-
-# Glasgow Comma Score (GCS)
+```
+## Glasgow Comma Score (GCS)
 
 ###### (by @jsanz on 9/29/19)
 
 The **Glasgow** Coma Scale/**Score** (GCS) estimates coma severity based on Eye (4), Verbal (5), and Motor (6) criteria.. The codes below will help you locate the GCS in your flowsheets table. APply them to the second table that you build.
-
+```sql
 | flo_meas_id | flo_meas_name |
 | --- | --- |
 | 16011292 | Glasgow Coma Scale Score |
@@ -3695,13 +3704,13 @@ The **Glasgow** Coma Scale/**Score** (GCS) estimates coma severity based on E
 | 3040101407 | Glasgow Coma: Age |
 | 3040401001 | Glasgow Coma Scale Score |
 | 401001 | Glasgow Coma Scale Score |
-
-# Sequential Organ Failure Assessment (**SOFA**)
+```
+## Sequential Organ Failure Assessment (**SOFA**)
 
 ###### (by @jsanz on 9/29/19)
 
 The Sequential Organ Failure Assessment (**SOFA**) Score is a mortality prediction score that is based on the degree of dysfunction of six organ systems. The score is calculated on admission and every 24 hours until discharge using the worst parameters measured during the prior 24 hours.  The code below will pull the SOFA score from your flowsheets table. Apply them to the second table that you build.
-
+```sql
 | FLT_ID | TEMPLATE_NAME |
 | --- | --- |
 | 3040100960 | IP SOFA UCLA |
@@ -3735,13 +3744,13 @@ order by pat\_id
 ,component\_name
 
 ;
-
-# Pathology HonestBroker Accession Numbers
+```
+## Pathology HonestBroker Accession Numbers
 
 (by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 10/19/2021)
 
 Code to process accession numbers for pathology. This will deidentify accession numbers as well as identify result texts that contain the literals “block” or “cassette”.
-
+```sql
 \----------------------------------------------------------------------------------------------------------------------
 
 \-- After creating pathology (entity\_cd=PATH) and pathology\_results (entity\_cd=PATHR) files, complete the following:
