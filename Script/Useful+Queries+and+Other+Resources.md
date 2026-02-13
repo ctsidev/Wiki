@@ -2,34 +2,26 @@
 
 *   [AD-POLST](#AD-POLST)
     *   *   [(by Fernando Sanz-Vidorreta on 6/26/19)](#UsefulQueriesandOtherResources-\(byon6/2)
-    *   [AD/POLST](#UsefulQueriesandOtherResources-AD/POLST)
-*   [Calculate Time on a Ventilator](#UsefulQueriesandOtherResources-Calculat)
+*   [Calculate Time on a Ventilator](#Calculate-Time-on-a-Ventilator)
     *   [(by Robert Follett (Unlicensed) on 11/06/2020)](#UsefulQueriesandOtherResources-\(byon11/)
 *   [Health Maintenance Report](#UsefulQueriesandOtherResources-HealthMa)
     *   *   [(by Fernando Sanz-Vidorreta on 6/26/19)](#UsefulQueriesandOtherResources-\(byon6/2)
-    *   [Health Maintenance Report](#UsefulQueriesandOtherResources-HealthMa)
 *   [Orders for Inpatient Transfers](#UsefulQueriesandOtherResources-Ordersfo)
     *   *   [(by Robert Follett (Unlicensed) on 7/02/19)](#UsefulQueriesandOtherResources-\(byon7/0)
-    *   [Inpatient Orders](#UsefulQueriesandOtherResources-Inpatien)
 *   [BMT (Bone Marrow Transplant)](#UsefulQueriesandOtherResources-BMT\(Bone)
     *   *   [(by Fernando Sanz-Vidorreta on 7/10/19)](#UsefulQueriesandOtherResources-\(byon7/1)
-    *   [BMT counts](#UsefulQueriesandOtherResources-BMTcount)
 *   [MyChart Activity](#UsefulQueriesandOtherResources-MyChartA)
     *   *   [(by Fernando Sanz-Vidorreta on 7/17/19)](#UsefulQueriesandOtherResources-\(byon7/1)
-    *   [MyChart Activity](#UsefulQueriesandOtherResources-MyChartA)
     *   [MyChart Session Information (from EPIC docu)](#UsefulQueriesandOtherResources-MyChartS)
     *   [MyChart Patient Status](#UsefulQueriesandOtherResources-MyChartP)
 *   [DEATH TABLE](#UsefulQueriesandOtherResources-DEATHTAB)
     *   [DEATH TABLE CREATION](#UsefulQueriesandOtherResources-DEATHTAB)
 *   [Face to Face Visits](#UsefulQueriesandOtherResources-FacetoFa)
     *   *   [(by Theona Tacorda on 9/5/19)](#UsefulQueriesandOtherResources-\(byon9/5)
-    *   [Face to Face Visits Query](#UsefulQueriesandOtherResources-FacetoFa)
 *   [Chief Complaints](#UsefulQueriesandOtherResources-ChiefCom)
 *   [Current Med List](#UsefulQueriesandOtherResources-CurrentM)
-    *   [Current Med List](#UsefulQueriesandOtherResources-CurrentM)
 *   [Multiple Phone Numbers and Patient's preference](#UsefulQueriesandOtherResources-Multiple)
     *   *   [(by Fernando Sanz-Vidorreta on 9/25/19)](#UsefulQueriesandOtherResources-\(byon9/2)
-    *   [Multiple Phone Number and Patient's Preference](#UsefulQueriesandOtherResources-Multiple)
 *   [Beaker Text Reports (narratives, etc...)](#UsefulQueriesandOtherResources-BeakerTe)
     *   *   [(BY Fernando Sanz-Vidorreta ON 9/26/19)](#UsefulQueriesandOtherResources-\(BYON9/2)
     *   [Original Query](#UsefulQueriesandOtherResources-Original)
@@ -99,14 +91,13 @@
 *   [PHQ9, PROMIS, SDOH, GAD7, AUDITC](#UsefulQueriesandOtherResources-PHQ9,PRO)
 *   [Dispensed Medications](#UsefulQueriesandOtherResources-Dispense)
 
-# AD-POLST
+## AD-POLST
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 6/26/19)
 
 The following code identified the AD/POLST patient records from the scanned documents. It starts by creating a driver list, classifying it, pulling the scanned docs, and exporting them.
 
-##### **AD/POLST**
-
+```sql
 /\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 
 AD-POLST
@@ -254,9 +245,8 @@ SELECT DISTINCT PAT\_ID
 FROM xdr\_MEHTA\_scan\_docs
 
 WHERE doc\_recv\_time IS NOT NULL ;
-
-#   
-Calculate Time on a Ventilator
+```
+## Calculate Time on a Ventilator
 
 ###### (by [Robert Follett (Unlicensed)](https://uclabip.atlassian.net/wiki/people/557058:fb90de8e-f6e8-4a11-b471-2992e0b019af?ref=confluence) on 11/06/2020)
 
@@ -264,6 +254,7 @@ This code will show you how to calculate ventilator time in days for a hospital 
 
 The official method and MS SQL code sample is kept in Collibra here: [https://uclahealth.collibra.com/asset/cf559613-9b4d-4e73-831a-9429d41d83ef](https://uclahealth.collibra.com/asset/cf559613-9b4d-4e73-831a-9429d41d83ef)
 
+```sql
 /\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 
 For Ventilator data, restrict to Airway LDAs
@@ -481,8 +472,8 @@ y
 group by ip\_enc\_id;
 
 select \* from XDR\_PROJECT\_VENTTIME;
-
-# Health Maintenance Report
+```sql
+## Health Maintenance Report
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 6/26/19)
 
