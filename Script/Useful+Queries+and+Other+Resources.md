@@ -1,6 +1,6 @@
 # Useful Queries and Other Resources
 
-*   [AD/POLST](#AD/POLST)
+*   [AD-POLST](#AD-POLST)
     *   *   [(by Fernando Sanz-Vidorreta on 6/26/19)](#UsefulQueriesandOtherResources-\(byon6/2)
     *   [AD/POLST](#UsefulQueriesandOtherResources-AD/POLST)
 *   [Calculate Time on a Ventilator](#UsefulQueriesandOtherResources-Calculat)
@@ -99,7 +99,7 @@
 *   [PHQ9, PROMIS, SDOH, GAD7, AUDITC](#UsefulQueriesandOtherResources-PHQ9,PRO)
 *   [Dispensed Medications](#UsefulQueriesandOtherResources-Dispense)
 
-# AD/POLST
+# AD-POLST
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 6/26/19)
 
