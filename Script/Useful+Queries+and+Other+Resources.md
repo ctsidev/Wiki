@@ -443,7 +443,7 @@ y
 group by ip\_enc\_id;
 
 select \* from XDR\_PROJECT\_VENTTIME;
-```sql
+```
 ## Health Maintenance Report
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 6/26/19)
@@ -453,7 +453,7 @@ This code allows to access historical data from the Health Maintenance Report. W
 Example: We must apply the selection for Colonoscopy screening:
 
 Galaxy link: [https://datahandbook.epic.com/Reports/Details/1239812?rank=1&queryid=63476074&docid=87831](https://datahandbook.epic.com/Reports/Details/1239812?rank=1&queryid=63476074&docid=87831)
-
+```sql
 **Table**: **F\_HM\_TREND**, The fact table is a derived table that stores Health Maintenance information.  
 This table is intended to take monthly snapshots to allow overtime trending on Health Maintenance topic data.  
 Will allow for facility, department and provider level reports. This is an append-only table that does not make  
@@ -530,15 +530,15 @@ where op.proc\_id in (263, 327411, 327400,721947) -- Admit to IP
 and op.order\_status\_c = 5
 
 order by op.pat\_id, op.order\_time;
-
-# BMT (Bone Marrow Transplant)
+```
+# BMT: Bone Marrow Transplant
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 7/10/19)
 
 I have found some resources on how to find information for Bone Marrow Transplants. Since it's not one of the types in \[**TX\_CLASS\_C**\], the key is to use \[**SUM\_BLK\_TYPE\_ID**\] = 2050001100 "HSCT ALLOGENEIC RECIPIENT"
 
 Inexplicably, this item is not in \[**ZC\_SUM\_BLK\_TYPE**\] but Ahson Shigri (the person that Star referred me to for transplant questions) told me about it.
-
+```sql
 ##### **BMT counts**
 
 select count(distinct pat.pat\_id)
@@ -558,7 +558,7 @@ where
 lnk.SUM\_BLK\_TYPE\_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
 
 \--join TRANSPLANT\_INFO inf on ep.episode\_id = inf.SUMMARY\_BLOCK\_ID --nothing comes from this join
-
+```
 # MyChart Activity
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 7/17/19)
@@ -574,7 +574,7 @@ The final solution was to pull directly from
 Additionally, the [**MYC\_PATIENT**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=MYC_PATIENT) includes a field called **PROXY\_ACCOUNT\_YN** that flags if the patient has a proxy account authorized to access his/her info.
 
 The table [**PAT\_MYC\_PRXY\_HX**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=PAT_MYC_PRXY_HX) contains a historical record of all the proxies for any given patient. The field **PROXY\_PAT\_ID**: The unique ID of the patient who has proxy access to the record of the patient who is identified in **PAT\_ID**
-
+```sql
 **Field** 
 
 ##### **MyChart Activity**
@@ -715,13 +715,13 @@ left join clarity.zc\_myc\_status zmcp on mcp.status\_cat\_c = zmcp.myc\_status\
 ;
 
 \*/
-
-# DEATH TABLE
+```
+## DEATH TABLE
 
 [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence)
 
 We decided to create a death table to capture cases where patients, that do not have a "deceased" status in Care Connect, that have been found to be deceased through other venues. For instance, a PI team contacting patients for enrollment is told by a relative or their PCP that the patient is dead. Additionally, we are planning on adding those patients in OHIA's death registry once we determine the final validation process, aimed at finding which ones are very likely to be deceased, even though there is no final confirmation in Care Connect yet.
-
+```sql
 ##### **DEATH TABLE CREATION**
 
 DROP TABLE I2B2.LZ\_DEATH PURGE;
@@ -1086,15 +1086,15 @@ pivot ( Max(value) FOR col in ('PHONE\_1'
 ) piv
 
 order by 1;
-
-# Beaker Text Reports (narratives, etc...)
+```
+## Beaker Text Reports
 
 ###### (BY [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) ON 9/26/19)
 
 The following code pulls the text based results (comments, narratives, etc...) using the case\_id as a reference. A common use case for this resource is when the usual query returns "This result contains rich text formatting which cannot be displayed here" as a result. The following script is the original code sent to us. Below it, you can find a more specific application of it.
 
 This script can pull results after January 2016 (Beaker) for previous results this might not work
-
+```sql
 ##### **Original Query**
 
 WITH
@@ -1680,17 +1680,15 @@ ORDER BY value\_line).GetClobVal(),',') as result\_text\_merged
 from xdr\_prinv\_opr\_results
 
 GROUP BY uniqueid,case\_id;
-
-# Check Patient's Contact Information
+```
+## Check Patient's Contact Information
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 10/08/19)
 
 The following code can be used to check if/when a patient has (or not) different forms of contact. The BIP\_PAT\_GEOCODE table contains patient's geocoded address.
 
 Note: this looks for valid address AND phone AND email.   If you want to pull a patient that has at least one form of valid contact use OR instead of AND in the code below
-
-##### **Check Patient's Contact Information**
-
+```sql
 SELECT \*
 
 FROM xdr\_prinv\_coh coh
@@ -1862,14 +1860,14 @@ where
 first\_dx = x.contact\_date
 
 order by pat\_id,diagnosis\_desc;
-
-# Procedure Performing and Billing Providers
+```
+## Procedure Performing and Billing Providers
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 3/2/20)
 
 The following code enhances the procedure data pull to add the performing and billing providers. It only applies to the CPT (not legacy but **hsp\_transactions**, and **arpb\_transactions**) and ICD-9/10 codes (**i2b2**.**lz\_clarity\_procedures**)
-
-##### **Procedure Performance Provider**
+```sql
+-- Procedure Performance Provider**
 
 DROP TABLE xdr\_prinv\_prc PURGE;
 
@@ -2576,15 +2574,13 @@ select dbms\_random.string('l',1) || dbms\_random.string('x',4) ||dbms\_random.s
 \-------------------------------------------------------------------------------
 
 select created from user\_objects where lower(object\_name)='xdr\_123456\_demo';
-
-# Care Everywhere Labs
+```
+## Care Everywhere Labs
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 9/22/20)
 
 The following code allows you to find labs results received through the care Everywhere interface
-
-##### **Care Everywhere Labs**
-
+``` sql
 \------------------------------------------------
 
 \-- Create table with all CE labs documents
@@ -2766,7 +2762,7 @@ and lab.RES\_COMP\_NAME\_CMP = drv.RES\_COMP\_NAME\_CMP
 and lab.organization\_id = drv.organization\_id
 
 ;
-
+```
 # Occupation Information
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 10/21/20)
