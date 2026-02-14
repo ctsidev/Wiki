@@ -36,27 +36,27 @@ This [document](https://uclahs.app.box.com/file/1814822603942 "OHIA Step-by-step
 ---
 ## 3 Data Delivery 
 - When dataset exceeds XXGB, open an ISS ticket for OHIA to copy the data from DataBrick de-identified object into the PI ULEAD folder
-- Instructions pending*
+- Further Instructions pending*
 - Language to share with investigator(s)
-- 
+
 You are receiving this dataset of clinical notes under the regulatory framework governing patient privacy and data protection, including the Health Insurance Portability and Accountability Act (HIPAA). This legislation requires that all shared health data be de-identified to prevent disclosure of Protected Health Information (PHI).
 
-    Regulatory Enforcement of De-identification
-    In compliance with HIPAA and related laws, this dataset has been de-identified to remove or obscure any information that could directly or indirectly identify patients, ensuring confidentiality and lawful data sharing.
+### Regulatory Enforcement of De-identification
+In compliance with HIPAA and related laws, this dataset has been de-identified to remove or obscure any information that could directly or indirectly identify patients, ensuring confidentiality and lawful data sharing.
 
-    ### Overview of the De-identification Process
-    An advanced PHI scrubbing tool from John Snow Labs, using AI, was applied to identify and remove PHI from free-text clinical notes, including names, dates, locations, and other identifiers. While robust, some residual PHI may remain due to the complexity of clinical text.
+### Overview of the De-identification Process
+An advanced PHI scrubbing tool from John Snow Labs, using AI, was applied to identify and remove PHI from free-text clinical notes, including names, dates, locations, and other identifiers. While robust, some residual PHI may remain due to the complexity of clinical text.
 
-  Our deidentification pipeline prioritizes eliminating false negatives (PHI leakage) over reducing false positives (non-PHI incorrectly annotated as PHI), while operating in a scalable and efficient manner. This can produce an over-redacting of certain text elements. We are workign diligently to improce these situations while still providing the maximum level of protection.
+Our deidentification pipeline prioritizes eliminating false negatives (PHI leakage) over reducing false positives (non-PHI incorrectly annotated as PHI), while operating in a scalable and efficient manner. This can produce an over-redacting of certain text elements. We are workign diligently to improce these situations while still providing the maximum level of protection.
 
-    #### Protocol if Potential PHI is Found
-    If you discover potential PHI or sensitive identifiers in the dataset, please:
+### Protocol if Potential PHI is Found
+If you discover potential PHI or sensitive identifiers in the dataset, please:
 
-    - Immediately stop further use or sharing to prevent disclosure.
-    - Notify the honest broker team who provisioned the data with details about the suspected PHI
-    - Securely provide specific examples or excerpts of the suspected PHI to assist investigation.
-    - Await further instructions before resuming use or distribution.
-    - Notify the UCLA compliance team at compoffice@mednet.ucla.edu.
+- Immediately stop further use or sharing to prevent disclosure.
+- Notify the honest broker team who provisioned the data with details about the suspected PHI
+- Securely provide specific examples or excerpts of the suspected PHI to assist investigation.
+- Await further instructions before resuming use or distribution.
+- Notify the UCLA compliance team at compoffice@mednet.ucla.edu.
 
 Your prompt cooperation is essential to maintain privacy compliance and protect patient information.
 
