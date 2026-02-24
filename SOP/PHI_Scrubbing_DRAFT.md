@@ -10,7 +10,7 @@ This repository contains scripts and documentation for a **multi-step process** 
 - [1 How to process a file](#1-how-to-process-a-file)
 - [2 Validate Cleaned Data](#2-validate-cleaned-data)
 - [3 Data Delivery](#3-data-delivery)
-- [4 Language to share with investigator(s)](#4-Language-to-share-with-investigator(s))
+- [4 Language to share with investigator](#4-Language-to-share-with-investigator)
 - [5 Tracking Metadata](#5-tracking-metadata)
 - [FAQ](#faq)
 
@@ -41,7 +41,7 @@ This [document](https://uclahs.app.box.com/file/1814822603942 "OHIA Step-by-step
 - Further Instructions pending*
 
 ---
-## 4 Language to share with investigator(s)
+## 4 Language to share with investigator
 
 You are receiving this dataset of clinical notes under the regulatory framework governing patient privacy and data protection, including the Health Insurance Portability and Accountability Act (HIPAA). This legislation requires that all shared health data be de-identified to prevent disclosure of Protected Health Information (PHI).
 
