@@ -1,0 +1,46 @@
+XDR Monday’s Template:
+
+Project Folder:
+Documentation:
+Compliance Type:
+Cohort Definition:
+Recruitment?
+Number of Patients Requested:
+Delivery System:
+Date Range:
+Tables Provided:
+
+-------------------------------------------------------
+
+ULEAD Data Transfer Complete - Bell IRB#:23-000516
+
+Your data has now been provisioned. 
+
+You can find it within ULEAD in the ShareFile application at the following path: 
+F:\Inbound\CTSI\DBell_23_23-000516
+
+Along with your data files, you shall find a data dictionary that outlines the meaning of every file and every field and how you can connect records across files using different keys/IDs for patients, encounters, providers, etc...
+
+If you have not already accessed ULEAD and ShareFile you can find instructions in
+ULEAD User Guide : Go to https://uclahs.box.com/s/xr9qy9pipvl4rbfj549pwx1cuks8gung
+
+Also, please see this video on how to access your data: Go to https://uclahs.box.com/s/24h1x2xgb5ecj8yv9i28vv5f8uudscix
+
+Ultimately, you can reach out to ULEAD Support Team with any ULEAD related issues: ULEADSupportTeam@mednet.ucla.edu
+
+One last tip, oftentimes investigators can't find the data when opening it with Excel. This is most typically due to "file type" selection filter. You must change it to “All Files” to be able to see the dataset files.
+
+---------------------------------------------
+
+Hi @consultant.
+
+I’ve delivered the HIPAA disclosure file and data dictionary for this project to the corresponding Box project folder.
+
+The password to unzip the HIPAA file is 519Cedar15
+
+Please let me know if you have any questions.
+
+Thank you
+
+PS: remember to delete the HIPAA file once the disclosure has been completed. We maintain a backup copy in case it’s needed.
+
