@@ -11,6 +11,7 @@ This repository contains scripts and documentation for a **multi-step process** 
 - [2 Validate Cleaned Data](#2-validate-cleaned-data)
 - [3 Data Delivery](#3-data-delivery)
 - [4 Language to share with investigator(s)](#4-Language-to-share-with-investigator(s))
+- [5 Tracking Metadata](#5-tracking-metadata)
 - [FAQ](#faq)
 
 
@@ -40,7 +41,7 @@ This [document](https://uclahs.app.box.com/file/1814822603942 "OHIA Step-by-step
 - Further Instructions pending*
 
 ---
-## Language to share with investigator(s)
+## 4 Language to share with investigator(s)
 
 You are receiving this dataset of clinical notes under the regulatory framework governing patient privacy and data protection, including the Health Insurance Portability and Accountability Act (HIPAA). This legislation requires that all shared health data be de-identified to prevent disclosure of Protected Health Information (PHI).
 
@@ -62,6 +63,12 @@ If you discover potential PHI or sensitive identifiers in the dataset, please:
 - Notify the UCLA compliance team at compoffice@mednet.ucla.edu.
 
 Your prompt cooperation is essential to maintain privacy compliance and protect patient information.
+
+---
+## 5 Tracking Metadata
+
+Log the metadata for the project in this spreadsheet
+https://uclahs.app.box.com/integrations/officeonline/openOfficeOnline?fileId=2144489756855&sharedAccessCode=
 
 ---
 ## FAQ
