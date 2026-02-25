@@ -1,10 +1,8 @@
 # How to Submit a QC Inquiry to the Cancer Registry Team
 
-
 ## Steps
 - [1 Gather information from PI](#1-Gather-information-from-PI)
 - [2 Confirm Data Files are accurate](#1-Confirm-data-Files-are-accurate)
-
 - [3 Review Data](#3-Review-Data)
 - [4 Escalate Inquiry to Cancer Registry Team](#4-Escalate-Inquiry-to-Cancer-Registry-Team)
 - [5 Manage PI Communications and Expectations](#5-Manage-PI-Communications-and-Expectations)
@@ -25,14 +23,14 @@ In other cases, we might need an expert opinion and shall ask the Director of th
 
 ---
 ### 4 Escalate Inquiry to Cancer Registry Team
-If the review uncovers inconsistencies in the data that need to be addressed by the Cancer Registy team. 
-- We shall open an ISS ticket containing a brief description of the issue. 
-- The ticket itself shall not include PHI.
-- We will put together a data file with the necessary information and copy it to the Box folder for the CT team to review.
-- We shall create a subfolder for each request with the ticket# and the IRB for the project.
-- Finaly, we will email the CR representative with the ticket # and folder name for their review.
+If the review uncovers inconsistencies in the data that need to be addressed by the Cancer Registy (CR) team. 
+- We will put together a data file(s) with the necessary information and copy it/them to the Box folder for the CR team to review.
+- We shall create a subfolder for each request with the IRB for the project.
+- We shall open a ticket containing a brief description of the issue. 
+- The ticket itself shall not include PHI. Please add the Box folder with the data pertinent to our inquiry.
+- Finaly, we will email the CR representative letting them know that opened a ticket in their system to initiate a communication process with them.
 
-ISS ticket: https://uclahsprod.service-now.com/now/nav/ui/classic/params/target/%24pa_dashboard.do
+Cancer Registry ticket using their Qualtrics form: https://uclahs.az1.qualtrics.com/jfe/form/SV_bdOtQacuPnF6Cqi
 
 Box folder: https://uclahs.app.box.com/folder/367956877275
 
