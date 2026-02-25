@@ -5,8 +5,14 @@ The goal of this process is to produce high quality datasets to investigators by
 
 The first step is to make sure that you are familiar with the specs that were shared through the documentation and the communication process thoughout the project life cycle. This is the information that you will need for your self-review, which is broken down into seven areas. 
 
-This guide provides a description of each one in the following section:
+> At the end of this process, you will post your review in Monday.com, similar to the ones that you have receiving from your supervisor:
+> <img width="407" height="324" alt="image" src="https://github.com/user-attachments/assets/68385399-ff69-4d64-bc36-bf10bc891483" />
 
+You will check each area as completed, only if you have reviewed it, and didn't encounter any issues.
+
+This guide provides a description of each area.
+
+---
 ## Areas
 - [1 Scripts](#1-Scripts)
 - [2 Files](#2-Files)
@@ -56,7 +62,9 @@ This guide provides a description of each one in the following section:
 
 If during this process you identify anything that needs a redo, or perhaps input from your director or the consultant, raise the appropriate question in the ticket to solve it ASAP. If the issue has to do with your work, address it until you can produce a clean review.
 
-Once the seven areas of the review have been cleared by you, you must tag the director and set the project to receive approval for delivery.
-<img width="815" height="648" alt="image" src="https://github.com/user-attachments/assets/68385399-ff69-4d64-bc36-bf10bc891483" />
-
+---
+Once the seven areas of the review have been cleared by you:
+- you must publish your review in Monday.com
+- Tag your director
+- add the "Programmer review" date to set the project to receive approval for delivery.
 
