@@ -5,7 +5,7 @@ The goal of this process is to produce high quality datasets to investigators by
 
 The first step is to make sure that you are familiar with the specs that were shared through the documentation and the communication process thoughout the project life cycle. This is the information that you will need for your self-review, which is broken down into seven areas. 
 
-> At the end of this process, you will post your review in Monday.com, similar to the ones that you have receiving from your supervisor:
+> At the end of this process, you will post your review in Monday.com using the check list feature to make look like the example below. It's similar to the ones that you have received from your supervisor:
 > <img width="407" height="324" alt="image" src="https://github.com/user-attachments/assets/68385399-ff69-4d64-bc36-bf10bc891483" />
 
 You will check each area as completed, only if you have reviewed it, and didn't encounter any issues.
