@@ -57,4 +57,6 @@ This guide provides a description of each one in the following section:
 If during this process you identify anything that needs a redo, or perhaps input from your director or the consultant, raise the appropriate question in the ticket to solve it ASAP. If the issue has to do with your work, address it until you can produce a clean review.
 
 Once the seven areas of the review have been cleared by you, you must tag the director and set the project to receive approval for delivery.
+<img width="815" height="648" alt="image" src="https://github.com/user-attachments/assets/68385399-ff69-4d64-bc36-bf10bc891483" />
+
 
