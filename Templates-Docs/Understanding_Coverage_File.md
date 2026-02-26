@@ -61,7 +61,3 @@ To find what kind of coverage a patient had on the date of an encounter:
 - Use encounter date to find applicable coverage.
 - If multiple coverages apply, the one with the lowest filling order is primary.
 - No matching coverage means no insurance at that time.
-
----
-
-If you want me to help you upload this file to your GitHub wiki or make any further adjustments, just let me know!
