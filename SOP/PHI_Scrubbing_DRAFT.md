@@ -33,6 +33,7 @@ This [document](https://uclahs.app.box.com/file/1814822603942 "OHIA Step-by-step
 ## 2 Validate Cleaned Data
 - Use OHIA AI tool to analyze 10k records
 - Manually review 375 cases of the  ones where no-PHI was found
+- See code for manual scrubbing in the Appendix at the end of this page
 
 
 ---
@@ -86,7 +87,35 @@ https://uclabip.atlassian.net/wiki/spaces/UBIG/pages/2527854594/How+to+scrub+PHI
 
 ---
 
+---
+## Appendix
+- See below code for manual PHI scrubbing:
+```python
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
 
+df = spark.table("ohiadev.ohia_deidentified_notes.your_file_here")
+
+w = Window.orderBy(F.rand(seed = 42))
+
+df_rand = (
+	df.withColumn("rn", F.row_number().over(w))
+)
+
+sample_1 = df_rand.filter((F.col("rn") >= 1) & (F.col("rn") <= 100)).drop("rn")
+sample_2 = df_rand.filter((F.col("rn") >= 101) & (F.col("rn") <= 200)).drop("rn")
+sample_3 = df_rand.filter((F.col("rn") >= 201) & (F.col("rn") <= 300)).drop("rn")
+sample_4 = df_rand.filter((F.col("rn") >= 301) & (F.col("rn") <= 400)).drop("rn")
+
+sample_1.display()
+
+sample_2.display()
+
+sample_3.display()
+
+sample_4.display()
+```
+---
 
 - **Headers:** `#`, `##`, `###` for structure.
 - **Bulleted lists:** `-` for steps and items.
