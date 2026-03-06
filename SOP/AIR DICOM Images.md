@@ -10,7 +10,7 @@ Send email to Rose Doherty Rdoherty@mednet.ucla.edu to ask for a project for the
 
 `AIR Project Request: XDR_116645_IMG for IRB: 24-5785, Klingbeil`
 
-and provide these data elments:
+And provide these data elements:
 
 |  |  |
 | ----------- | ----------- |
@@ -21,6 +21,7 @@ and provide these data elments:
 | Cohort | 95 |
 | Accession Number Count | 3057 |
 | Final Storage | ULEAD [kklingbeil_24_24-5785] |
+
 
 1. Once the project is ready, use CTSI Server to access AIR.
    1. Link to access AIR: https://vitair01.ad.medctr.ucla.edu/ui/search (Credentials are your mednet user name and password.)
