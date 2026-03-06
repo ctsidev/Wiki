@@ -12,7 +12,8 @@ Send email to Rose Doherty Rdoherty@mednet.ucla.edu to ask for a project for the
 
 And provide these data elements:
 
-|  |  |
+| | |
+| --- | --- |
 | **Investigator** | Klingbeil |
 | **Programmer** | ttacorda |
 | **IRB** | 24-5785 |
