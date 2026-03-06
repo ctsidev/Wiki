@@ -12,15 +12,14 @@ Send email to Rose Doherty Rdoherty@mednet.ucla.edu to ask for a project for the
 
 And provide these data elements:
 
-|  |  |
 | ----------- | ----------- |
-| Investigator | Klingbeil |
-| Programmer | ttacorda |
-| IRB | 24-5785 |
-| CTSI Preferred project name | XDR_116645_IMG |
-| Cohort | 95 |
-| Accession Number Count | 3057 |
-| Final Storage | ULEAD [kklingbeil_24_24-5785] |
+| **Investigator** | Klingbeil |
+| **Programmer** | ttacorda |
+| **IRB** | 24-5785 |
+| **Preferred project name** | XDR_116645_IMG |
+| **Cohort** | 95 |
+| **Accession Number Count** | 3057 |
+| **Final Storage** | ULEAD [kklingbeil_24_24-5785] |
 
 <br>
 
