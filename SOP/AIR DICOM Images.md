@@ -12,12 +12,10 @@ Send email to Rose Doherty Rdoherty@mednet.ucla.edu to ask for a project for the
 
 and provide these data elments:
 
-| Col 2 | Col 2 |
+|  |  |
 | ----------- | ----------- |
 | Investigator | Klingbeil |
 | Programmer | ttacorda |
-| IRB | 24-5785 |
-| CTSI Preferred project name | 24-5785 |
 | IRB | 24-5785 |
 | CTSI Preferred project name | XDR_116645_IMG |
 | Cohort | 95 |
