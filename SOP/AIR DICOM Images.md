@@ -23,6 +23,8 @@ And provide these data elements:
 | Final Storage | ULEAD [kklingbeil_24_24-5785] |
 
 
+
+
 1. Once the project is ready, use CTSI Server to access AIR.
    1. Link to access AIR: https://vitair01.ad.medctr.ucla.edu/ui/search (Credentials are your mednet user name and password.)
 1. Prepare an input file with the accession number and MRN for the studies that you wish to request.
