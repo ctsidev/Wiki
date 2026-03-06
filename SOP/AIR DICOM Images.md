@@ -22,7 +22,7 @@ And provide these data elements:
 | Accession Number Count | 3057 |
 | Final Storage | ULEAD [kklingbeil_24_24-5785] |
 
-<br><br>
+<br>
 
 1. Once the project is ready, use CTSI Server to access AIR.
    1. Link to access AIR: https://vitair01.ad.medctr.ucla.edu/ui/search (Credentials are your mednet user name and password.)
