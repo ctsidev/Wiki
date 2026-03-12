@@ -22,6 +22,7 @@ This repository contains scripts and documentation for a **multi-step process** 
 - PILastNamne_IRB#_FileType.csv (ex Elmnore_25-1895_Notes.csv)
 > The options for FileType are: "Notes", "Imaging", "Pathology."
 
+<img width="1449" height="826" alt="image" src="https://github.com/user-attachments/assets/571d9536-65fb-4cd5-b820-3d313581ed5a" />
 
 ---
 ## 1 How to process a file
