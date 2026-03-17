@@ -28,7 +28,7 @@ This repository contains scripts and documentation for a **multi-step process** 
 ## 1 How to process a file
 This [document](https://uclahs.app.box.com/file/1814822603942 "OHIA Step-by-step Document") from OHIA presents a step by step.
 
-
+Note that for pathology deliveries, UID must be ip_order_proc_id || component_id prior to submitting to scrubber.
 
 ---
 ## 2 Validate Cleaned Data
