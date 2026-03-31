@@ -61,6 +61,7 @@
 *   [PDF Scans from Clarity](#UsefulQueriesandOtherResources-PDFScans)
 *   [PHQ9, PROMIS, SDOH, GAD7, AUDITC](#UsefulQueriesandOtherResources-PHQ9,PRO)
 *   [Dispensed Medications](#UsefulQueriesandOtherResources-Dispense)
+*   [Genetic Testing - Tempus Reports](#UsefulQueriesandOtherResources-Genetic)
 
 ## AD-POLST
 
