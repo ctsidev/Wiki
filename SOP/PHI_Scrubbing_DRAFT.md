@@ -26,21 +26,31 @@ This repository contains scripts and documentation for a **multi-step process** 
 
 ---
 ## 1 How to process a file
+Extract data from the ORacle schema and upload to your folder in ULEAD.
+Files cannot be larger than 5GB
+```batch
+NEEDS SCRIPT TO SPLIT FILES INTO 5GB CHUNCKS
+```
+You might consider zipping each file to make the copy to ULEAD more efficient.
+
 This [document](https://uclahs.app.box.com/file/1814822603942 "OHIA Step-by-step Document") from OHIA presents a step by step.
 
 Note that for pathology deliveries, UID must be ip_order_proc_id || component_id prior to submitting to scrubber.
 
+
+
 ---
 ## 2 Validate Cleaned Data
 - Use OHIA AI tool to analyze 10k records
-- Manually review 375 cases of the  ones where no-PHI was found
+- Manually review 375 cases of the ones where no-PHI was found using the Notebook/script under the MlD schema in Databricks and called [De-identified LLM Validation]
 - See code for manual scrubbing in the Appendix at the end of this page
 
 
 ---
 ## 3 Data Delivery 
-- When dataset exceeds XXGB, open an ISS ticket for OHIA to copy the data from DataBrick de-identified object into the PI ULEAD folder
-- Further Instructions pending*
+- You shall export directly into ULEAD from DataBricks and then copy the files to the PI IRB folder.
+- YOu might want to zip-copy-past-unzip to miminize time it takes to 'copy'
+- In exceptional cases When dataset exceeds XXGB, open an ISS ticket for OHIA to copy the data from DataBrick de-identified object into the PI ULEAD folder- 
 
 ---
 ## 4 Language to share with investigator
@@ -89,7 +99,7 @@ https://uclabip.atlassian.net/wiki/spaces/UBIG/pages/2527854594/How+to+scrub+PHI
 ---
 
 ---
-## Appendix
+## Appendix [needs to be updated]
 - See below code for manual PHI scrubbing:
 ```python
 from pyspark.sql import functions as F
