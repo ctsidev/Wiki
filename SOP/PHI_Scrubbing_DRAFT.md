@@ -63,7 +63,7 @@ In compliance with HIPAA and related laws, this dataset has been de-identified t
 ### Overview of the De-identification Process
 An advanced PHI scrubbing tool from John Snow Labs, using AI, was applied to identify and remove PHI from free-text clinical notes, including names, dates, locations, and other identifiers. While robust, some residual PHI may remain due to the complexity of clinical text.
 
-Our deidentification pipeline prioritizes eliminating false negatives (PHI leakage) over reducing false positives (non-PHI incorrectly annotated as PHI), while operating in a scalable and efficient manner. This can produce an over-redacting of certain text elements. We are workign diligently to improce these situations while still providing the maximum level of protection.
+Our deidentification pipeline prioritizes eliminating false negatives (PHI leakage) over reducing false positives (non-PHI incorrectly annotated as PHI), while operating in a scalable and efficient manner. This can produce an over-redacting of certain text elements. We are working diligently to improve these situations while still providing the maximum level of protection.
 
 ### Protocol if Potential PHI is Found
 If you discover potential PHI or sensitive identifiers in the dataset, please:
