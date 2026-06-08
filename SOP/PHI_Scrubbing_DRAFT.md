@@ -26,7 +26,7 @@ This repository contains scripts and documentation for a **multi-step process** 
 
 ---
 ## 1 How to process a file
-Extract data from the ORacle schema and upload to your folder in ULEAD.
+Extract data from the Oracle schema and upload to your folder in ULEAD.
 Files cannot be larger than 5GB
 ```batch
 NEEDS SCRIPT TO SPLIT FILES INTO 5GB CHUNCKS
@@ -36,6 +36,8 @@ You might consider zipping each file to make the copy to ULEAD more efficient.
 This [document](https://uclahs.app.box.com/file/1814822603942 "OHIA Step-by-step Document") from OHIA presents a step by step.
 
 Note that for pathology deliveries, UID must be ip_order_proc_id || component_id prior to submitting to scrubber.
+
+Additionally, for all files ensure that double quotes ("") are removed throughout the file. Otherwise, OHIA scrubber will chunk text into separate lines. Generally, you can just replace double quotes with empty string.
 
 
 
