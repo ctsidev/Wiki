@@ -510,17 +510,11 @@ We decided to create a death table to capture cases where patients, that do not 
 DROP TABLE I2B2.LZ_DEATH PURGE;
 
 CREATE TABLE LZ_DEATH
-
 ("PAT_ID" VARCHAR2(10 BYTE)
-
 ,"SOURCE" VARCHAR2(256 BYTE) --Example: 'ACP - Project, IRB 18-001612'
-
 ,"USER" VARCHAR2(15 BYTE) --Example: 'JSANZ'
-
 ,CREATE_DATE TIMESTAMP --use SYSDATE
-
 ,"COMMENT" VARCHAR2(1256 BYTE) --Example: 'The patients husband reported her to be deceased when receiving a notification from the research team on early September 2019. The PI team let us know'
-
 ,"DEATH_DATE" DATE); --LEave it blank if we don't have it
 
 We shall incorporate this table to the death function so that it's taken into account when producing the most up to date vital status for each patient. 
@@ -548,81 +542,43 @@ The following identifies face-to-face visits.
 ##### **Face to Face Visits Query**
 
 FROM i2b2.lz_clarity_enc e
-
 JOIN i2b2.lz_enc_visit_types vt ON e.pat_enc_csn_id = vt.pat_enc_csn_id
-
 WHERE e.effective_date_dt < SYSDATE --Completed appts are prior to current date
-
 AND ((vt.visit_type = 'AV' --Ambulatory Visit
-
 AND (e.appt_status_c IS NULL OR e.appt_status_c = '2') --Completed (includes null)
-
 )
-
 OR
-
 (vt.visit_type <> 'AV' --Non-Ambulatory Visit
-
 AND e.appt_status_c = '2' --Completed (does not include null)
-
 AND e.enc_type_c IN ('1000' --Initial consult --Face-to-face encounter types per I:\\_BIP\\xDR\\Lists and Codes\\Face to Face Visits.xlsx
-
 ,'1001' --Anti-coag visit
-
 ,'1003' --Procedure visit
-
 ,'101' --Office Visit
-
 ,'108' --Immunization
-
 ,'112540' --Home Visit
-
 ,'1200' --Routine Prenatal
-
 ,'1201' --Initial Prenatal
-
 ,'139101' --Ophthalmology Procedure
-
 ,'201' --Nurse/Clinical Support
-
 ,'202' --Social Work
-
 ,'209' --Education
-
 ,'210' --Treatment
-
 ,'2100' --Surgical Consult
-
 ,'2101' --Clinical Support
-
 ,'2501' --Evaluation
-
 ,'2502' --Follow-Up
-
 ,'2508' --Infusion
-
 ,'2510' --Pre-op/Pre-procedure Orders
-
 ,'2535' --DEXA Scan
-
 ,'2543' --Integrated Practice Office Visit
-
 ,'3' --Hospital Encounter
-
 ,'49' --Lactation Encounter
-
 ,'50' --Appointment
-
 ,'55' --Ancillary Procedure
-
 --,'70' --Telephone (Remove per DB on 3/14/2022)
-
 ,'76' --Telemedicine
-
 --,'21076' --Tele-Medicine (Remove per DB on 3/14/2022)
-
 )
-
 ))
 
 # Chief Complaints
@@ -632,33 +588,21 @@ PAT_ENC_RSN_VISIT. ENC_REASON_NAME obtains the chief complaints for the cohort.
 Modified on 06/07/2021 by Rob Follett - Added the CL_RSN_FOR_VISIT lookup table.
 
 left join (select distinct lk.pat_mrn_id as mrn
-
 ,vs.pat_enc_csn_id
-
 ,listagg(rfv.display_text, '||') within group (order by vs.line) as chief_complaint_list
-
 from xdr_nnnnn_cohort lk
-
 join clarity.pat_enc_rsn_visit vs on lk.pat_id = vs.pat_id
-
 join CL_RSN_FOR_VISIT rfv on vs.enc_reason_id = rfv.reason_visit_id
-
 group by lk.pat_mrn_id,vs.pat_enc_csn_id
-
 ) chief on cohort.pat_enc_csn_id = chief.pat_enc_csn_id
 
 --TT-9/26/2023: Alternate query
 
 left join (select pat_enc_csn_id, listagg(trim(enc_reason_name), '|') within group (order by pat_enc_csn_id, line) as chief_complaint_list
-
 from (select distinct vs.pat_id, vs.pat_enc_csn_id, vs.line, vs.enc_reason_name
-
 from p_coh lk
-
 join clarity.pat_enc_rsn_visit vs on lk.pat_id = vs.pat_id)
-
 group by pat_enc_csn_id
-
 ) chief on coh.pat_enc_csn_id = chief.pat_enc_csn_id
 
 # Current Med List
@@ -674,33 +618,19 @@ PAT_ENC_CURR_MEDS table enables you to report on current (as well as active) med
 -- If active flag is null, treat as active.
 
 select x.*
-
 ,m.*
-
 from (select distinct cm.pat_id
-
 ,cm.current_med_id
-
 ,cm.contact_date
-
 ,cm.is_active_yn
-
 ,max(cm.contact_date) over (partition by cm.pat_id) latest_contact_date
-
 from pat_enc_curr_meds cm
-
 where nvl(cm.is_active_yn,'Y') = 'Y'
-
 ) x
-
 join i2b2.lz_clarity_meds m on x.current_med_id = m.order_med_id
-
 where x.contact_date = x.latest_contact_date
-
 and m.order_class <> 'Historical Med'
-
 order by x.pat_id, x.current_med_id
-
 ;
 
 # Multiple Phone Numbers and Patient's preference
@@ -741,133 +671,70 @@ with home_result as
 (
 
 Select coh.pat_ID,
-
-othcom.name as phone_type,
-
-cm1.OTHER_COMMUNIC_NUM as phone ,
-
-cm1.line,
-
-case when cm1.CONTACT_PRIORITY is not null then cm1.CONTACT_PRIORITY else 99 end as CONTACT_PRIORITY,
-
-concat(SUBSTR( othcom.name, 1 , 1 ), (case when cm1.CONTACT_PRIORITY is not null then cm1.CONTACT_PRIORITY else 0 end )) as Contactpriorityorder
-
+   othcom.name as phone_type,
+   cm1.OTHER_COMMUNIC_NUM as phone ,
+   cm1.line,
+   case when cm1.CONTACT_PRIORITY is not null then cm1.CONTACT_PRIORITY else 99 end as CONTACT_PRIORITY,
+   concat(SUBSTR( othcom.name, 1 , 1 ), (case when cm1.CONTACT_PRIORITY is not null then cm1.CONTACT_PRIORITY else 0 end )) as Contactpriorityorder
 from XDR_PRINV_COH coh
-
 inner join OTHER_COMMUNCTN cm1 on coh.pat_id = cm1.pat_id --and cm1.OTHER_COMMUNIC_C = 7 --Home Phone
-
 left outer join ZC_OTHER_COMMUNIC othcom on othcom.OTHER_COMMUNIC_C = cm1.OTHER_COMMUNIC_C
-
 /* if multiple values, grouping them at patient level */
-
 WHERE
-
 -- Exclude obvious place holders or invalid phone #s
-
 cm1.OTHER_COMMUNIC_NUM is not null
-
 and cm1.OTHER_COMMUNIC_NUM not in ('000-000-0000'
-
 ,'000-000-0001'
-
 ,'999-999-9999'
-
 ,'310-000-0000'
-
 ,'818-999-9999'
-
 ,'310-000-0001'
-
 ,'805-000-0000'
-
 ,'213-000-0001'
-
 )
-
 )
 
 SELECT
-
 PAT_ID
-
 ,"'PHONE_1'" as "phone1"
-
 ,"'CONTACTPRIORITYORDER_2'" AS "contactpriority_phone1"
-
 ,"'PHONE_3'" AS "phone2"
-
 ,"'CONTACTPRIORITYORDER_4'" AS "contactpriority_phone2"
-
 ,"'PHONE_5'" AS "phone3"
-
 ,"'CONTACTPRIORITYORDER_6'" AS "contactpriority_phone3"
-
 ,"'PHONE_7'" AS "phone4"
-
 ,"'CONTACTPRIORITYORDER_8'" AS "contactpriority_phone4"
-
 ,CONCAT(
-
 CONCAT(
-
 CONCAT(CASE WHEN "'CONTACTPRIORITYORDER_2'" IS NOT NULL THEN "'CONTACTPRIORITYORDER_2'" ELSE 'NA' END, '| ')
-
 ,CONCAT(CASE WHEN "'CONTACTPRIORITYORDER_4'" IS NOT NULL THEN "'CONTACTPRIORITYORDER_4'" ELSE 'NA' END, '| ' )
-
 )
-
 ,CONCAT(
-
 CONCAT(CASE WHEN "'CONTACTPRIORITYORDER_6'" IS NOT NULL THEN "'CONTACTPRIORITYORDER_6'" ELSE 'NA' END, '| ' )
-
 ,CASE WHEN "'CONTACTPRIORITYORDER_8'" IS NOT NULL THEN "'CONTACTPRIORITYORDER_8'" ELSE 'NA' END)
-
 )
-
 AS "contactpriorityorder_phone1234"
-
 FROM (
-
 SELECT PAT_ID
-
 ,concat(
-
 concat( col , '_'), ROW_NUMBER() OVER (PARTITION BY PAT_ID ORDER BY orderpriority ASC)
-
 ) AS col
-
 ,value
-
 FROM (
-
 SELECT PAT_ID
-
 ,cast ( phone as varchar2(30)) as phone
-
 ,cast(Contactpriorityorder as varchar2(30)) as Contactpriorityorder
-
 , ROW_NUMBER() OVER (PARTITION BY PAT_ID ORDER BY CONTACT_PRIORITY ASC) as orderpriority
-
 FROM home_result
-
 GROUP BY PAT_ID, phone, Contactpriorityorder, CONTACT_PRIORITY
-
 ) rt
-
 unpivot ( value FOR col in ( phone, Contactpriorityorder))unpiv
-
 ) tp
-
 pivot ( Max(value) FOR col in ('PHONE_1'
-
 ,'CONTACTPRIORITYORDER_2','PHONE_3','CONTACTPRIORITYORDER_4',
-
 'PHONE_5','CONTACTPRIORITYORDER_6','PHONE_7','CONTACTPRIORITYORDER_8'
-
 )
-
 ) piv
-
 order by 1;
 ```
 ## Beaker Text Reports
@@ -881,205 +748,109 @@ This script can pull results after January 2016 (Beaker) for previous results th
 ##### **Original Query**
 
 WITH
-
 CaseIDsToProcess AS (
-
 SELECT LAB_CASE_DB_MAIN.CASE_ID
-
 FROM LAB_CASE_DB_MAIN
-
 WHERE CASE_ID IN (818130 )
-
 ),ExternalPatientInfo AS (
-
 SELECT REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_SUBM_PT_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM, EXTERNAL_VISIT_ID FROM (
-
 SELECT DISTINCT REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_SUBM_PT_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM, EXTERNAL_VISIT_ID,
-
 RANK() OVER (PARTITION BY REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM ORDER BY REquisition_ID DESC, NVL(EXTERNAL_VISIT_ID,'-') DESC, REQ_SUBM_PT_ID) as Rankorder
-
 FROM CLARITY.REQ_DB_MAIN
-
 WHERE
-
 REQ_DB_MAIN.REQUISITION_ID IN (SELECT CASE_ID FROM CaseIDsToProcess )
-
 AND REQ_SUBMITTER_ID IS NOT NULL) REQDBMAINResults
-
 WHERE REQDBMAINResults.RankOrder=1
-
 ),
 
 PatientInformation AS (
-
 SELECT
-
 DISTINCT
-
 CASE WHEN NVL(REQ_DB_MAIN.REQ_GROUPER_ID,0) <>0 THEN CAST (NVL(REQ_DB_MAIN.REQ_GROUPER_ID,'0') AS VARCHAR2(25)) ELSE PATIENT.PAT_ID END || '-' ||LAB_CASE_DB_MAIN.CASE_ID uniqueid,
-
 LAB_CASE_DB_MAIN.CASE_ID
-
 FROM CaseIDsToProcess
-
 INNER JOIN CLARITY.LAB_CASE_DB_MAIN ON CaseIDsToProcess.CASE_ID=LAB_CASE_DB_MAIN.CASE_ID
-
 LEFT JOIN CLARITY.PATIENT ON PATIENT.PAT_ID=LAB_CASE_DB_MAIN.CASE_PAT_ID
-
 LEFT JOIN CLARITY.REQ_CASES ON REQ_CASES.CASES_ID = CaseIDsToProcess.CASE_ID
-
 LEFT JOIN CLARITY.REQ_DB_MAIN ON REQ_DB_MAIN.REQUISITION_ID = CLARITY.REQ_CASES.REQUISITION_ID
-
 LEFT JOIN CLARITY.RQG_DB_MAIN ON REQ_DB_MAIN.REQ_GROUPER_ID = RQG_DB_MAIN.RQG_GROUPER_ID
-
 LEFT JOIN CLARITY.SPEC_DB_MAIN ON LAB_CASE_DB_MAIN.CASE_ID=SPEC_DB_MAIN.CASE_ID
-
 LEFT JOIN CLARITY.LAB_SMT_NOADD ON SPEC_DB_MAIN.REQ_SMT_ID = Lab_Smt_Noadd.Record_Id
-
 LEFT JOIN CLARITY.REQ_ORDER_GROUP ON REQ_ORDER_GROUP.REQUISITION_ID=LAB_CASE_DB_MAIN.CASE_ID
-
 LEFT JOIN CLARITY.ORDER_PROC ON REQ_ORDER_GROUP.ORDER_ID=ORDER_PROC.ORDER_PROC_ID
-
 LEFT JOIN ExternalPatientInfo ON REQ_DB_MAIN.REQ_GROUPER_ID = ExternalPatientInfo.REQ_GROUPER_ID
-
 ),
 
 PatientCases AS
-
 (
-
 SELECT
-
 DISTINCT
-
 PatientInformation.uniqueid,
-
 LAB_CASE_INFO.CASE_NUM,
-
 LAB_CASE_DB_MAIN.CASE_ID,
-
 LAB_CASE_INFO.AP_CASE_STATUS_C
-
 FROM CaseIDsToProcess
-
 INNER JOIN CLARITY.LAB_CASE_DB_MAIN ON CaseIDsToProcess.CASE_ID=LAB_CASE_DB_MAIN.CASE_ID
-
 INNER JOIN CLARITY.LAB_CASE_INFO ON LAB_CASE_INFO.REQUISITION_ID = LAB_CASE_DB_MAIN.CASE_ID
-
 INNER JOIN CLARITY.ZC_AP_CASE_STATUS ON ZC_AP_CASE_STATUS.AP_CASE_STATUS_C = LAB_CASE_INFO.AP_CASE_STATUS_C
-
 INNER JOIN PatientInformation ON CaseIDsToProcess.CASE_ID=PatientInformation.Case_Id
-
 ),
 
 CASERESULT AS (
-
 SELECT
-
 UNIQUEID,
-
 CASE_ID,
-
 CASE_NUM,
-
 RESULT_ID,
-
 AP_CASE_STATUS_C,
-
 RES_VAL_STATUS_C,
-
 Line,
-
 Value_Line,
-
 COMPONENT_ID,
-
 EXTERNAL_NAME,
-
 REPLACE(REPLACE(MULT_LN_VAL_STORAGE,'\\','\\\\'),'"','\\"') AS ResultText,
-
 CMP_MULTILINE_VALUE
-
 FROM
 
 (
-
 SELECT DISTINCT
-
 h.uniqueid,
-
 a.Case_ID,
-
 h.CASE_NUM,
-
 c.RESULT_ID,
-
 d.COMPONENT_ID,
-
 NVL(e.CMP_MULTILINE_VALUE,1) AS CMP_MULTILINE_VALUE,
-
 NVL(d.LINE,1) AS LINE,
-
 NVL(f.VALUE_LINE,1) AS VALUE_LINE ,
-
 g.EXTERNAL_NAME,
-
 NVL(f.MULT_LN_VAL_STORAGE,NVL(d.COMPONENT_RESULT,'')) AS "MULT_LN_VAL_STORAGE",
-
 RANK() OVER ( Partition BY a.CASE_ID Order by c.Result_ID DESC) AS "RANK",
-
 c.RES_VAL_STATUS_C,
-
 h.AP_CASE_STATUS_C
-
 FROM CaseIDsToProcess a
-
 , CLARITY.SPEC_DB_MAIN b
-
 , CLARITY.RES_DB_MAIN c
-
 , CLARITY.Res_Components d
-
 , CLARITY.RES_VAL_PTR_RM e
-
 , CLARITY.RES_VAL_DATA_RM f
-
 , CLARITY.CLARITY_COMPONENT g
-
 , PatientCases h
-
 WHERE
-
 a.CASE_ID=b.CASE_ID
-
 AND a.CASE_ID=h.CASE_ID
-
 AND b.SPECIMEN_ID = c.RES_SPECIMEN_ID
-
 AND c.RESULT_ID = d.RESULT_ID
-
 AND d.LINE = e.GROUP_LINE (+)
-
 AND d.RESULT_ID = e.RESULT_ID (+)
-
 AND e.CMP_MULTILINE_VALUE = f.GROUP_LINE (+)
-
 AND e.RESULT_ID = f.RESULT_ID (+)
-
 AND d.COMPONENT_ID= g.COMPONENT_ID
-
 -- AND c.RES_VAL_STATUS_C = 9
-
 AND d.COMPONENT_REPORT_YN=1
-
 AND d.COMPONENT_ID <> 7100796
-
 ) RESULT
-
 WHERE RANK=1
-
 AND MULT_LN_VAL_STORAGE IS NOT NULL
-
 )SELECT UNIQUEID,CASE_ID,CASE_NUM, RESULT_ID,AP_CASE_STATUS_C,RES_VAL_STATUS_C,Line,Value_Line,COMPONENT_ID,EXTERNAL_NAME,ResultText,CMP_MULTILINE_VALUE FROM CaseResult ORDER BY UNIQUEID, LINE, CMP_MULTILINE_VALUE, VALUE_LINE;
 
 ##### **Pull Beaker Results - Use Case**
@@ -1097,97 +868,51 @@ Use any selections that might apply to your particular case
 DROP TABLE xdr_prinv_opr PURGE;
 
 CREATE TABLE xdr_prinv_opr AS
-
 SELECT DISTINCT pat.pat_id
-
-,pat.pat_mrn_id
-
-,pat.study_id
-
-,opr.order_proc_id
-
-,opr.proc_id
-
-,opr.description
-
-,eap.proc_name
-
-,opr.proc_code
-
-,opr.order_time
-
-,opr.result_time
-
-,opr.order_type_c
-
-,xot.NAME AS order_type
-
-,opr.abnormal_yn
-
-,opr.order_status_c
-
-,opr.radiology_status_c
-
-,opr.specimen_source_c
-
-,opr.specimen_type_c
-
-,acc.acc_num
-
-,xpt.NAME AS specimen_type
-
-,res.line
-
-,res.ord_value
-
-,res.component_id
-
-,cmp.NAME AS component_name
-
-,res.component_comment
-
-,res.result_time AS res_result_time
-
-,res.result_val_start_ln
-
-,res.result_val_end_ln
-
-,res.result_cmt_start_ln
-
-,res.result_cmt_end_ln
-
-,res.lrr_based_organ_id
-
+   ,pat.pat_mrn_id
+   ,pat.study_id
+   ,opr.order_proc_id
+   ,opr.proc_id
+   ,opr.description
+   ,eap.proc_name
+   ,opr.proc_code
+   ,opr.order_time
+   ,opr.result_time
+   ,opr.order_type_c
+   ,xot.NAME AS order_type
+   ,opr.abnormal_yn
+   ,opr.order_status_c
+   ,opr.radiology_status_c
+   ,opr.specimen_source_c
+   ,opr.specimen_type_c
+   ,acc.acc_num
+   ,xpt.NAME AS specimen_type
+   ,res.line
+   ,res.ord_value
+   ,res.component_id
+   ,cmp.NAME AS component_name
+   ,res.component_comment
+   ,res.result_time AS res_result_time
+   ,res.result_val_start_ln
+   ,res.result_val_end_ln
+   ,res.result_cmt_start_ln
+   ,res.result_cmt_end_ln
+   ,res.lrr_based_organ_id
 FROM xdr_prinv_enc pat
-
 JOIN order_proc opr ON pat.pat_enc_csn_id = opr.pat_enc_csn_id
-
 LEFT JOIN order_results res ON opr.order_proc_id = res.order_proc_id
-
 LEFT JOIN order_rad_acc_num acc ON opr.order_proc_id = acc.order_proc_id
-
 LEFT JOIN clarity_eap eap ON opr.proc_id = eap.proc_id
-
 LEFT JOIN clarity_component cmp ON res.component_id = cmp.component_id
-
 LEFT JOIN zc_order_type xot ON opr.order_type_c = xot.order_type_c
-
 LEFT JOIN zc_specimen_type xpt ON opr.specimen_type_c = xpt.specimen_type_c
-
 WHERE opr.order_status_c = 5
-
 -- for referrals, see comments above for order_status_c IN (2,4)
-
 --AND opr.order_type_c NOT IN (7,26,62,63) --Not labs --not really necessary when a selection is made in the following lines
-
 --AND (opr.order_type_c IN (5,1003) OR opr.radiology_status_c = 99) --Imaging
-
 --AND (opr.order_type_c = 3) --Microbiology
-
 --AND (opr.order_type_c = 59) --Pathology
-
 --AND (opr.order_type_c = 8) --Outpatient Referral
-
 ;
 
 /**************************************************
@@ -1203,23 +928,14 @@ to them
 DROP TABLE xdr_prinv_opr_selection PURGE;
 
 CREATE TABLE xdr_prinv_selection AS
-
 select DISTINCT
-
 -- requisition_id matches the case_id
-
 cas.requisition_id
-
 ,opr.*
-
 from XDR_ABDALLA_OPR_SAMPLE opr
-
 JOIN LAB_CASE_INFO cas ON opr.acc_num = cas.CASE_NUM -- this is added join that allows to find the case_idwhere
-
 opr.proc_id = '77929'
-
 and opr.component_id = '7000004'
-
 ;
 
 /**************************************************
@@ -1233,215 +949,113 @@ that apply to your case
 drop table xdr_prinv_opr_results purge;
 
 create table xdr_prinv_opr_results as
-
 WITH
-
 CaseIDsToProcess AS (
-
 SELECT requisition_id as CASE_ID
-
 FROM xdr_prinv_selection
-
 )
-
 ),ExternalPatientInfo AS (
-
 SELECT REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_SUBM_PT_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM, EXTERNAL_VISIT_ID FROM (
-
 SELECT DISTINCT REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_SUBM_PT_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM, EXTERNAL_VISIT_ID,
-
 RANK() OVER (PARTITION BY REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM ORDER BY REquisition_ID DESC, NVL(EXTERNAL_VISIT_ID,'-') DESC, REQ_SUBM_PT_ID) as Rankorder
-
 FROM CLARITY.REQ_DB_MAIN
-
 WHERE
-
 REQ_DB_MAIN.REQUISITION_ID IN (SELECT CASE_ID FROM CaseIDsToProcess )
-
 AND REQ_SUBMITTER_ID IS NOT NULL) REQDBMAINResults
-
 WHERE REQDBMAINResults.RankOrder=1
-
 ),
 
 PatientInformation AS (
-
 SELECT
-
 DISTINCT
-
 CASE WHEN NVL(REQ_DB_MAIN.REQ_GROUPER_ID,0) <>0 THEN CAST (NVL(REQ_DB_MAIN.REQ_GROUPER_ID,'0') AS VARCHAR2(25)) ELSE PATIENT.PAT_ID END || '-' ||LAB_CASE_DB_MAIN.CASE_ID uniqueid,
-
 LAB_CASE_DB_MAIN.CASE_ID
-
 FROM CaseIDsToProcess
-
 INNER JOIN CLARITY.LAB_CASE_DB_MAIN ON CaseIDsToProcess.CASE_ID=LAB_CASE_DB_MAIN.CASE_ID
-
 LEFT JOIN CLARITY.PATIENT ON PATIENT.PAT_ID=LAB_CASE_DB_MAIN.CASE_PAT_ID
-
 LEFT JOIN CLARITY.REQ_CASES ON REQ_CASES.CASES_ID = CaseIDsToProcess.CASE_ID
-
 LEFT JOIN CLARITY.REQ_DB_MAIN ON REQ_DB_MAIN.REQUISITION_ID = CLARITY.REQ_CASES.REQUISITION_ID
-
 LEFT JOIN CLARITY.RQG_DB_MAIN ON REQ_DB_MAIN.REQ_GROUPER_ID = RQG_DB_MAIN.RQG_GROUPER_ID
-
 LEFT JOIN CLARITY.SPEC_DB_MAIN ON LAB_CASE_DB_MAIN.CASE_ID=SPEC_DB_MAIN.CASE_ID
-
 LEFT JOIN CLARITY.LAB_SMT_NOADD ON SPEC_DB_MAIN.REQ_SMT_ID = Lab_Smt_Noadd.Record_Id
-
 LEFT JOIN CLARITY.REQ_ORDER_GROUP ON REQ_ORDER_GROUP.REQUISITION_ID=LAB_CASE_DB_MAIN.CASE_ID
-
 LEFT JOIN CLARITY.ORDER_PROC ON REQ_ORDER_GROUP.ORDER_ID=ORDER_PROC.ORDER_PROC_ID
-
 LEFT JOIN ExternalPatientInfo ON REQ_DB_MAIN.REQ_GROUPER_ID = ExternalPatientInfo.REQ_GROUPER_ID
-
 ),
 
 PatientCases AS
-
 (
-
 SELECT
-
 DISTINCT
-
 PatientInformation.uniqueid,
-
 LAB_CASE_INFO.CASE_NUM,
-
 LAB_CASE_DB_MAIN.CASE_ID,
-
 LAB_CASE_INFO.AP_CASE_STATUS_C
-
 FROM CaseIDsToProcess
-
 INNER JOIN CLARITY.LAB_CASE_DB_MAIN ON CaseIDsToProcess.CASE_ID=LAB_CASE_DB_MAIN.CASE_ID
-
 INNER JOIN CLARITY.LAB_CASE_INFO ON LAB_CASE_INFO.REQUISITION_ID = LAB_CASE_DB_MAIN.CASE_ID
-
 INNER JOIN CLARITY.ZC_AP_CASE_STATUS ON ZC_AP_CASE_STATUS.AP_CASE_STATUS_C = LAB_CASE_INFO.AP_CASE_STATUS_C
-
 INNER JOIN PatientInformation ON CaseIDsToProcess.CASE_ID=PatientInformation.Case_Id
-
 ),
 
 CASERESULT AS (
-
 SELECT
-
 UNIQUEID,
-
 CASE_ID,
-
 CASE_NUM,
-
 RESULT_ID,
-
 AP_CASE_STATUS_C,
-
 RES_VAL_STATUS_C,
-
 Line,
-
 Value_Line,
-
 COMPONENT_ID,
-
 EXTERNAL_NAME,
-
 REPLACE(REPLACE(MULT_LN_VAL_STORAGE,'\\','\\\\'),'"','\\"') AS ResultText,
-
 CMP_MULTILINE_VALUE
-
 FROM
-
 (
-
 SELECT DISTINCT
-
 h.uniqueid,
-
 a.Case_ID,
-
 h.CASE_NUM,
-
 c.RESULT_ID,
-
 d.COMPONENT_ID,
-
 NVL(e.CMP_MULTILINE_VALUE,1) AS CMP_MULTILINE_VALUE,
-
 NVL(d.LINE,1) AS LINE,
-
 NVL(f.VALUE_LINE,1) AS VALUE_LINE ,
-
 g.EXTERNAL_NAME,
-
 NVL(f.MULT_LN_VAL_STORAGE,NVL(d.COMPONENT_RESULT,'')) AS "MULT_LN_VAL_STORAGE",
-
 RANK() OVER ( Partition BY a.CASE_ID Order by c.Result_ID DESC) AS "RANK",
-
 c.RES_VAL_STATUS_C,
-
 h.AP_CASE_STATUS_C
-
 FROM CaseIDsToProcess a
-
 , CLARITY.SPEC_DB_MAIN b
-
 , CLARITY.RES_DB_MAIN c
-
 , CLARITY.Res_Components d
-
 , CLARITY.RES_VAL_PTR_RM e
-
 , CLARITY.RES_VAL_DATA_RM f
-
 , CLARITY.CLARITY_COMPONENT g
-
 , PatientCases h
-
 WHERE
-
 a.CASE_ID=b.CASE_ID
-
 AND a.CASE_ID=h.CASE_ID
-
 AND b.SPECIMEN_ID = c.RES_SPECIMEN_ID
-
 AND c.RESULT_ID = d.RESULT_ID
-
 AND d.LINE = e.GROUP_LINE (+)
-
 AND d.RESULT_ID = e.RESULT_ID (+)
-
 AND e.CMP_MULTILINE_VALUE = f.GROUP_LINE (+)
-
 AND e.RESULT_ID = f.RESULT_ID (+)
-
 AND d.COMPONENT_ID= g.COMPONENT_ID
-
 -- AND c.RES_VAL_STATUS_C = 9
-
 AND d.COMPONENT_REPORT_YN=1
-
 AND d.COMPONENT_ID <> 7100796
-
 ) RESULT
-
 WHERE RANK=1
-
 AND MULT_LN_VAL_STORAGE IS NOT NULL
-
 )SELECT UNIQUEID,CASE_ID,CASE_NUM, RESULT_ID,AP_CASE_STATUS_C,RES_VAL_STATUS_C,Line,Value_Line,COMPONENT_ID,EXTERNAL_NAME,ResultText,CMP_MULTILINE_VALUE
-
 FROM CaseResult
-
 where component_id = 7000004 --MICROSCOPIC DESCRIPTION
-
 ORDER BY UNIQUEID, LINE, CMP_MULTILINE_VALUE, VALUE_LINE
-
 ;
 
 /**************************************************
@@ -1455,13 +1069,9 @@ you may use the following pice
 DROP TABLE xdr_prinv_opr_results_merge PURGE;
 
 CREATE TABLE xdr_prinv_opr_results_merge AS
-
 SELECT uniqueid,case_id,RTRIM(XMLAGG(XMLELEMENT(E,resulttext,'').EXTRACT('//text()')
-
 ORDER BY value_line).GetClobVal(),',') as result_text_merged
-
 from xdr_prinv_opr_results
-
 GROUP BY uniqueid,case_id;
 ```
 ## Check Patient's Contact Information
@@ -1473,13 +1083,9 @@ The following code can be used to check if/when a patient has (or not) different
 Note: this looks for valid address AND phone AND email.   If you want to pull a patient that has at least one form of valid contact use OR instead of AND in the code below
 ```sql
 SELECT *
-
 FROM xdr_prinv_coh coh
-
 JOIN patient pat ON coh.pat_id = pat.pat_id
-
 left join JSANZ.BIP_PAT_GEOCODE geo on pat.pat_id = geo.pat_id
-
 where
 
 ---------------------------------------------------------------------------------
@@ -1489,11 +1095,8 @@ where
 ---------------------------------------------------------------------------------
 
 geo.add_line_1is not null
-
 and UPPER(geo.add_line_1) NOT like '%HOMELESS%'
-
 and geo.fips is not null
-
 AND -- OR
 
 ---------------------------------------------------------------------------------
@@ -1505,19 +1108,12 @@ AND -- OR
 ---------------------------------------------------------------------------------
 
 ( pat.home_phone is not null
-
 and pat.home_phone NOT IN ('000-000-0000'
-
 ,'000-000-0001'
-
 ,'310-000-0000'
-
 ,'310-450-1748'
-
 ,'999-999-9999'
-
 )
-
 )
 
 ---------------------------------------------------------------------------------
@@ -1527,7 +1123,6 @@ and pat.home_phone NOT IN ('000-000-0000'
 ---------------------------------------------------------------------------------
 
 AND -- OR
-
 pat.email_address is not null
 
 # All Flowsheet Questions on a Template
@@ -1537,47 +1132,26 @@ pat.email_address is not null
 The following code pulls the different flowsheet questions on a given template id.  Use this to see what questions are asked on a template.
 
 select
-
-t.template_id,
-
-t.template_name,
-
-t.display_name template_display_name,
-
-tc.flo_meas_id group_meas_id,
-
-fgd.disp_name group_meas_name,
-
-fgd.flo_meas_name group_flo_meas_name,
-
-fgd2.flo_meas_id flo_meas_id,
-
-fgd2.flo_meas_name flo_meas_name,
-
-fgd2.disp_name flo_disp_name
-
+   t.template_id,
+   t.template_name,
+   t.display_name template_display_name,
+   tc.flo_meas_id group_meas_id,
+   fgd.disp_name group_meas_name,
+   fgd.flo_meas_name group_flo_meas_name,
+   fgd2.flo_meas_id flo_meas_id,
+   fgd2.flo_meas_name flo_meas_name,
+   fgd2.disp_name flo_disp_name
 from
-
 ip_flt_data t
-
 left join ip_flt_comps tc on (t.template_id = tc.template_id)
-
 left join ip_flo_gp_data fgd on (tc.flo_meas_id = fgd.flo_meas_id)
-
 left join ip_flo_measuremnts fm on (fgd.flo_meas_id = fm.id)
-
 join ip_flo_gp_data fgd2 on (fm.measurement_id = fgd2.flo_meas_id)
-
 where t.template_id = 281
-
 group by
-
 t.template_id, t.template_name, t.display_name,
-
 tc.line, tc.flo_meas_id, fgd.disp_name, fgd.flo_meas_name,
-
 fgd2.flo_meas_id, fgd2.flo_meas_name, fgd2.flo_dis_name, fgd2.flo_row_name, fgd2.flo_row_name,
-
 fgd2.value_type_name, fgd2.description, fgd2.disp_name
 
 # Past Medical History
