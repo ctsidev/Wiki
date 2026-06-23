@@ -3634,7 +3634,7 @@ filepath = ("I:\\\\_Theona\\\\icd10_dx_updates\\\\2023_Updates\\\\2023 Code Desc
 filein = str(filepath + 'icd10cm_codes_2023.txt')
 fileout = str(filepath + 'icd10cm_codes_2023.txt_new.csv')
 
-\# Delete the formatted file first, if one exists
+# Delete the formatted file first, if one exists
 
 if os.path.exists(fileout):
 os.remove(fileout)
@@ -3661,7 +3661,7 @@ i += 1
 except:
 
 print('An error occurred at line ' + i)
-\# After this program is run, import to i2b2.icd10_yyyy, where yyyy is the icd-10 import year.
+# After this program is run, import to i2b2.icd10_yyyy, where yyyy is the icd-10 import year.
 readFile.close()
 writeFile.close()
 print('ending...')
@@ -3710,25 +3710,15 @@ commit; --1,343 rows inserted.
 -----------------------------------------------------------------------------------------------------
 
 insert into i2b2.lz_dx_px_lookup (code, code_type, icd_type, icd_desc)
-
 select substr(column1,1,7) code
-
 ,'PX' code_type
-
 ,10 icd_type
-
 ,trim(substr(column1,8)) icd_desc
-
 from i2b2.icd10_2023 x
-
 left join i2b2.lz_dx_px_lookup dl on substr(x.column1,1,7) = dl.code
-
 and dl.code_type = 'PX'
-
 and dl.icd_type = 10
-
 where dl.code is null
-
 ;
 
 commit; --7,772 rows inserted.
@@ -3755,7 +3745,7 @@ Steps:
 2.  Run python program below to create a new text files. Change project id and entity codes accordingly. This program is also located in I:_BIP\\xDR\\Python\\escape_text_from_oracle_to_redcapcsv.py
 3.  Provide new files to DOMSTATS or load directly to REDCap, whichever is appropriate for your project.
 
-\# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 """
 
@@ -3765,13 +3755,12 @@ Created on Wed Apr 7 05:58:27 2021
 
 """
 
-\# import commands
+# import commands
 
 import os
-
 import cx_Oracle as Ora
 
-\# import csv
+# import csv
 
 filepath = ("E:\\\\Projects\\\\123456\\\\Data\\\\")
 
@@ -3779,108 +3768,74 @@ print('starting...')
 
 batch_size = 100000
 
-\# Format date
+# Format date
 
 CLdb = Ora.connect('ctsi_research/S5archR3_CTsi@clarityq')
-
 cur = CLdb.cursor()
-
 sql = 'alter session set nls_date_format = \\'MM/DD/YYYY HH24:MI\\'';
-
 cur.execute(sql)
 
-\# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-\# Provider_Notes
+# Provider_Notes
 
-\# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
 print('starting Provider_Notes...')
-
 fileout = str(filepath + 'Provider_Notes_REDCap_Final.txt')
 
-\# Delete output file if it exists
+# Delete output file if it exists
 
 if os.path.exists(fileout):
-
 os.remove(fileout)
-
 writeFile = open(fileout, 'w', encoding='utf8', errors="ignore")
 
-\# Write header
+# Write header
 
 v_col = 'ip_patient_id,ip_enc_id,ip_note_id,note_type,create_datetime,create_by,line_number,note_text,contact_date'
-
 writeFile.write(v_col + '\\n')
 
-\# Get and Write rows
+# Get and Write rows
 
 sql = 'select \\'"\\' || study_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || study_csn ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || study_note_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || note_type ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || create_datetime ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || create_by ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || line_number ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || note_text ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || contact_date ' \\
-
 '|| \\'"\\' export ' \\
-
 'from (select distinct study_id, study_csn, study_note_id, note_type, create_datetime' \\
-
 ', create_by, line_number, note_text, contact_date ' \\
-
 'from xdr_123456_note ' \\
-
 'order by study_id, study_note_id, line_number)';
 
-\# print(sql)
+# print(sql)
 
 i=0
 
 try:
 
 with CLdb.cursor() as cur:
-
 cur.execute(sql)
-
 while True:
 
 rows = cur.fetchmany(batch_size)
-
 if not rows:
-
 break
 
 for row in rows:
-
 v_col = row\[0\]
-
 v_col = v_col.replace('"', '', 1) # reset first "
-
 v_col = v_col\[:-1\] # remove last "
-
 v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
-
 v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
-
 v_col = v_col.replace('\\"', '""') # escape double-quotes
-
 v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
-
 v_col = '"' + v_col # reinstate first "
-
 v_col = v_col + '"' # reinstate last "
-
 writeFile.write(v_col + '\\n')
 
 i += 1
@@ -3888,212 +3843,136 @@ i += 1
 except CLdb.Error as error:
 
 print(error)
-
 writeFile.close()
-
 print('ending Provider_Notes...')
 
-\# -----------------------------------------------------------------------------
-
-\# Pathology_Results
-
-\# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Pathology_Results
+# -----------------------------------------------------------------------------
 
 print('starting Pathology_Results...')
 
 fileout = str(filepath + 'Pathology_Results_REDCap_Final3.txt')
 
-\# Delete output file if it exists
+# Delete output file if it exists
 
 if os.path.exists(fileout):
-
 os.remove(fileout)
-
 writeFile = open(fileout, 'w', errors="ignore")
-
-\# Write header
-
+# Write header
 v_col = 'ip_patient_id,ip_order_proc_id,component_id,component_name,sort_key,result_txt'
-
 writeFile.write(v_col + '\\n')
 
-\# Get and Write rows
+# Get and Write rows
 
 sql = 'select \\'"\\' || study_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || study_order_proc_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || component_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || component_name ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || sort_key ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || result_txt ' \\
-
 '|| \\'"\\' export ' \\
-
 'from (select distinct study_id, study_order_proc_id, component_id, component_name' \\
-
 ', sort_key, result_txt ' \\
-
 'from xdr_123456_pathr ' \\
-
 'order by study_id, study_order_proc_id, component_id, sort_key)';
 
-\# print(sql)
+# print(sql)
 
 i=0
 
 try:
-
 with CLdb.cursor() as cur:
-
 cur.execute(sql)
-
 while True:
-
 rows = cur.fetchmany(batch_size)
-
 if not rows:
-
 break
-
 for row in rows:
-
 v_col = row\[0\]
-
 v_col = v_col.replace('"', '', 1) # reset first "
-
 v_col = v_col\[:-1\] # remove last "
-
 v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
-
 v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
-
 v_col = v_col.replace('\\"', '""') # escape double-quotes
-
 v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
-
 v_col = '"' + v_col # reinstate first "
-
 v_col = v_col + '"' # reinstate last "
-
 writeFile.write(v_col + '\\n')
 
 i += 1
-
 except CLdb.Error as error:
-
 print(error)
-
 writeFile.close()
-
 print('ending Pathology_Results...')
 
-\# -----------------------------------------------------------------------------
-
-\# Imaging_Impressions
-
-\# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Imaging_Impressions
+# -----------------------------------------------------------------------------
 
 print('starting Imaging_Impressions...')
 
 fileout = str(filepath + 'Imaging_Impressions_REDCap_Final.txt')
 
-\# Delete output file if it exists
+# Delete output file if it exists
 
 if os.path.exists(fileout):
-
 os.remove(fileout)
-
 writeFile = open(fileout, 'w', errors="ignore")
-
-\# Write header
+# Write header
 
 v_col = 'ip_patient_id,ip_order_proc_id,line,impression'
 
 writeFile.write(v_col + '\\n')
 
-\# Get and Write rows
+# Get and Write rows
 
 sql = 'select \\'"\\' || study_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || study_order_proc_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || line ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || impression ' \\
-
 '|| \\'"\\' export ' \\
-
 'from (select distinct study_id, study_order_proc_id, line, impression ' \\
-
 'from xdr_123456_imgi ' \\
-
 'order by study_id, study_order_proc_id, line)';
 
-\# print(sql)
+# print(sql)
 
 i=0
-
 try:
-
 with CLdb.cursor() as cur:
-
 cur.execute(sql)
-
 while True:
-
 rows = cur.fetchmany(batch_size)
-
 if not rows:
-
 break
-
 for row in rows:
-
 v_col = row\[0\]
-
 v_col = v_col.replace('"', '', 1) # reset first "
-
 v_col = v_col\[:-1\] # remove last "
-
 v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
-
 v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
-
 v_col = v_col.replace('\\"', '""') # escape double-quotes
-
 v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
-
 v_col = '"' + v_col # reinstate first "
-
 v_col = v_col + '"' # reinstate last "
-
 writeFile.write(v_col + '\\n')
 
 i += 1
-
 except CLdb.Error as error:
-
 print(error)
-
 writeFile.close()
-
 print('ending Imaging_Impressions...')
 
-\# -----------------------------------------------------------------------------
-
-\# Imaging_Narratives
-
-\# -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Imaging_Narratives
+# -----------------------------------------------------------------------------
 
 print('starting Imaging Narratives...')
 
 fileout = str(filepath + 'Imaging_Narratives_REDCap_Final.txt')
 
-\# Delete output file if it exists
+# Delete output file if it exists
 
 if os.path.exists(fileout):
 
@@ -4101,13 +3980,13 @@ os.remove(fileout)
 
 writeFile = open(fileout, 'w', errors="ignore")
 
-\# Write header
+# Write header
 
 v_col = 'ip_patient_id,ip_order_proc_id,line,narrative'
 
 writeFile.write(v_col + '\\n')
 
-\# Get and Write rows
+# Get and Write rows
 
 sql = 'select \\'"\\' || study_id ' \\
 
@@ -4125,7 +4004,7 @@ sql = 'select \\'"\\' || study_id ' \\
 
 'order by study_id, study_order_proc_id, line)';
 
-\# print(sql)
+# print(sql)
 
 i=0
 
@@ -4226,13 +4105,13 @@ print('starting...')
 
 #------------------------------------------------------------------------------
 
-\# Start customizations!!!
+# Start customizations!!!
 
-\# Pre-requisite: Create xdr_123456_entity_cd_rc,
+# Pre-requisite: Create xdr_123456_entity_cd_rc,
 
-\# where 123456=project_id
+# where 123456=project_id
 
-\# and entity_cd = entity_cd (e.g. IMGN=imaging narratives)
+# and entity_cd = entity_cd (e.g. IMGN=imaging narratives)
 
 #------------------------------------------------------------------------------
 
@@ -4278,11 +4157,11 @@ sql = 'select rn, \\'"\\' || "study_id" ' \\
 
 #------------------------------------------------------------------------------
 
-\# End customizations!!!
+# End customizations!!!
 
 #------------------------------------------------------------------------------
 
-\# Format date
+# Format date
 
 CLdb = Ora.connect('ctsi_research/S5archR3_CTsi@clarityq')
 
