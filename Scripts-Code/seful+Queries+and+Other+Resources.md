@@ -185,17 +185,11 @@ For Ventilator data, restrict to Airway LDAs
 ************************************************************************************************************************/
 
 create table xdr_PROJECT_airway_ids as
-
 SELECT t.ID,
-
-t.CONTACT_DATE_REAL,
-
-gp.FLO_MEAS_NAME as LDA_NAME
-
+   t.CONTACT_DATE_REAL,
+   gp.FLO_MEAS_NAME as LDA_NAME
 FROM IP_FLO_LDA_TYPES t
-
 JOIN IP_FLO_GP_DATA gp ON t.ID = gp.FLO_MEAS_ID
-
 WHERE t.LDA_TYPE_OT_C = '11'; -- per Vihn Wells, validated by Dr. Neil Parikh
 
 /************************************************************************************************************************
@@ -207,45 +201,25 @@ Get all Airway LDAs associated with discharged inpatient encounters
 drop table xdr_PROJECT_airways purge;
 
 create table xdr_PROJECT_airways as
-
 SELECT ip_patient_id
-
-,ip_enc_id
-
-,enc.pat_enc_csn_id
-
-,clenc.inpatient_data_id
-
-,florow.LINE
-
-,lda.IP_LDA_ID
-
-,lda.FLO_MEAS_ID as LDA_FLO_MEAS_ID
-
-,lda.PLACEMENT_INSTANT
-
-,lda.REMOVAL_DTTM
-
-,air.LDA_NAME
-
-,enc.hosp_admsn_time
-
-,enc.hosp_dischrg_time
-
+   ,ip_enc_id
+   ,enc.pat_enc_csn_id
+   ,clenc.inpatient_data_id
+   ,florow.LINE
+   ,lda.IP_LDA_ID
+   ,lda.FLO_MEAS_ID as LDA_FLO_MEAS_ID
+   ,lda.PLACEMENT_INSTANT
+   ,lda.REMOVAL_DTTM
+   ,air.LDA_NAME
+   ,enc.hosp_admsn_time
+   ,enc.hosp_dischrg_time
 FROM xdr_PROJECT_enc enc
-
 join i2b2.lz_clarity_enc clenc on enc.pat_enc_csn_id = clenc.pat_enc_csn_id
-
 JOIN IP_FLOWSHEET_ROWS florow ON clenc.Inpatient_Data_ID = florow.INPATIENT_DATA_ID
-
 AND florow.IP_LDA_ID IS NOT NULL
-
 JOIN IP_LDA_NOADDSINGLE lda ON florow.IP_LDA_ID = lda.IP_LDA_ID
-
 JOIN xdr_PROJECT_airway_ids air ON lda.FLO_MEAS_ID = air.ID
-
 AND lda.LDA_GROUP_CDR = air.CONTACT_DATE_REAL
-
 ;
 
 /************************************************************************************************************************
@@ -263,57 +237,31 @@ Because Placement and Removal data is unreliable (manual entry), pull RecordedTi
 ************************************************************************************************************************/
 
 create table xdr_PROJECT_air_meas as
-
 SELECT ip_patient_id,
-
-ip_enc_id,
-
-hosp_admsn_time,
-
-hosp_dischrg_time,
-
-ldarows.LDA_FLO_MEAS_ID,
-
-ldarows.LDA_NAME,
-
-ldarows.IP_LDA_ID,
-
-ldarows.PLACEMENT_INSTANT,
-
-ldarows.REMOVAL_DTTM,
-
-ldarows.INPATIENT_DATA_ID,
-
-ldarows.LINE as RowLine,
-
-flwrec.FSD_ID,
-
-meas.LINE,
-
-meas.FLO_MEAS_ID,
-
-meas.RECORDED_TIME,
-
-meas.MEAS_VALUE
-
+   ip_enc_id,
+   hosp_admsn_time,
+   hosp_dischrg_time,
+   ldarows.LDA_FLO_MEAS_ID,
+   ldarows.LDA_NAME,
+   ldarows.IP_LDA_ID,
+   ldarows.PLACEMENT_INSTANT,
+   ldarows.REMOVAL_DTTM,
+   ldarows.INPATIENT_DATA_ID,
+   ldarows.LINE as RowLine,
+   flwrec.FSD_ID,
+   meas.LINE,
+   meas.FLO_MEAS_ID,
+   meas.RECORDED_TIME,
+   meas.MEAS_VALUE
 FROM XDR_PROJECT_AIRWAYS ldarows
-
 JOIN IP_FLWSHT_REC flwrec ON ldarows.INPATIENT_DATA_ID = flwrec.INPATIENT_DATA_ID
-
 JOIN IP_FLWSHT_MEAS meas ON flwrec.FSD_ID = meas.FSD_ID
-
 AND ldarows.LINE = meas.OCCURANCE
-
 AND meas.MEAS_VALUE IS NOT NULL
-
 WHERE
-
 ( meas.RECORDED_TIME >= ldarows.hosp_admsn_time )
-
 AND ( ldarows.hosp_dischrg_time IS NULL OR meas.RECORDED_TIME <= ldarows.hosp_dischrg_time )
-
 AND ( ldarows.PLACEMENT_INSTANT IS NULL OR meas.RECORDED_TIME >= ldarows.PLACEMENT_INSTANT )
-
 AND ( ldarows.REMOVAL_DTTM IS NULL OR meas.RECORDED_TIME <= ldarows.REMOVAL_DTTM );
 
 /************************************************************************************************************************
@@ -325,73 +273,41 @@ Calculate time for each Airway LDA
 create table xdr_PROJECT_ventminmax as
 
 SELECT ip_enc_id, IP_LDA_ID,
-
-MIN (hosp_admsn_time) as HospitalAdmission,
-
-MAX (hosp_dischrg_time) as HospitalDischarge,
-
-MIN (PLACEMENT_INSTANT) as PlacementTime,
-
-MAX (REMOVAL_DTTM) as RemovalTime,
-
-MIN (RECORDED_TIME) as MinRecorded,
-
-MAX (RECORDED_TIME) as MaxRecorded
-
+   MIN (hosp_admsn_time) as HospitalAdmission,
+   MAX (hosp_dischrg_time) as HospitalDischarge,
+   MIN (PLACEMENT_INSTANT) as PlacementTime,
+   MAX (REMOVAL_DTTM) as RemovalTime,
+   MIN (RECORDED_TIME) as MinRecorded,
+   MAX (RECORDED_TIME) as MaxRecorded
 FROM xdr_PROJECT_air_meas
-
 GROUP BY ip_enc_id, IP_LDA_ID;
 
 drop table xdr_PROJECT_venttime purge;
 
 create table xdr_PROJECT_venttime as
-
 select ip_enc_id,
-
-round(sum(airwaydays),1) as total_vent_days
-
+   round(sum(airwaydays),1) as total_vent_days
 from (
-
 SELECT ip_enc_id,
-
 IP_LDA_ID,
-
 MaxTimePerLDA - MinTimePerLDA as AirwayDays
-
 FROM (
-
-SELECT v.*,
-
-CASE
-
-WHEN PlacementTime IS NULL THEN MinRecorded
-
-WHEN PlacementTime < HospitalAdmission THEN MinRecorded
-
-WHEN PlacementTime <= MinRecorded THEN PlacementTime
-
-ELSE MinRecorded
-
-END as MinTimePerLDA,
-
-CASE
-
-WHEN RemovalTime IS NULL THEN MaxRecorded
-
-WHEN RemovalTime > HospitalDischarge THEN MaxRecorded
-
-WHEN RemovalTime >= MaxRecorded THEN RemovalTime
-
-ELSE MaxRecorded
-
-END as MaxTimePerLDA
-
-FROM xdr_PROJECT_ventminmax v
-
+   SELECT v.*,
+   CASE
+   WHEN PlacementTime IS NULL THEN MinRecorded
+   WHEN PlacementTime < HospitalAdmission THEN MinRecorded
+   WHEN PlacementTime <= MinRecorded THEN PlacementTime
+   ELSE MinRecorded
+   END as MinTimePerLDA,
+   CASE
+   WHEN RemovalTime IS NULL THEN MaxRecorded
+   WHEN RemovalTime > HospitalDischarge THEN MaxRecorded
+   WHEN RemovalTime >= MaxRecorded THEN RemovalTime
+   ELSE MaxRecorded
+   END as MaxTimePerLDA
+   FROM xdr_PROJECT_ventminmax v
 ) x)
-
 y
-
 group by ip_enc_id;
 
 select * from XDR_PROJECT_VENTTIME;
@@ -416,33 +332,19 @@ use of Start or End dates. [https://datahandbook.epic.com/ClarityDictionary/Deta
 -- The cohort table includes a reference date to use when pulling the health maintenance at a particular point in time
 
 select distinct coh.pat_id
-
-,coh.reference_date
-
-,hm.extract_date
-
-,hm.TOPIC_NAME
-
-,hm.IDEAL_RETURN_DT
-
-,zst.name as due_status_dt1
-
-,MAX(hm.extract_date) OVER (PARTITION BY coh.pat_id) AS latest_measure
-
+   ,coh.reference_date
+   ,hm.extract_date
+   ,hm.TOPIC_NAME
+   ,hm.IDEAL_RETURN_DT
+   ,zst.name as due_status_dt1
+   ,MAX(hm.extract_date) OVER (PARTITION BY coh.pat_id) AS latest_measure
 from xdr_prinv_coh coh
-
 left JOIN F_HM_TREND hm ON coh.pat_id = hm.pat_id and trunc(hm.extract_date) <= coh.date_1
-
 left join ZC_HMT_DUE_STATUS zst ON hm.HMT_DUE_STATUS_C = zst.HMT_DUE_STATUS_C
-
 where
-
 hm.QUALIFIED_HMT_ID = 7770000132 --Colon Ca Screening: COLONOSCOPY
-
 ) x
-
 WHERE x.extract_date = latest_measure
-
 ) dt1 on coh.pat_id = dt1.pat_id;
 
 # Orders for Inpatient Transfers
@@ -454,33 +356,19 @@ This code will pull orders to admit a patient into the hospital.
 ##### **Inpatient Orders**
 
 select op.pat_id,
-
-          op.pat_enc_csn_id,
-
-          admit_ser.prov_name as admit_prov_name,
-
-          op.order_time,
-
-          op.display_name,
-
-          auth_ser.prov_name as auth_prov_name,
-
-          op.proc_id,
-
-          op.ORD_CREATR_USER_ID
-
+   op.pat_enc_csn_id,
+   admit_ser.prov_name as admit_prov_name,
+   op.order_time,
+   op.display_name,
+   auth_ser.prov_name as auth_prov_name,
+   op.proc_id,
+   op.ORD_CREATR_USER_ID
 from order_proc op
-
 join clarity_eap eap on op.proc_id = eap.proc_id
-
 join clarity_ser admit_ser on op.ORD_CREATR_USER_ID = admit_ser.user_id
-
 join clarity_ser auth_ser on op.authrzing_prov_id = auth_ser.prov_id
-
 where op.proc_id in (263, 327411, 327400,721947) -- Admit to IP
-
 and op.order_status_c = 5
-
 order by op.pat_id, op.order_time;
 ```
 # BMT: Bone Marrow Transplant
@@ -494,21 +382,13 @@ Inexplicably, this item is not in \[**ZC_SUM_BLK_TYPE**\] but Ahson Shigri (the 
 ##### **BMT counts**
 
 select count(distinct pat.pat_id)
-
 from patient pat
-
 join pat_enc enc on pat.pat_id = enc.pat_id
-
 join Episode_Link lnk on enc.pat_enc_csn_id = lnk.pat_enc_csn_id
-
 join Episode ep on lnk.episode_id = ep.episode_id
-
 left join BMT_INFO bmt on ep.episode_id = bmt.SUMMARY_BLOCK_ID
-
 where
-
 lnk.SUM_BLK_TYPE_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
-
 --join TRANSPLANT_INFO inf on ep.episode_id = inf.SUMMARY_BLOCK_ID --nothing comes from this join
 ```
 # MyChart Activity
@@ -532,63 +412,36 @@ The table [**PAT_MYC_PRXY_HX**](https://datahandbook.epic.com/ClarityDictionary/
 ##### **MyChart Activity**
 
 SELECT distinct coh.pat_id
-
-,MYC.MYPT_ID
-
-,myc.PROXY_ACCOUNT_YN
-
-,PRX.PROXY_PAT_ID
-
-,mycPRX.MYPT_ID AS PROXY_MYPT_ID
-
-,act.UA_WHO_ACCESSED
-
-,CASE WHEN MYC.MYPT_ID = act.UA_WHO_ACCESSED THEN 0 ELSE 1 END PROXY_ACCESS_YN
-
-,act.UA_SESSION_NUM
-
-,act.myc_ua_type_c
-
-,act.MYC_UA_ACTION_C
-
-,act.BEDSIDE_UA_TYPE_C
-
-,ztyp.name as type
-
-,zact.name as action
-
-,act.UA_PERSON_TYPE_C
-
-,act.ua_time
-
-,act.UA_EXTENDED_INFO
-
+   ,MYC.MYPT_ID
+   ,myc.PROXY_ACCOUNT_YN
+   ,PRX.PROXY_PAT_ID
+   ,mycPRX.MYPT_ID AS PROXY_MYPT_ID
+   ,act.UA_WHO_ACCESSED
+   ,CASE WHEN MYC.MYPT_ID = act.UA_WHO_ACCESSED THEN 0 ELSE 1 END PROXY_ACCESS_YN
+   ,act.UA_SESSION_NUM
+   ,act.myc_ua_type_c
+   ,act.MYC_UA_ACTION_C
+   ,act.BEDSIDE_UA_TYPE_C
+   ,ztyp.name as type
+   ,zact.name as action
+   ,act.UA_PERSON_TYPE_C
+   ,act.ua_time
+   ,act.UA_EXTENDED_INFO
 FROM xdr_prinv_coh COH
-
 LEFT JOIN PAT_MYC_PRXY_HX PRX ON COH.PAT_ID = PRX.PAT_ID
-
 JOIN MYC_PATIENT myc ON coh.pat_id = myc.pat_id
-
 LEFT JOIN MYC_PATIENT mycPRX ON PRX.PROXY_PAT_ID = mycPRX.pat_id
-
 JOIN MYC_PT_USER_ACCSS ACT ON MYC.MYPT_ID = ACT.MYPT_ID
-
 AND act.MYC_UA_TYPE_C IS NOT NULL
-
 LEFT JOIN ZC_MYC_UA_TYPE ztyp ON act.myc_ua_type_c = ztyp.myc_ua_type_c
-
 LEFT JOIN ZC_MYC_UA_ACTION zact ON act.MYC_UA_ACTION_C = zact.MYC_UA_ACTION_C
-
 LEFT JOIN ZC_BEDSIDE_UA_TYPE zbed ON act.BEDSIDE_UA_TYPE_C = zbed.BEDSIDE_UA_TYPE_C
-
 WHERE
 
 -- Date range of interest for patient portal activity is 8/1/17 - 7/31/18.
 
 TRUNC(act.ua_time) BETWEEN '08/01/2015' AND '07/31/2018'
-
 AND act.UA_PERSON_TYPE_C = 1--patient
-
 ;
 
 If you need to lookup the session information, you should resort to [**V_MYC_SESSIONS:**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=V_MYC_SESSIONS) This view should be used as the base table for reporting content that reports on the MyChart Session because it handles required filtering on the derived table underlying the view query. This view can be joined to MYC_PT_USER_ACCSS for detailed information about what the user did during their MyChart session by using queries of the form outlined below.
@@ -607,17 +460,11 @@ The query belows check the latest MyChart status of a patient.
 ##### **MyChart Patient Status**
 
 select distinct pat_id
-
-,end_dttm
-
-,mychart_status_c
-
+   ,end_dttm
+   ,mychart_status_c
 from f_pat_mychart_status_hx
-
 where end_dttm is null --this indicates the latest MyChart status of a patient
-
 and mychart_status_c = 1 --this indicates that the latest MyChart status of a patient is "active"
-
 ;
 
 /*
@@ -633,37 +480,21 @@ or check clarity.patient_myc directly for mychart_status_c
 or check clarity.myc_patient directly for status_cat_c
 
 select distinct coh.pat_id
-
-,active_mychart
-
-,pmc.mychart_status_c
-
-,zpmc.name patient_myc_status
-
-,mcp.status_cat_c
-
-,zmcp.name myc_patient_status
-
+   ,active_mychart
+   ,pmc.mychart_status_c
+   ,zpmc.name patient_myc_status
+   ,mcp.status_cat_c
+   ,zmcp.name myc_patient_status
 from xdr_prinv_coh coh
-
 left join i2b2.lz_clarity_pat_contacts con on coh.pat_id = con.pat_id
-
 left join clarity.patient_myc pmc on coh.pat_id = pmc.pat_id
-
 left join clarity.zc_alt_webste_stat zpmc on pmc.mychart_status_c = zpmc.alt_webste_stat_c
-
 left join clarity.myc_patient mcp on coh.pat_id = mcp.pat_id
-
 left join clarity.zc_myc_status zmcp on mcp.status_cat_c = zmcp.myc_status_c
-
 -- the criteria below selects only active MyChart patients
-
 -- where nvl(con.active_mychart,'No') = 'Yes' --default null to inactive
-
 -- or nvl(pmc.mychart_status_c,2) = 1 --default null to inactive
-
 -- or nvl(mcp.status_cat_c,2) = 1 --default null to inactive
-
 ;
 
 */
