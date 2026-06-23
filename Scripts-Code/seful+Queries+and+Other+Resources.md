@@ -2229,41 +2229,23 @@ union
 select dx.pat_enc_csn_id
 from i2b2.int_dx dx
 where trunc(dx.effective_date) between to_date('01/01/2013','mm/dd/yyyy')
-
 and to_date('09/30/2015','mm/dd/yyyy')
-
 and dx.icd9_code between '630' and '679.9999999999'
-
 union
-
 select lab.pat_enc_csn_id
-
 from i2b2.bip_encounter_pat_link enc
-
 join i2b2.lz_clarity_labs lab on enc.pat_enc_csn_id = enc.pat_enc_csn_id
-
 -- driver being used by Covid registry ETL
-
 join i2b2.xdr_covid_preg_lab_drv drv on lab.component_id = drv.component_id
-
 where upper(lab.ord_value) = 'POSITIVE'
-
 and lab.specimn_taken_time >= to_date('01/01/2013','mm/dd/yyyy')
-
 and lab.proc_code in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
-
 union
-
 select enc.pat_enc_csn_id
-
 from i2b2.lz_clarity_enc enc
-
 join clarity.v_ob_enc_obgyn_stat preg on enc.pat_enc_csn_id = preg.pat_enc_csn_id
-
 where enc.effective_date_dt >= to_date('01/01/2013','mm/dd/yyyy')
-
 and preg.obgyn_stat_c = 4 --pregnant
-
 ;
 
 --------------------------------------------------------------------------------
@@ -2277,13 +2259,9 @@ and preg.obgyn_stat_c = 4 --pregnant
 --------------------------------------------------------------------------------
 
 from xdr_123456_lab lab --lab cohort containing pat_id
-
 join i2b2.lz_clarity_enc e on lab.pat_id = e.pat_id
-
 join episode_link el on e.pat_enc_csn_id = el.pat_enc_csn_id
-
 join episode ep on el.episode_id = ep.episode_id
-
 and lab.specimn_taken_time between ep.ob_wrk_edd_dt - 280 and ep.ob_wrk_edd_dt --280=40 pregnancy weeks * 7
 
 ```
@@ -2296,93 +2274,53 @@ This code will create a table that will calculate the start and end date/times o
 --------------------------------------
 
 -- create ADT table:
-
 -- this code is slightly different from the LZ ADT table
-
 -- becuase it brings in some additional variables that we use
-
 -- to identify ICU stays. Which can be detemrined by the department name
-
 -- or by the level of care provided to the patient
 
 ----------------------------------------
 
 CREATE TABLE xdr_prinv_adt AS
-
 select distinct adt.pat_id,
-
-adt.pat_enc_csn_id,
-
-case when adt.event_type_c = 1 and adt.next_out_event_id = enc2.hsp_dis_event_id then 'Admit/Discharge'
-
-when adt.event_type_c = 1 then 'Admit'
-
-when adt.event_type_c = 3 and adt.next_out_event_id = enc2.hsp_dis_event_id then 'Discharge'
-
-else 'Transfer' end as event_type,
-
-adt.event_id as in_event_id,
-
-adt.department_id,
-
-dept.department_name,
-
-dept.dept_abbreviation,
-
-dept.specialty,
-
-dept.rev_loc_id,
-
-loc.loc_name,
-
-adt.effective_time as time_in,
-
-adtout.effective_time as time_out,
-
-adt.next_out_event_id as out_event_id,
-
-enc2.hsp_adm_event_id as adm_event_id,
-
-enc2.hsp_dis_event_id as dis_event_id,
-
-enc.inpatient_data_id,
-
-adt.PAT_LVL_OF_CARE_C,
-
-adt.ACCOMMODATION_C
-
+   adt.pat_enc_csn_id,
+   case when adt.event_type_c = 1 and adt.next_out_event_id = enc2.hsp_dis_event_id then 'Admit/Discharge'
+   when adt.event_type_c = 1 then 'Admit'
+   when adt.event_type_c = 3 and adt.next_out_event_id = enc2.hsp_dis_event_id then 'Discharge'
+   else 'Transfer' end as event_type,
+   adt.event_id as in_event_id,
+   adt.department_id,
+   dept.department_name,
+   dept.dept_abbreviation,
+   dept.specialty,
+   dept.rev_loc_id,
+   loc.loc_name,
+   adt.effective_time as time_in,
+   adtout.effective_time as time_out,
+   adt.next_out_event_id as out_event_id,
+   enc2.hsp_adm_event_id as adm_event_id,
+   enc2.hsp_dis_event_id as dis_event_id,
+   enc.inpatient_data_id,
+   adt.PAT_LVL_OF_CARE_C,
+   adt.ACCOMMODATION_C
 from clarity_adt adt
-
 join xdr_PRINV_coh_final pat on adt.pat_id = pat.pat_id
-
 join pat_enc enc on adt.pat_enc_csn_id = enc.pat_enc_csn_id
-
 join pat_enc_hsp_2 enc2 on adt.pat_enc_csn_id = enc2.pat_enc_csn_id
-
 left join clarity_adt adtout on adt.next_out_event_id = adtout.event_id
-
 left join clarity_dep dept on adt.department_id = dept.department_id
-
 left join clarity_loc loc on dept.rev_loc_id = loc.loc_id
-
 where adt.event_type_c in (1,3)
-
 and adt.event_subtype_c != 2
-
 and enc2.hsp_adm_event_id is not null;
 
 xdr_covid_icu_times
-
----
-
+--
 --------------------------------------
 
 -- this procedure runs through the ADT table and calculate
-
 -- the start and end of each ICU that happened during each encounter
-
 -- if the patient went in and out of the ICU multiple times, then the
-
 -- record will show multiple entries for that encounter, with each episode
 
 ----------------------------------------
@@ -2390,15 +2328,10 @@ xdr_covid_icu_times
 -- create this table to store the output
 
 create table xdr_prinv_icu_times
-
 ( "PAT_ID" VARCHAR2(18 BYTE) COLLATE "USING_NLS_COMP",
-
 "CSN" NUMBER(18,0) NOT NULL ENABLE,
-
 "ICU_START" DATE,
-
 "ICU_END" DATE
-
 );
 
 I think that this code should run
@@ -2406,113 +2339,62 @@ I think that this code should run
 --procedure covid_icu as
 
 v_procname varchar2(120) := 'covid_charlson';
-
 begin
-
 i2b2.do_the_truncate('i2b2.xdr_covid_icu_times');
-
 DECLARE
-
 cursor c_icu is
-
 select adt.pat_id
-
 ,adt.pat_enc_csn_id
-
 ,adt.time_in as icu_in
-
 ,adt.time_out as icu_out
-
 from xdr_prinv_adt adt
-
 left join ZC_LVL_OF_CARE zloc on adt.PAT_LVL_OF_CARE_C = zloc.LEVEL_OF_CARE_C
-
 left join ZC_ACCOMMODATION za on adt.ACCOMMODATION_C = za.ACCOMMODATION_C
-
 where department_name like '%ICU%'
-
 OR ( adt.PAT_LVL_OF_CARE_C IS NOT NULL AND adt.PAT_LVL_OF_CARE_C = '6') -- ICU
-
 OR adt.ACCOMMODATION_C IN (25,28,46)
-
 order by adm.pat_id, adm.csn, adt.time_in;
-
 t_rec c_icu%rowtype;
-
 hold_enc number := 0;
-
 hold_pat varchar2(20);
-
 hold_start_time date;
-
 hold_end_time date;
 
 BEGIN
-
 OPEN c_icu;
-
 LOOP
-
 FETCH c_icu into t_rec;
-
 EXIT WHEN c_icu%notfound;
-
 IF hold_enc = 0 THEN -- first pass
-
 hold_enc := t_rec.csn;
-
 hold_pat := t_rec.pat_id;
-
 hold_start_time := t_rec.icu_in;
-
 hold_end_time := t_rec.icu_out;
-
 ELSIF hold_enc = t_rec.csn THEN -- same encounter
-
 IF t_rec.icu_in = hold_end_time THEN --- if icu in = the last out time move the new out time to hold
-
 hold_end_time := t_rec.icu_out;
-
 else -- icu in != icu hold write a record
-
 insert into xdr_prinv_icu_times(pat_id, csn, icu_start, icu_end)
-
 VALUES (hold_pat, hold_enc, hold_start_time, hold_end_time);
-
 hold_start_time := t_rec.icu_in;
-
 hold_end_time := t_rec.icu_out;
-
 END IF;
-
 -- hold_enc != new enc, we have a new telemetry action -- write the old one
-
 ELSE
-
 insert into xdr_prinv_icu_times(pat_id, csn, icu_start, icu_end)
-
 VALUES (hold_pat, hold_enc, hold_start_time, hold_end_time);
-
 hold_enc := t_rec.csn;
-
 hold_pat := t_rec.pat_id;
-
 hold_start_time := t_rec.icu_in;
-
 hold_end_time := t_rec.icu_out;
-
 END IF;
-
 END LOOP;
 
 -- process last record and calculate
 
 insert into xdr_prinv_icu_times(pat_id, csn, icu_start, icu_end)
-
 VALUES (hold_pat, hold_enc, hold_start_time, hold_end_time);
-
 CLOSE c_icu;
-
 END;
 
 commit;
@@ -2555,23 +2437,14 @@ In the example below of LABS we are looking for the most recent labs available p
 Example:
 
 select pat_id
-
 ,component_name
-
 ,max(ord_value) keep (dense_rank first order by order_time desc) as lab_value
-
 ,max(reference_unit) keep (dense_rank first order by order_time desc) as lab_value_unit
-
 from xdr_100001_lab
-
 group by pat_id
-
 ,component_name
-
 order by pat_id
-
 ,component_name
-
 ;
 ```
 ## Pathology HonestBroker Accession Numbers
@@ -2597,17 +2470,11 @@ Code to process accession numbers for pathology. This will deidentify accession 
 drop table xdr_123456_path_accnum purge;
 
 create table xdr_123456_path_accnum as
-
 select distinct demoi.mrn
-
 ,min(i2b2.f_get_deid_new(6,path.accession_number,113164)) over (partition by demoi.study_id, path.accession_number) ip_accession_number
-
 ,path.*
-
 from xdr_123456_path path
-
 join xdr_123456_demoi demoi on path.study_id = demoi.study_id
-
 ;
 
 -- Ensure this table's counts are identical to the original
@@ -2623,7 +2490,6 @@ select count(distinct accession_number), count(distinct ip_accession_number) fro
 --------------------------------------------------------------------------------
 
 -- Add a column to the pathology results to identify if a result text line
-
 -- contains "block" or "cassette" and update
 
 --------------------------------------------------------------------------------
@@ -2631,11 +2497,8 @@ select count(distinct accession_number), count(distinct ip_accession_number) fro
 alter table xdr_123456_pathr add block_cassette_in_txt varchar(1);
 
 update xdr_123456_pathr
-
 set block_cassette_in_txt = 'Y'
-
 where regexp_like(result_txt, 'cassette|block', 'i')
-
 ;
 
 commit;
@@ -2643,9 +2506,7 @@ commit;
 --------------------------------------------------------------------------------
 
 -- Respool pathology files
-
 -- Example of respool:
-
 -- Refer to E:\\Projects\\108564\\Execute_Custom.bat and PullMain_Custom.sql
 
 --------------------------------------------------------------------------------
@@ -2653,21 +2514,13 @@ commit;
 --spool e:\\projects\\123456\\Data\\Pathology.txt
 
 select 'ip_patient_id,ip_enc_id,ip_order_proc_id,ip_accession_number,order_time,result_time,procedure_description,specimen_source,specimen_type,specimen_taken_time' export from dual union all
-
 select '"' || study_id || '"' || ',' || '"' || study_csn || '"' || ',' || '"' || study_order_proc_id || '"' || ',' || '"' || ip_accession_number || '"' || ',' || '"' || order_time
-
 || '"' || ',' || '"' || result_time || '"' || ',' || '"' || procedure_description || '"' || ',' || '"' || specimen_source || '"' || ',' || '"' || specimen_type
-
 || '"' || ',' || '"' || specimen_taken_time || '"' export
-
 from (select distinct study_id, study_csn, study_order_proc_id, ip_accession_number, order_time, result_time, procedure_description, specimen_source, specimen_type
-
 , specimen_taken_time
-
 from xdr_123456_path_accnum
-
 order by study_id, study_order_proc_id
-
 );
 
 --spool off
@@ -2675,17 +2528,11 @@ order by study_id, study_order_proc_id
 --spool e:\\projects\\123456\\Data\\Pathology_Results.txt
 
 select 'ip_patient_id,ip_order_proc_id,component_id,component_name,sort_key,block_cassette_in_txt,result_txt' export from dual union all
-
 select '"' || study_id || '"' || ',' || '"' || study_order_proc_id || '"' || ',' || '"' || component_id || '"' || ',' || '"' || component_name
-
 || '"' || ',' || '"' || sort_key || '"' || ',' || '"' || block_cassette_in_txt || '"' || ',' || '"' || result_txt || '"' export
-
 from (select distinct study_id, study_order_proc_id, component_id, component_name, sort_key, block_cassette_in_txt, result_txt
-
 from xdr_123456_pathr
-
 order by study_id, study_order_proc_id, component_id, sort_key
-
 );
 
 --spool off
@@ -2699,17 +2546,11 @@ order by study_id, study_order_proc_id, component_id, sort_key
 --spool e:\\projects\\123456\\Pathology_Cases.txt
 
 select 'ip_patient_id,mrn,case_number,ip_case_number' export from dual union all
-
 select '"' || study_id || '"' || ',' || '"' || mrn || '"' || ',' || '"' || accession_number || '"' || ',' || '"' || ip_accession_number || '"' export
-
 from (select distinct study_id, mrn, accession_number, ip_accession_number
-
 from xdr_123456_path_accnum
-
 where accession_number is not null
-
 order by mrn, accession_number
-
 );
 
 --spool off
@@ -2745,23 +2586,14 @@ Code to process accession numbers for imaging. This will deidentify accession nu
 drop table xdr_123456_img_accnum purge;
 
 create table xdr_123456_img_accnum as
-
 select distinct rownum list_order_number
-
 ,demoi.pat_mrn_id mrn
-
 ,i2b2.f_get_deid_new(5,img.accession_number,123456) ip_accession_number
-
 ,substr(img.procedure_name,1,instr(procedure_name,' ') - 1) modality --get modality up to first space
-
 ,img.*
-
 from xdr_123456_img img
-
 join xdr_123456_coh_patonly cpo on img.study_id = cpo.study_id
-
 join i2b2.lz_clarity_patient demoi on cpo.pat_id = demoi.pat_id
-
 ;
 
 -- Ensure this table's counts are identical to the original
@@ -2787,19 +2619,12 @@ select count(distinct accession_number), count(distinct ip_accession_number) fro
 --spool e:\\projects\\123456\\Data\\Imaging.txt
 
 select 'ip_patient_id,ip_enc_id,ip_order_proc_id,procedure_id,procedure_name,ip_accession_number,modality' export from dual union all
-
 select '"' || study_id || '"' || ',' || '"' || study_csn || '"' || ',' || '"' || study_order_proc_id
-
 || '"' || ',' || '"' || procedure_id || '"' || ',' || '"' || procedure_name
-
 || '"' || ',' || '"' || ip_accession_number || '"' || ',' || '"' || modality || '"' export
-
 from (select distinct study_id, study_csn, study_order_proc_id, procedure_id
-
 , procedure_name, ip_accession_number, modality
-
 from xdr_123456_img_accnum
-
 order by study_id, study_order_proc_id);
 
 --spool off
@@ -2807,9 +2632,7 @@ order by study_id, study_order_proc_id);
 --------------------------------------------------------------------------------
 
 -- Do not output this to Data subfolder because this is sent to DICOM, not the PI
-
 -- Spool e:\\projects\\123456\\Imaging_UleadFolderName.txt (e.g. Imaging_Jamshidi_21_10-001869.txt)
-
 -- Copy to Box folder Imaging_Accession_Numbers
 
 --------------------------------------------------------------------------------
@@ -2817,37 +2640,21 @@ order by study_id, study_order_proc_id);
 --spool E:\\Projects\\123456\\Sent_Backup\\Imaging_UleadFolderName.txt
 
 select 'list_order_number,mrn,ip_patient_id,accession_number,ip_accession_number,modality' export from dual union all
-
 select '"' || list_order_number || '"' || ',' || '"' || mrn || '"' || ',' || '"' || study_id
-
 || '"' || ',' || '"' || accession_number || '"' || ',' || '"' || ip_accession_number
-
 || '"' || ',' || '"' || modality
-
 || '"' export
-
 from (select distinct *
-
 from xdr_123456_img_accnum
-
 where accession_number is not null
-
 and ((LENGTH(TRIM(TRANSLATE(accession_number, '+-.0123456789',' '))) is null --numeric accession_number
-
 and accession_number like '4%'
-
 and length(accession_number) = 8
-
 )
-
 or
-
 modality = 'ECG'
-
 )
-
 order by list_order_number
-
 );
 
 --spool off
@@ -2867,25 +2674,19 @@ Code to process changing IDs and MRNs. Please refer to ctsi_research.f_get_curr_
 --------------------------------------------------------------------------------
 
 -- Please refer to ctsi_research.f_get_curr_pt(sample of Input/output
-
 -- parameters below and note necessary requirements in comments)
 
 --------------------------------------------------------------------------------
 
 create or replace function f_get_curr_pt
-
 (pi_type in integer --1=pat_id, 2=mrn
-
 ,pi_pat in varchar2 --pat_id/mrn to be validated
-
 )
 
 return varchar2 --returns status + new value (if applicable)
 
 --status: 'C'=CURRENT, 'N'=NEW PT, 'X'=EXCLUDE, ,'O'=OPTED OUT OF RESEARCH, 'F'=NOT FOUND, 'E'=ERROR
-
 --note that 'X'=EXCLUDE could mean "restricted/test/dummy"
-
 --note that 'E'=ERROR will also return the sql error message ilo new value
 
 --------------------------------------------------------------------------------
@@ -2895,7 +2696,6 @@ return varchar2 --returns status + new value (if applicable)
 --------------------------------------------------------------------------------
 
 select f_get_curr_pt(1,'Z000001') from dual;
-
 select f_get_curr_pt(1,pat_id) from i2b2.lz_clarity_patient where rownum = 1;
 
 --------------------------------------------------------------------------------
@@ -2905,45 +2705,25 @@ select f_get_curr_pt(1,pat_id) from i2b2.lz_clarity_patient where rownum = 1;
 --------------------------------------------------------------------------------
 
 select distinct x.*
-
 ,i2b2.f_death_clarity_all(coalesce(trim(substr(x.new_pat_id_info,2)),x.clarity_pat_id)) f_death_info
-
 ,substr(x.new_pat_id_info,1,1) new_pat_id_stat
-
 ,coalesce(x.research_opt_out_pre, p3.research_opt_out) research_opt_out
-
 ,coalesce(trim(substr(x.new_pat_id_info,2)),x.clarity_pat_id) new_pat_id
-
 from (select distinct coh.*
-
 ,p.pat_id lz_pat_id
-
 ,p2.pat_id clarity_pat_id
-
 ,case when p2.pat_id is not null then ' ' || p2.pat_id
-
 else f_get_curr_pt(1,coh.pat_id)
-
 end new_pat_id_info
-
 ,p.research_opt_out research_opt_out_pre
-
 from xdr_123456_cohpatfin coh
-
 left join i2b2.lz_clarity_patient p on coh.pat_id = p.pat_id
-
 left join clarity.patient p2 on coh.pat_id = p2.pat_id
-
 left join i2b2.bip_project_disclosure bpd on coh.pat_id = bpd.pat_id
-
 and bpd.project_id = 109826
-
 where bpd.pat_id is null
-
 ) x
-
 left join i2b2.lz_clarity_patient p3 on coalesce(trim(substr(x.new_pat_id_info,2)),x.clarity_pat_id) = p3.pat_id
-
 ;
 
 # Control Cohort Identification
@@ -2955,107 +2735,62 @@ Code to create controls for a case cohort.
 --------------------------------------------------------------------------------
 
 -- Please refer to ctsi_research.p_create_control (sample of Input/output
-
 -- parameters below and note necessary requirements in comments)
-
 --
-
 -- Alternate method to p_create_controls above:
-
 -- C:\\server_apps\\eHonestBroker\\Create_Controls.py
-
 -- pi_project_id = 123456
-
 -- pi_max_number_matches = n, where n=integer of how many controls are requested per case
 
 --------------------------------------------------------------------------------
 
 create or replace PROCEDURE P_CREATE_CONTROL
-
 (pi_project_id IN i2b2.bip_project.project_id%TYPE --Must have a cohort-to-control file that exists in ctsi_research schema, which includes coh_pat_id, ctl_pat_id, and rank
-
 --named xdr_123456_ctlpre, where 123456 is the project_id
-
 --rank must be precoded in the order that PI requests, if any.
-
 --i.e. closest cosine_similarity first
-
 -- see I:\\_BIP\\Consults\\zz Completed\\Hser - Zhu (refresh)\\Hser_Script_Control.sql (Elixhauser)
-
 -- or I:\\_BIP\\Consults\\Bui_CRRT\\Bui_CRRT_Script.sql (Charlson) for examples
-
 ,pi_max_number_matches IN INTEGER
-
 ) IS
-
 --------------------------------------------------------------------------------
-
 -- Step 1: Match case to control (must contain variables to match (e.g. age, sex)
-
 -- Input: a. Case table
-
 -- b. Preliminary control table
-
 -- Output: xdr_123456_ctlpre
-
 -- Note that rank is only necessary when there is a priority in matching. If
-
 -- there is no priority, this can be set to a sequential number per patient.
-
 --------------------------------------------------------------------------------
-
 drop table xdr_123456_ctlpre purge;
 
 create table xdr_123456_ctlpre as
-
 select distinct cohcase.pat_id coh_pat_id
-
-,cohctl.pat_id ctl_pat_id
-
-,cohcase.match_age age
-
-,cohcase.sex sex
-
-,cohcase.race race
-
-,cohcase.ethnicity ethnicity
-
-,cohctl.number_of_pl_icds
-
-,rank() over (partition by cohcase.pat_id order by cohcase.pat_id, cohctl.number_of_pl_icds, cohctl.pat_id) rank
-
+   ,cohctl.pat_id ctl_pat_id
+   ,cohcase.match_age age
+   ,cohcase.sex sex
+   ,cohcase.race race
+   ,cohcase.ethnicity ethnicity
+   ,cohctl.number_of_pl_icds
+   ,rank() over (partition by cohcase.pat_id order by cohcase.pat_id, cohctl.number_of_pl_icds, cohctl.pat_id) rank
 from xdr_123456_coh_patonly_age cohcase -- This is the file that contains the case information
-
 join xdr_123456_ctlprefin cohctl on cohcase.match_age = cohctl.match_age -- This is the file that contains the preliminary control information
-
 and cohcase.sex = cohctl.sex
-
 and cohcase.race = cohctl.race
-
 and cohcase.ethnicity = cohctl.ethnicity
-
 ;
 
 --------------------------------------------------------------------------------
 
 -- Step 2: Get final case to control cohort
-
 -- Input: xdr_123456_ctlpre from Step 1
-
 -- Output: xdr_123456_case2ctl
-
 -- NOTE: In the event that PI wants further matching using cosine
-
 -- similarity, please jump to "Rank by cosine similarity"
 
 --------------------------------------------------------------------------------
-
 -- parameters: project_id, #controls to case match
-
 exec p_create_control(123456,2);
-
 select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_case2ctl; --17829 9085 17829
-
 select * from xdr_123456_case2ctl order by coh_pat_id, ctl_pat_id;
 
 /*****************************************************************************************
@@ -3091,119 +2826,62 @@ I:\\_BIP\\Consults\\Bui_CRRT\\Bui_CRRT_Script.sql (Charlson)
 drop table xdr_123456_cohpat2 purge;
 
 create table xdr_123456_cohpat2 as
-
 select distinct coh.pat_id
-
 ,p.sex
-
 ,p.mapped_race_name race
-
 ,p.ethnic_group ethnicity
-
 ,case
-
 when x2.death_date_derived = to_date('01/01/0001','mm/dd/yyyy') then null
-
 when x2.death_date_derived <> to_date('01/01/0001','mm/dd/yyyy') then trunc(months_between(x2.death_date_derived, x2.birth_date)/12)
-
 else trunc(months_between(sysdate, x2.birth_date)/12)
-
 end current_or_death_age
-
 ,case
-
 when x2.death_date_derived is not null then 'Known Deceased'
-
 else 'Not Known Deceased'
-
 end vital_status
-
 ,case
-
 when x2.death_date_derived is not null then x2.death_date_derived
-
 else null
-
 end death_datetime
-
 ,p2.pat_name
-
 ,p.restricted_yn
-
 ,p.pat_mrn_id mrn
-
 ,p.birth_date
-
 ,p.research_opt_out
-
 from xdr_123456_cohpat coh
-
 join i2b2.lz_clarity_patient p on coh.pat_id = p.pat_id
-
 join clarity.patient p2 on coh.pat_id = p2.pat_id
-
 join (select x1.*
-
 ,case
-
 when (dead_pat = 1 or dead_enc = 1 or dead_death = 1) and death_date_min = to_date('12/31/9999','mm/dd/yyyy') then to_date('01/01/0001','mm/dd/yyyy')
-
 when (dead_pat = 1 or dead_enc = 1 or dead_death = 1) and death_date_min <> to_date('12/31/9999','mm/dd/yyyy') then death_date_min
-
 else null
-
 end death_date_derived
-
 from (select distinct x.*
-
 ,least(nvl(death_date_pat,to_date('12/31/9999','mm/dd/yyyy'))
-
 ,nvl(death_date_enc,to_date('12/31/9999','mm/dd/yyyy'))
-
 ,nvl(death_date_death,to_date('12/31/9999','mm/dd/yyyy'))
-
 ) death_date_min
-
 from (select coh.pat_id
-
 ,coh.pat_mrn_id
-
 ,coh.ip_patient_id
-
 ,coh.birth_date
-
 ,pat.pat_status_c
-
 ,ps.name as patient_status
-
 ,case when pat.pat_status_c = 2 or pat.death_date is not null then 1 else 0 end dead_pat
-
 ,case when enc.pat_id is not null then 1 else 0 end dead_enc
-
 ,case when death.pat_id is not null then 1 else 0 end dead_death
-
 ,case when nvl(pat.death_date,to_date('01/01/0001','mm/dd/yyyy')) >= pat.birth_date then pat.death_date else null end death_date_pat
-
 ,max(enc.hosp_disch_time) over (partition by enc.pat_id) death_date_enc
-
 ,case when nvl(death.death_date,to_date('01/01/0001','mm/dd/yyyy')) >= pat.birth_date then death.death_date else null end death_date_death
-
 from xdr_123456_cohpat coh
-
 join clarity.patient pat on coh.pat_id = pat.pat_id
-
 left join clarity.pat_enc_hsp enc on pat.pat_id = enc.pat_id and (enc.disch_disp_c in ('20', '40', '41', '42', '71') or enc.ed_disposition_c = '8')
-
 left join i2b2.lz_death death on pat.pat_id = death.pat_id
-
 left join clarity.zc_patient_status ps on pat.pat_status_c = ps.patient_status_c
-
 ) x
-
 ) x1
-
 ) x2 on coh.pat_id = x2.pat_id
-
 ;
 
 alter table xdr_123456_cohpat2 add constraint xdr_123456_cohpat2_pk primary key (pat_id);
@@ -3223,23 +2901,14 @@ select * from xdr_123456_cohpat2;
 drop table xdr_123456_cohpat3 purge;
 
 create table xdr_123456_cohpat3 as
-
 select distinct charl.*
-
-,coh.ethnicity
-
-,coh.race
-
-,coh.sex
-
-,coh.vital_status
-
-,coh.current_or_death_age
-
+   ,coh.ethnicity
+   ,coh.race
+   ,coh.sex
+   ,coh.vital_status
+   ,coh.current_or_death_age
 from xdr_123456_cohpat2 coh
-
 join i2b2.lz_clarity_charlson_score charl on coh.pat_id = charl.pat_id
-
 ;
 
 select count(*), count(distinct pat_id) from xdr_123456_cohpat3; --2392 2392
@@ -3255,111 +2924,58 @@ drop table xdr_123456_ctlpat1 purge;
 create table xdr_123456_ctlpat1 as
 
 select distinct p.pat_id
-
 ,p.sex
-
 ,p.mapped_race_name race
-
 ,p.ethnic_group ethnicity
-
 ,case
-
 when x2.death_date_derived = to_date('01/01/0001','mm/dd/yyyy') then null
-
 when x2.death_date_derived <> to_date('01/01/0001','mm/dd/yyyy') then trunc(months_between(x2.death_date_derived, x2.birth_date)/12)
-
 else trunc(months_between(sysdate, x2.birth_date)/12)
-
 end current_or_death_age
-
 ,case
-
 when x2.death_date_derived is not null then 'Known Deceased'
-
 else 'Not Known Deceased'
-
 end vital_status
-
 ,case
-
 when x2.death_date_derived is not null then x2.death_date_derived
-
 else null
-
 end death_datetime
-
 ,p2.pat_name
-
 ,p.restricted_yn
-
 ,p.pat_mrn_id mrn
-
 ,p.birth_date
-
 ,p.research_opt_out
-
 from i2b2.lz_clarity_patient p
-
 join clarity.patient p2 on p.pat_id = p2.pat_id
-
 join (select x1.*
-
 ,case
-
 when (dead_pat = 1 or dead_enc = 1 or dead_death = 1) and death_date_min = to_date('12/31/9999','mm/dd/yyyy') then to_date('01/01/0001','mm/dd/yyyy')
-
 when (dead_pat = 1 or dead_enc = 1 or dead_death = 1) and death_date_min <> to_date('12/31/9999','mm/dd/yyyy') then death_date_min
-
 else null
-
 end death_date_derived
-
 from (select distinct x.*
-
 ,least(nvl(death_date_pat,to_date('12/31/9999','mm/dd/yyyy'))
-
 ,nvl(death_date_enc,to_date('12/31/9999','mm/dd/yyyy'))
-
 ,nvl(death_date_death,to_date('12/31/9999','mm/dd/yyyy'))
-
 ) death_date_min
-
 from (select pat.pat_id
-
 ,pat.pat_mrn_id
-
 ,pat.birth_date
-
 ,pat.pat_status_c
-
 ,ps.name as patient_status
-
 ,case when pat.pat_status_c = 2 or pat.death_date is not null then 1 else 0 end dead_pat
-
 ,case when enc.pat_id is not null then 1 else 0 end dead_enc
-
 ,case when death.pat_id is not null then 1 else 0 end dead_death
-
 ,case when nvl(pat.death_date,to_date('01/01/0001','mm/dd/yyyy')) >= pat.birth_date then pat.death_date else null end death_date_pat
-
 ,max(enc.hosp_disch_time) over (partition by enc.pat_id) death_date_enc
-
 ,case when nvl(death.death_date,to_date('01/01/0001','mm/dd/yyyy')) >= pat.birth_date then death.death_date else null end death_date_death
-
 from clarity.patient pat
-
 left join clarity.pat_enc_hsp enc on pat.pat_id = enc.pat_id and (enc.disch_disp_c in ('20', '40', '41', '42', '71') or enc.ed_disposition_c = '8')
-
 left join i2b2.lz_death death on pat.pat_id = death.pat_id
-
 left join clarity.zc_patient_status ps on pat.pat_status_c = ps.patient_status_c
-
 ) x
-
 ) x1
-
 ) x2 on p.pat_id = x2.pat_id
-
 ;
 
 alter table xdr_123456_ctlpat1 add constraint xdr_123456_ctlpat1_pk primary key (pat_id);
@@ -3377,27 +2993,16 @@ select * from xdr_123456_ctlpat1;
 drop table xdr_123456_ctlpat2 purge;
 
 create table xdr_123456_ctlpat2 as
-
 select distinct charl.*
-
-,coh.ethnicity
-
-,coh.race
-
-,coh.sex
-
-,coh.vital_status
-
-,coh.current_or_death_age
-
+   ,coh.ethnicity
+   ,coh.race
+   ,coh.sex
+   ,coh.vital_status
+   ,coh.current_or_death_age
 from xdr_123456_ctlpat1 coh
-
 join i2b2.lz_clarity_charlson_score charl on coh.pat_id = charl.pat_id
-
 left join xdr_123456_cohpat cs on coh.pat_id = cs.pat_id --use original 2464-pt cohort to ensure none are used in controls
-
 where cs.pat_id is null
-
 ;
 
 select count(*), count(distinct pat_id) from xdr_123456_ctlpat2; --696541 696541
@@ -3413,31 +3018,18 @@ select * from xdr_123456_ctlpat2;
 drop table xdr_123456_cs2ctlpre purge;
 
 create table xdr_123456_cs2ctlpre as
-
 select distinct cohcase.pat_id coh_pat_id
-
-,cohctl.pat_id ctl_pat_id
-
-,cohcase.sex
-
-,cohcase.race
-
-,cohcase.ethnicity
-
-,cohcase.current_or_death_age age
-
-,cohcase.char_total_score
-
+   ,cohctl.pat_id ctl_pat_id
+   ,cohcase.sex
+   ,cohcase.race
+   ,cohcase.ethnicity
+   ,cohcase.current_or_death_age age
+   ,cohcase.char_total_score
 from xdr_123456_cohpat3 cohcase
-
 join xdr_123456_ctlpat2 cohctl on cohcase.sex = cohctl.sex
-
 and cohcase.race = cohctl.race
-
 and cohcase.ethnicity = cohctl.ethnicity
-
 and cohcase.current_or_death_age = cohctl.current_or_death_age
-
 ;
 
 select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_cs2ctlpre; --2295324 2372 426830
@@ -3537,53 +3129,29 @@ alter table xdr_123456_ctlpat2 rename column char_aids_hiv to x17;
 drop table xdr_123456_ctlpat_cs2 purge;
 
 create table xdr_123456_ctlpat_cs2 as
-
 select x.*
-
 ,cs_num / (sqrt(cs_den_coh) * sqrt(cs_den_ctl)) as cosine_similarity
-
 from (select cc.*
-
 ,(coh.x1*ctl.x1)+(coh.x2*ctl.x2)+(coh.x3*ctl.x3)+(coh.x4*ctl.x4)+(coh.x5*ctl.x5)
-
 +(coh.x6*ctl.x6)+(coh.x7*ctl.x7)+(coh.x8*ctl.x8)+(coh.x9*ctl.x9)+(coh.x10*ctl.x10)
-
 +(coh.x11*ctl.x11)+(coh.x12*ctl.x12)+(coh.x13*ctl.x13)+(coh.x14*ctl.x14)+(coh.x15*ctl.x15)
-
 +(coh.x16*ctl.x16)+(coh.x17*ctl.x17)
-
 as cs_num
-
 ,(power(coh.x1,2))+(power(coh.x2,2))+(power(coh.x3,2))+(power(coh.x4,2))+(power(coh.x5,2))
-
 +(power(coh.x6,2))+(power(coh.x7,2))+(power(coh.x8,2))+(power(coh.x9,2))+(power(coh.x10,2))
-
 +(power(coh.x11,2))+(power(coh.x12,2))+(power(coh.x13,2))+(power(coh.x14,2))+(power(coh.x15,2))
-
 +(power(coh.x16,2))+(power(coh.x17,2))
-
 as cs_den_coh
-
 ,(power(ctl.x1,2))+(power(ctl.x2,2))+(power(ctl.x3,2))+(power(ctl.x4,2))+(power(ctl.x5,2))
-
 +(power(ctl.x6,2))+(power(ctl.x7,2))+(power(ctl.x8,2))+(power(ctl.x9,2))+(power(ctl.x10,2))
-
 +(power(ctl.x11,2))+(power(ctl.x12,2))+(power(ctl.x13,2))+(power(ctl.x14,2))+(power(ctl.x15,2))
-
 +(power(ctl.x16,2))+(power(ctl.x17,2))
-
 as cs_den_ctl
-
 from xdr_123456_cs2ctlpre cc
-
 join xdr_123456_cohpat3 coh on cc.coh_pat_id = coh.pat_id --case pts
-
 join xdr_123456_ctlpat2 ctl on cc.ctl_pat_id = ctl.pat_id --ctl pts
-
 ) x
-
 where cs_den_coh > 0 and cs_den_ctl > 0
-
 ;
 
 alter table xdr_123456_ctlpat_cs2 add constraint xdr_123456_ctlpat_cs2_pk primary key (coh_pat_id, ctl_pat_id);
@@ -3601,31 +3169,19 @@ select * from xdr_123456_ctlpat_cs2;
 select * from xdr_123456_ctlpat_cs2;
 
 select cs, count(*)
-
 from (select case
-
 when cosine_similarity = 0 then '=0' --no match whatsoever
-
 when cosine_similarity < 1 then '<1' --possible match; the higher, the more similar
-
 when cosine_similarity = 1 then '=1' --exact match
-
 when cosine_similarity > 1 then '>1' --should never happen but checking to confirm
-
 end cs
-
 from xdr_123456_ctlpat_cs2
-
 )
-
 group by cs
-
 ;
 
 --=0 1042910
-
 --=1 3330
-
 --<1 1249084
 
 select * from xdr_123456_ctlpat_cs2 where cosine_similarity = 0;
@@ -3655,7 +3211,6 @@ Prepare final controls for 1 case to 1 control
 --------------------------------------------------------------------------------
 
 -- Prepare input to creating control procedure
-
 -- Start with ranking within each case cohort patient
 
 --------------------------------------------------------------------------------
@@ -3663,27 +3218,16 @@ Prepare final controls for 1 case to 1 control
 drop table xdr_123456_ctlpre1 purge; --must include coh_pat_id, ctl_pat_id, and rank
 
 create table xdr_123456_ctlpre1 as
-
 select x.*
-
 ,rank() over (partition by coh_pat_id order by coh_pat_id, rank_ctl, rank_coh) rank
-
 from (select distinct coh_pat_id
-
 ,rank() over (partition by coh_pat_id order by coh_pat_id, cosine_similarity desc, char_total_score desc, ctl_pat_id) rank_coh
-
 ,rank() over (partition by ctl_pat_id order by ctl_pat_id, cosine_similarity desc, char_total_score desc, coh_pat_id) rank_ctl
-
 ,cosine_similarity
-
 ,char_total_score
-
 ,ctl_pat_id
-
 from xdr_123456_ctlpat_cs2
-
 where cosine_similarity > 0
-
 ) x
 
 ;
@@ -3695,13 +3239,9 @@ select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr
 select * from xdr_123456_ctlpre1;
 
 select count(*) --4328=good=all coh and ctl pts are unique
-
 from (select coh_pat_id from xdr_123456_ctlpre1 where rank_coh = 1 and rank_ctl = 1 and rank = 1
-
 union select ctl_pat_id from xdr_123456_ctlpre1 where rank_coh = 1 and rank_ctl = 1 and rank = 1
-
 )
-
 ;
 
 --------------------------------------------------------------------------------
@@ -3715,13 +3255,9 @@ drop table xdr_123456_ctlpre2 purge; --must include coh_pat_id, ctl_pat_id, and 
 create table xdr_123456_ctlpre2 as
 
 select x.*
-
 from xdr_123456_ctlpre1 x
-
 where rank_coh = 1 and rank_ctl = 1 and rank = 1
-
 order by ctl_pat_id, cosine_similarity desc
-
 ;
 
 alter table xdr_123456_ctlpre2 add constraint xdr_123456_ctlpre2_pk primary key (coh_pat_id, rank, ctl_pat_id);
@@ -3733,9 +3269,7 @@ select * from xdr_123456_ctlpre2;
 --------------------------------------------------------------------------------
 
 -- Now get the leftovers for the control matching procedure
-
 -- The prioritized ones are excluded because they are already the top
-
 -- matches per case
 
 --------------------------------------------------------------------------------
@@ -3743,17 +3277,11 @@ select * from xdr_123456_ctlpre2;
 drop table xdr_123456_ctlpre purge;
 
 create table xdr_123456_ctlpre as
-
 select x.*
-
 from xdr_123456_ctlpre1 x
-
 left join xdr_123456_ctlpre2 sav on x.coh_pat_id = sav.coh_pat_id
-
 or x.ctl_pat_id = sav.ctl_pat_id
-
 where sav.coh_pat_id is null
-
 ;
 
 alter table xdr_123456_ctlpre add constraint xdr_123456_ctlpre_pk primary key (coh_pat_id, rank, ctl_pat_id);
@@ -3787,15 +3315,10 @@ drop table xdr_123456_ctlpre1 purge; --must include coh_pat_id, ctl_pat_id, and 
 create table xdr_123456_ctlpre1 as
 
 select distinct coh_pat_id
-
 ,rank() over (partition by coh_pat_id order by coh_pat_id, cosine_similarity desc, ctl_pat_id) rank
-
 ,cosine_similarity
-
 ,ctl_pat_id
-
 from xdr_123456_ctlpat_cs2
-
 ;
 
 alter table xdr_123456_ctlpre1 add constraint xdr_123456_ctlpre1_pk primary key (coh_pat_id, rank, ctl_pat_id);
@@ -3813,11 +3336,8 @@ select * from xdr_123456_ctlpre1;
 drop table xdr_123456_ctlpre purge; --must include coh_pat_id, ctl_pat_id, and rank
 
 create table xdr_123456_ctlpre as
-
 select ctl.*
-
 from xdr_123456_ctlpre1 ctl
-
 where ctl.rank <= 5000 --change this at your discretion, increase and rerun if not enough controls reached
 
 ;
@@ -3837,19 +3357,12 @@ select * from xdr_123456_ctlpre;
 /*****************************************************************************************
 
 -- Run procedure to get unique controls per case
-
 -- (pi_project_id in i2b2.bip_project.project_id%type --Must have a cohort-to-control file that exists in ctsi_research schema, which includes coh_pat_id, ctl_pat_id, and rank
-
 -- --named xdr_pppppp_ctlpre, where pppppp is the project_id
-
 -- --rank must be precoded in the order that PI requests, if any.
-
 -- -- see I:\\_BIP\\Consults\\zz Completed\\Hser - Zhu (refresh)\\Hser_Script_Control.sql (Elixhauser)
-
 -- -- or I:\\_BIP\\Consults\\Bui_CRRT\\Bui_CRRT_Script.sql (Charlson) for examples
-
 -- ,pi_max_number_matches in integer
-
 -- )
 
 -- Alternate method to p_create_controls above:
@@ -3877,9 +3390,7 @@ select * from xdr_123456_case2ctl;
 select rank, count(*) from xdr_123456_case2ctl group by rank order by rank;
 
 --1 178
-
 --2 20
-
 --3 2
 
 select min(cosine_similarity) from xdr_123456_case2ctl; --0.0.3333333333333333333333333333333333333344
@@ -3891,17 +3402,11 @@ select min(cosine_similarity) from xdr_123456_case2ctl where rank = 2; --0.0.333
 select min(cosine_similarity) from xdr_123456_case2ctl where rank = 3; --0.0.816496580927726032732428024901963797324
 
 select * --no rows found=good=all unique
-
 from xdr_123456_case2ctl coh
-
 left join xdr_123456_case2ctl ctl on coh.coh_pat_id = ctl.ctl_pat_id
-
 left join xdr_123456_case2ctl cs on coh.ctl_pat_id = cs.coh_pat_id
-
 where ctl.ctl_pat_id is not null
-
 or cs.coh_pat_id is not null
-
 ;
 
 --------------------------------------------------------------------------------
@@ -3915,31 +3420,18 @@ drop table xdr_123456_cohctlpat purge;
 create table xdr_123456_cohctlpat as
 
 select distinct z.*
-
 ,p.pat_mrn_id coh_mrn
-
 ,p2.pat_mrn_id ctl_mrn
-
 from
-
 -- (select x.* from xdr_123456_ctlpre2 x --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
-
 -- union --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
-
 -- select x.* from --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
-
 xdr_123456_case2ctl
-
 -- x --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
-
 -- ) --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
-
 z
-
 join i2b2.lz_clarity_patient p on z.coh_pat_id = p.pat_id
-
 join i2b2.lz_clarity_patient p2 on z.ctl_pat_id = p2.pat_id
-
 ;
 
 select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_cohctlpat; --2364 2364 2364
@@ -3949,13 +3441,9 @@ select * from xdr_123456_cohctlpat;
 -- Verify unique cases and controls
 
 select count(*) --4728=good=all coh and ctl pts are unique
-
 from (select coh_pat_id from xdr_123456_cohctlpat
-
 union select ctl_pat_id from xdr_123456_cohctlpat
-
 )
-
 ;
 
 # Vaccination
@@ -3963,45 +3451,27 @@ union select ctl_pat_id from xdr_123456_cohctlpat
 (by [Ngan Chau](https://uclabip.atlassian.net/wiki/people/557058:6a532fda-2b06-4abd-8615-2f07f4bd7f9f?ref=confluence) on 1/24/2022)
 
 – the following code retrieves the patients' vaccination records (test)
-
 – this data can be added to the vaccination data retrieved through the ‘procedures’
 
 drop table xdr_PRINV_immunizations purge;
 
 create table xdr_PRINV_immunizations as
-
 select i1.*
-
 ,i2.name    immunization
-
 ,istat.name immunization_status
-
 ,penc.pat_enc_csn_id
-
 ,penc.visit_prov_id
-
 ,penc.department_id
-
 ,cpt.cpt_code
-
 from xdr_PRINV_pat     pat
-
 join immune            i1 on pat.pat_id=i1.pat_id
-
 join clarity_immunzatn i2 on i1.immunzatn_id=i2.immunzatn_id
-
 join zc_immnztn_status istat on istat.immnztn_status_c = i1.immnztn_status_c
-
 join pat_enc penc on i1.imm_csn = penc.pat_enc_csn_id
-
 left join i2b2.lz_clarity_cpt_code cpt on cpt.pat_enc_csn_id=penc.pat_enc_csn_id
-
 where trunc(immune_date) <insert date param logic>
-
 and regexp_like(i2.name,'+(hpv|tdap|meningococcal|flu|Gardasil|mcv4)+','i') – name of vaccines
-
 and istat.name = 'Given'
-
 and regexp_like(penc.department_id,'12345|67890');
 
 commit;      
@@ -4019,25 +3489,15 @@ commit;      
 -------------------------------------------
 
 SELECT adt.*
-
 from clarity_adt adt
-
 left join ZC_LVL_OF_CARE zloc on adt.PAT_LVL_OF_CARE_C = zloc.LEVEL_OF_CARE_C
-
 left join ZC_ACCOMMODATION za on adt.ACCOMMODATION_C = za.ACCOMMODATION_C
-
 left join clarity_dep dept on adt.department_id = dept.department_id
-
 where department_name like '%ICU%'
-
 OR ( adt.PAT_LVL_OF_CARE_C IS NOT NULL AND adt.PAT_LVL_OF_CARE_C = '6') -- ICU
-
 OR adt.ACCOMMODATION_C IN (25 --ICU
-
 28 --ICU Trauma
-
 46 --ICU Pediatric
-
 );
 
 # SmartData Elements
@@ -4057,91 +3517,48 @@ The following code is just a very first draft to pull elements but further enhan
 -------------------------------------------
 
 select distinct coh.pat_id
-
 ,sed.ELEMENT_ID
-
 -- once we have the table referenced above loaded into our schema, we can simply left join to it and get the name of the element
-
 -- based on the element ID, the example below was hardcoded becase our team was involved in the creation of the form
-
 -- and were told the element IDs behind each question
-
 -- ,case
-
 -- when sed.ELEMENT_ID = 'EPIC#31000090752' then 'AD < 3 YEARS OLD IN CHART'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#330' then 'POLST < 3 YEARS OLD IN CHART'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#331' then 'AD < 3 YEARS OLD AT HOME COMPLETED'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#332' then 'AD > 3 YEARS OLD ON FILE STILL VALID'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#333' then 'WILLING TO USE PREPARE FOR YOUR CARE WEBSITE'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#336' then 'INTRODUCING AD COMPLETION WITH PATIENT'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#338' then 'IS PATIENT WILLING TO USE PREPARE FOR YOUR CARE WEBSITE'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#339' then 'ACP OUTREACH TIMESTAMP'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#341' then 'PATIENT WILL COMPLETE AD AND SUBMIT VIA:'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#342' then 'PATIENT WILL COMPLETE AD AND SUBMIT VIA OTHER COMMENT:'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#344' then 'AD < 3 YEARS OLD AT HOME COMPLETED OTHER COMMENT'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#345' then 'PATIENT NOT READY TO PROCEED WITH AD. CCC TO FOLLOW UP ON:'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#346' then 'POLST'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#347' then 'PATIENT REFUSE'
-
 -- when sed.ELEMENT_ID = 'UCLATEAM#348' then 'OUTREACH COMMENTS'
-
 -- else 'OTHER'
-
 -- end smart_element_name
-
 ,sed.CUR_SOURCE_LQF_ID
-
 ,sed.CUR_VALUE_DATETIME
-
 ,sed.UPDATE_DATE
-
 ,sed.REC_ARCHIVED_YN
-
 ,sed.CUR_VAL_UTC_DTTM
-
 ,sed.HLV_ID
-
 ,sev.line
-
 ,sev.smrtdta_elem_value
-
 ,CUR_SOURCE_LQF_ID
-
 -- ,sysdate as creation_date
-
 -- if you need to pull te user who filled out the form
-
 -- ,sed.CUR_VALUE_USER_ID as user_id
-
 -- ,emp.name as user_name
-
 from i2b2.lz_clarity_patient coh
-
 join clarity.smrtdta_elem_data sed on coh.pat_id = sed.PAT_LINK_ID
-
 join clarity.SMRTDTA_ELEM_VALUE sev on sed.hlv_id = sev.hlv_id
-
 --left join clarity.clarity_emp emp on sed.CUR_VALUE_USER_ID = emp.USER_ID
-
 where
-
 -- if we know the form ID
-
 --sed.CUR_SOURCE_LQF_ID = 992' --ACP outreach
-
 sed.ELEMENT_ID = 'EPIC#31000090752'
 
 # Birth Control / Contraception / Sexually Active
@@ -4151,45 +3568,25 @@ sed.ELEMENT_ID = 'EPIC#31000090752'
 – the following gets birth control/contraception and sexually active data for patients
 
 select distinct coh.pat_id
-
-,xsa.name sexually_active
-
-,s.contact_date
-
-,max(s.contact_date) over (partition by coh.pat_id) latest_contact_date
-
-,s.condom_yn
-
-,s.pill_yn
-
-,s.diaphragm_yn
-
-,s.iud_yn
-
-,s.surgical_yn
-
-,s.spermicide_yn
-
-,s.implant_yn
-
-,s.rhythm_yn
-
-,s.injection_yn
-
-,s.sponge_yn
-
-,s.inserts_yn
-
-,s.abstinence_yn
-
+   ,xsa.name sexually_active
+   ,s.contact_date
+   ,max(s.contact_date) over (partition by coh.pat_id) latest_contact_date
+   ,s.condom_yn
+   ,s.pill_yn
+   ,s.diaphragm_yn
+   ,s.iud_yn
+   ,s.surgical_yn
+   ,s.spermicide_yn
+   ,s.implant_yn
+   ,s.rhythm_yn
+   ,s.injection_yn
+   ,s.sponge_yn
+   ,s.inserts_yn
+   ,s.abstinence_yn
 from xdr_123456_cohpat coh
-
 join social_hx s on coh.pat_id = s.pat_id
-
 left join zc_sexually_active xsa on s.sexually_active_c = xsa.sexually_active_c
-
 -- where xsa.name = 'Yes'
-
 ;
 
 # PHI disclosure HHS Guidelines
@@ -4207,15 +3604,10 @@ IRB can supersede these guidelines since every case is evaluated separately but 
 ### Get provider emails using the ‘prov_id’:
 
 select distinct emp.prov_id
-
 ,lower(substr(vu.ad_username,4)) || '@mednet.ucla.edu' as prov_email
-
 from cohort_enc enc
-
 join clarity_emp emp on enc.visit_prov_id = emp.prov_id
-
 join v_cube_d_user vu on emp.user_id = vu.user_id
-
 ;
 
 # ICD-10-CM Updates to Lookup Table
@@ -4239,41 +3631,27 @@ Steps:
 import os
 
 filepath = ("I:\\\\_Theona\\\\icd10_dx_updates\\\\2023_Updates\\\\2023 Code Descriptions in Tabular Order\\\\")
-
 filein = str(filepath + 'icd10cm_codes_2023.txt')
-
 fileout = str(filepath + 'icd10cm_codes_2023.txt_new.csv')
 
 \# Delete the formatted file first, if one exists
 
 if os.path.exists(fileout):
-
 os.remove(fileout)
-
 print('starting...')
-
 writeFile = open(fileout, 'w', encoding='utf8')
-
 i=0
-
 writeFile.write('"icd_code","icd_description"\\n')
-
 with open(filein, errors='ignore') as readFile:
 
 for line in readFile:
 
 try:
-
 ln = str(line)
-
 if len(ln\[0:8\].strip(" ")) == 3:
-
 icd = ln\[0:3\]
-
 else:
-
 icd = ln\[0:3\] + '.' + ln\[3:8\]
-
 desc = ln\[8:-1\]
 
 writeFile.write('"' + icd + '","' + desc + '"\\n')
@@ -4283,13 +3661,9 @@ i += 1
 except:
 
 print('An error occurred at line ' + i)
-
 \# After this program is run, import to i2b2.icd10_yyyy, where yyyy is the icd-10 import year.
-
 readFile.close()
-
 writeFile.close()
-
 print('ending...')
 
 -----------------------------------------------------------------------------------------------------
@@ -4317,23 +3691,14 @@ select * from i2b2.lz_dx_px_lookup;
 insert into i2b2.lz_dx_px_lookup (code, code_type, icd_type, icd_desc)
 
 select trim(icd_code) code
-
-,'DX' code_type
-
-,10 icd_type
-
-,trim(icd_description) icd_desc
-
+   ,'DX' code_type
+   ,10 icd_type
+   ,trim(icd_description) icd_desc
 from i2b2.icd10_2023 x
-
 left join i2b2.lz_dx_px_lookup dl on trim(x.icd_code) = dl.code
-
 and dl.code_type = 'DX'
-
 and dl.icd_type = 10
-
 where dl.code is null
-
 ;
 
 commit; --1,343 rows inserted.
