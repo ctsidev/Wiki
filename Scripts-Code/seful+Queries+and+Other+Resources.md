@@ -82,25 +82,15 @@ AD-POLST
 -------------------------------------------
 
 DROP TABLE XDR_MEHTA_ADPOLST_DOCTYPE PURGE;
-
 CREATE TABLE XDR_MEHTA_ADPOLST_DOCTYPE AS
-
 SELECT *
-
 FROM ZC_DOC_INFO_TYPE
-
 where DOC_INFO_TYPE_C in (
-
-'11' -- Power of Attorney
-
-,'300052' --Advance Directive Enduring
-
-,'10' --Advance Directives and Living Will
-
-,'200068' --DNR (Do Not Resuscitate) Documentation
-
-,'300058' ---POLST
-
+   '11' -- Power of Attorney
+   ,'300052' --Advance Directive Enduring
+   ,'10' --Advance Directives and Living Will
+   ,'200068' --DNR (Do Not Resuscitate) Documentation
+   ,'300058' ---POLST
 );
 
 -------------------------------------------
@@ -112,35 +102,22 @@ where DOC_INFO_TYPE_C in (
 -------------------------------------------
 
 ALTER TABLE XDR_MEHTA_ADPOLST_DOCTYPE ADD DOC_GROUP VARCHAR2(10);
-
 UPDATE XDR_MEHTA_ADPOLST_DOCTYPE
-
 SET DOC_GROUP = 'POLST'
-
 WHERE
-
 DOC_INFO_TYPE_C IN ('200068' -- DNR (Do Not Resuscitate) Documentation
-
-,'300058' -- POLST);
-
+   ,'300058' -- POLST);
 );
 
 COMMIT;
 
 UPDATE XDR_MEHTA_ADPOLST_DOCTYPE
-
 SET DOC_GROUP = 'AD'
-
 WHERE
-
 DOC_INFO_TYPE_C in (
-
-'11' -- Power of Attorney
-
-,'300052' --Advance Directive Enduring
-
-,'10' --Advance Directives and Living Will
-
+   '11' -- Power of Attorney
+   ,'300052' --Advance Directive Enduring
+   ,'10' --Advance Directives and Living Will
 );
 
 COMMIT;
@@ -154,45 +131,25 @@ COMMIT;
 -------------------------------------------
 
 DROP TABLE xdr_MEHTA_scan_docs PURGE;
-
 CREATE TABLE xdr_MEHTA_scan_docs AS
-
 SELECT distinct coh.pat_id
-
-,coh.study_id
-
-,bb.doc_info_id
-
-,bb.doc_recv_time
-
-,bb.SCAN_FILE
-
-,bt.name as doc_type
-
-,BT.DOC_GROUP
-
+   ,coh.study_id
+   ,bb.doc_info_id
+   ,bb.doc_recv_time
+   ,bb.SCAN_FILE
+   ,bt.name as doc_type
+   ,BT.DOC_GROUP
 FROM xdr_MEHTA_PAT COH
-
 join DOC_INFORMATION BB on coh.PAT_ID = BB.DOC_PT_ID
-
 join XDR_MEHTA_ADPOLST_DOCTYPE BT on BB.DOC_INFO_TYPE_C = BT.DOC_INFO_TYPE_C
-
 WHERE
-
-BB.IS_SCANNED_YN = 'Y'
-
---and bb.doc_recv_time between sysdate - (365.25 *3 ) AND sysdate --(last three years);
-
--- We noticed that in the case of AD/POLST documents, there were instances where the docs had been deleted
-
-and (bb.RECORD_STATE_C <> 2 OR bb.RECORD_STATE_C IS NULL)-- Deleted
-
-and (bb.DOC_STAT_C <> 35 OR bb.DOC_STAT_C IS NULL)-- Error
-
-and bb.DOC_REVOK_DT is null
-
--- and bb.DOC_EXPIR_TIME is null
-
+   BB.IS_SCANNED_YN = 'Y'
+   --and bb.doc_recv_time between sysdate - (365.25 *3 ) AND sysdate --(last three years);
+   -- We noticed that in the case of AD/POLST documents, there were instances where the docs had been deleted
+   and (bb.RECORD_STATE_C <> 2 OR bb.RECORD_STATE_C IS NULL)-- Deleted
+   and (bb.DOC_STAT_C <> 35 OR bb.DOC_STAT_C IS NULL)-- Error
+   and bb.DOC_REVOK_DT is null
+   -- and bb.DOC_EXPIR_TIME is null
 ;
 
 SELECT COUNT(*), COUNT(DISTINCT PAT_ID) FROM xdr_MEHTA_scan_docs;--179 110
@@ -206,15 +163,10 @@ SELECT COUNT(*), COUNT(DISTINCT PAT_ID) FROM xdr_MEHTA_scan_docs;--179 110
 -------------------------------------------
 
 SELECT DISTINCT PAT_ID
-
-,STUDY_ID
-
-,doc_recv_time
-
-,DOC_GROUP
-
+   ,STUDY_ID
+   ,doc_recv_time
+   ,DOC_GROUP
 FROM xdr_MEHTA_scan_docs
-
 WHERE doc_recv_time IS NOT NULL ;
 ```
 ## Calculate Time on a Ventilator
