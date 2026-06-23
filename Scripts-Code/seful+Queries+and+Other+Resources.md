@@ -3969,91 +3969,48 @@ print('ending Imaging_Impressions...')
 # -----------------------------------------------------------------------------
 
 print('starting Imaging Narratives...')
-
 fileout = str(filepath + 'Imaging_Narratives_REDCap_Final.txt')
-
 # Delete output file if it exists
-
 if os.path.exists(fileout):
-
 os.remove(fileout)
-
 writeFile = open(fileout, 'w', errors="ignore")
-
 # Write header
-
 v_col = 'ip_patient_id,ip_order_proc_id,line,narrative'
-
 writeFile.write(v_col + '\\n')
-
 # Get and Write rows
-
 sql = 'select \\'"\\' || study_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || study_order_proc_id ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || line ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || narrative ' \\
-
 '|| \\'"\\' export ' \\
-
 'from (select distinct study_id, study_order_proc_id, line, narrative ' \\
-
 'from xdr_123456_imgn ' \\
-
 'order by study_id, study_order_proc_id, line)';
-
 # print(sql)
-
 i=0
-
 try:
-
 with CLdb.cursor() as cur:
-
 cur.execute(sql)
-
 while True:
-
 rows = cur.fetchmany(batch_size)
-
 if not rows:
-
 break
-
 for row in rows:
-
 v_col = row\[0\]
-
 v_col = v_col.replace('"', '', 1) # reset first "
-
 v_col = v_col\[:-1\] # remove last "
-
 v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
-
 v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
-
 v_col = v_col.replace('\\"', '""') # escape double-quotes
-
 v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
-
 v_col = '"' + v_col # reinstate first "
-
 v_col = v_col + '"' # reinstate last "
-
 writeFile.write(v_col + '\\n')
-
 i += 1
-
 except CLdb.Error as error:
-
 print(error)
-
 writeFile.close()
-
 print('ending Imaging_Narratives...')
-
 print('ending...')
 
 # Splitting table data into smaller files
@@ -4068,91 +4025,53 @@ Steps:
 drop table xdr_123456_imgn_rc purge;
 
 create table xdr_123456_imgn_rc as
-
 select rownum rn
-
 ,x.*
-
 from (select distinct coh.study_id_rc "study_id"
-
 ,'imaging_narratives' "redcap_repeat_instrument"
-
 ,row_number() over (partition by x.study_id order by x.study_id, x.study_order_proc_id, x.line) as "redcap_repeat_instance"
-
 ,x.study_order_proc_id "ip_order_proc_id_narrative"
-
 ,x.line "narrative_line"
-
 ,x.narrative "narrative"
-
 ,0 "imaging_narratives_complete"
-
 from xdr_123456_DEMO_rc coh
-
 join xdr_123456_IMGN x on coh.study_id = x.study_id
-
 order by coh.study_id_rc, x.study_order_proc_id, "redcap_repeat_instance"
-
 ) x
-
 ;
 
 import os
-
 import cx_Oracle as Ora
-
 print('starting...')
 
 #------------------------------------------------------------------------------
 
 # Start customizations!!!
-
 # Pre-requisite: Create xdr_123456_entity_cd_rc,
-
 # where 123456=project_id
-
 # and entity_cd = entity_cd (e.g. IMGN=imaging narratives)
 
 #------------------------------------------------------------------------------
 
 filepath = ("I:\\\\_BIP\\\\Consults\\\\")
-
 batch_size = 100000
-
 v_limit = 14000
-
 v_projid = '123456'
-
 v_entcd = 'IMGN'
-
 v_file = 'Imaging_Narratives_'
-
 v_hdr = 'study_id,redcap_repeat_instrument,redcap_repeat_instance,ip_order_proc_id_narrative,narrative_line,narrative,imaging_narratives_complete'
-
 sql = 'select rn, \\'"\\' || "study_id" ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || "redcap_repeat_instrument" ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || "redcap_repeat_instance" ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || "ip_order_proc_id_narrative" ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || "narrative_line" ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || "narrative" ' \\
-
 '|| \\'"\\' || \\'|\\' || \\'"\\' || "imaging_narratives_complete" ' \\
-
 '|| \\'"\\' export ' \\
-
 'from (select distinct rn,"study_id","redcap_repeat_instrument","redcap_repeat_instance"' \\
-
 ',"ip_order_proc_id_narrative","narrative_line","narrative","imaging_narratives_complete"' \\
-
 'from xdr_' + v_projid + '_' + v_entcd + '_rc ' \\
-
 'order by "study_id", "redcap_repeat_instance")';
-
 #print(sql)
 
 #------------------------------------------------------------------------------
@@ -4164,109 +4083,60 @@ sql = 'select rn, \\'"\\' || "study_id" ' \\
 # Format date
 
 CLdb = Ora.connect('ctsi_research/S5archR3_CTsi@clarityq')
-
 cur = CLdb.cursor()
-
 presql = 'alter session set nls_date_format = \\'MM/DD/YYYY HH24:MI\\'';
-
 cur.execute(presql)
-
 presql = 'select max(rn) into :a from xdr_' + v_projid + '_' + v_entcd + '_rc';
-
 cur.execute(presql)
-
 v_rows = cur.fetchone()
-
 v_max_rows = v_rows\[0\]
-
 print(str('v_max_rows=' + str(v_max_rows)))
-
 v_ctr_min = 1
-
 v_ctr_max = v_limit
-
 v_ctr_file = 1
-
 print(str('v_ctr_min=' + str(v_ctr_min) + ', v_ctr_max=' + str(v_ctr_max)))
-
 fileout = str(filepath + v_file + str(v_ctr_file) + '.csv')
 
 if os.path.exists(fileout):
-
 os.remove(fileout)
-
 writeFile = open(fileout, 'w', encoding='utf8', errors="ignore")
-
 writeFile.write(v_hdr + '\\n')
 
 try:
-
 with CLdb.cursor() as cur:
-
 cur.execute(sql)
 
 while True:
-
 rows = cur.fetchmany(batch_size)
-
 if not rows:
-
 break
-
 for row in rows:
-
 v_col = row\[1\]
-
 v_col = v_col.replace('"', '', 1) # reset first "
-
 v_col = v_col\[:-1\] # remove last "
-
 v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
-
 v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
-
 v_col = v_col.replace('\\"', '""') # escape double-quotes
-
 v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
-
 v_col = '"' + v_col # reinstate first "
-
 v_col = v_col + '"' # reinstate last "
-
 if (v_ctr_min <= row\[0\] <= v_ctr_max):
-
 writeFile.write(v_col + '\\n')
-
 else:
-
 writeFile.close()
-
 v_ctr_file = v_ctr_file + 1
-
 fileout = str(filepath + v_file + str(v_ctr_file) + '.csv')
-
 if os.path.exists(fileout):
-
 os.remove(fileout)
-
 writeFile = open(fileout, 'w', encoding='utf8', errors="ignore")
-
 writeFile.write(v_hdr + '\\n')
-
 writeFile.write(v_col + '\\n')
-
 v_ctr_min = v_ctr_max + 1
-
 v_ctr_max = v_ctr_max + v_limit
-
 print(str('v_ctr_min=' + str(v_ctr_min) + ', v_ctr_max=' + str(v_ctr_max)))
-
 except CLdb.Error as error:
-
 print(error)
-
 writeFile.close()
-
 print('ending...')
 
 # Patient Set from I2B2 Query
@@ -4276,27 +4146,16 @@ print('ending...')
 – the following gets a patient set from an I2B2 query. Change :i2b2_query_name to your i2b2 query.
 
 SELECT DISTINCT pat.PATIENT_NUM
-
                     FROM QT_QUERY_MASTER qm
-
                     JOIN QT_QUERY_INSTANCE qi
-
                         ON qm.QUERY_MASTER_ID = qi.QUERY_MASTER_ID
-
                     JOIN QT_QUERY_RESULT_INSTANCE       qr
-
                         ON qi.QUERY_INSTANCE_ID = qr.QUERY_INSTANCE_ID
-
                     left JOIN QT_PATIENT_SET_COLLECTION pat
-
                         ON qr.RESULT_INSTANCE_ID = pat.RESULT_INSTANCE_ID
-
                     WHERE
-
                         qr.RESULT_TYPE_ID = 1
-
                         AND qm.name = :i2b2_query_name
-
 ;
 
 # Patient Set from User Patient List in Care Connect
@@ -4306,23 +4165,14 @@ SELECT DISTINCT pat.PATIENT_NUM
 – the following gets a patient set from an Care Connect based on a user’s Patient List.
 
 select pl.list_id
-
 ,pli.list_description
-
 ,count(distinct pl.pat_id)
-
 from pat_list pl
-
 join pat_list_info pli on pl.list_id = pli.list_id
-
 where pli.list_creator_id = 'uid' --replace uid with investigator user_id, then ask which is the requested patient list
-
 group by pl.list_id
-
 ,pli.list_description
-
 order by pli.list_description
-
 ;
 
 # PROMIS Queries
@@ -4360,69 +4210,37 @@ order by pli.list_description
 --------------------------------------------------------------------------------
 
 select distinct pefa.pat_id
-
-,pefa.pat_enc_csn_id
-
-,pefa.qf_lqf_id as form_id
-
-,pefa.qf_hqa_id as answer_id
-
-,qf.form_name
-
-,qf.pat_frndly_name
-
-,cqa.quest_id
-
-,clqo.question
-
-,cqa.line as ans_line
-
-,quest_answer
-
-,question_instant as answer_time
-
+   ,pefa.pat_enc_csn_id
+   ,pefa.qf_lqf_id as form_id
+   ,pefa.qf_hqa_id as answer_id
+   ,qf.form_name
+   ,qf.pat_frndly_name
+   ,cqa.quest_id
+   ,clqo.question
+   ,cqa.line as ans_line
+   ,quest_answer
+   ,question_instant as answer_time
 from pat_enc_form_ans pefa
-
 join cl_qform qf on pefa.qf_lqf_id = qf.form_id
-
 join cl_qanswer_qa cqa on pefa.qf_hqa_id = cqa.answer_id
-
 join cl_qquest cqq on cqa.quest_id = cqq.quest_id -- question name
-
 join cl_qquest_ovtm clqo on cqa.quest_id = clqo.quest_id -- question
-
 where regexp_like(qf.form_name,'+(PROMIS)+','i')
-
 or regexp_like(qf.pat_frndly_name,'+(PROMIS)+','i')
-
 or regexp_like(clqo.question,'+(PROMIS)+','i')
-
 or pefa.qf_lqf_id in (14010000014
-
 ,1400001701
-
 ,1400001703
-
 ,1400001705
-
 ,1400001706
-
 ,1400001708
-
 ,1400001709
-
 ,1400001710
-
 ,140000051
-
 ,140000007
-
 ,140000010
-
 )
-
 order by pefa.pat_id, pefa.pat_enc_csn_id, pefa.qf_lqf_id, cqa.line
-
 ;
 
 --------------------------------------------------------------------------------
@@ -4432,53 +4250,29 @@ order by pefa.pat_id, pefa.pat_enc_csn_id, pefa.qf_lqf_id, cqa.line
 --------------------------------------------------------------------------------
 
 select distinct vo.pat_id
-
-,vo.qnr_id as form_id
-
-,qf.form_name
-
-,qf.pat_frndly_name
-
-,cqa.quest_id
-
-,clqo.question
-
-,vo.qnr_ans_id as answer_id
-
-,cqa.line as ans_line
-
-,cqa.quest_answer
-
-,cqa.question_instant as answer_time
-
-,vo.srs_id series_id
-
-,si.series_name
-
+   ,vo.qnr_id as form_id
+   ,qf.form_name
+   ,qf.pat_frndly_name
+   ,cqa.quest_id
+   ,clqo.question
+   ,vo.qnr_ans_id as answer_id
+   ,cqa.line as ans_line
+   ,cqa.quest_answer
+   ,cqa.question_instant as answer_time
+   ,vo.srs_id series_id
+   ,si.series_name
 from v_pat_reported_outcomes vo
-
 join cl_qanswer_qa cqa on vo.ques_id = cqa.quest_id
-
 and vo.qnr_ans_id = cqa.answer_id
-
 and vo.ques_ans_line = cqa.line
-
 join cl_qform qf on vo.qnr_id = qf.form_id
-
 join cl_qquest cqq on vo.ques_id = cqq.quest_id -- question name
-
 join cl_qquest_ovtm clqo on vo.ques_id = clqo.quest_id -- question
-
 join srs_info si on vo.srs_id = si.series_id
-
 where regexp_like(si.series_name,'+(PROMIS)+','i')
-
 or regexp_like(qf.form_name,'+(PROMIS)+','i')
-
 or regexp_like(qf.pat_frndly_name,'+(PROMIS)+','i')
-
 or regexp_like(clqo.question,'+(PROMIS)+','i')
-
 ;
 
 --------------------------------------------------------------------------------
@@ -4488,65 +4282,35 @@ or regexp_like(clqo.question,'+(PROMIS)+','i')
 --------------------------------------------------------------------------------
 
 select distinct pefa.pat_enc_csn_id
-
-,pefa.pat_id
-
-,pefa.contact_date
-
-,pefa.qf_lqf_id
-
-,pefa.qf_hqa_id
-
-,pefa.qf_status_c
-
-,qf.form_name
-
-,cqa.answer_id
-
-,cqa.line
-
-,cqa.quest_id
-
-,cqa.quest_dat
-
-,cqa.quest_answer
-
-,cqa.question_instant
-
-,cqa.float_answer
-
-,cqa.numeric_answer
-
-,cqa.varchar_answer
-
-,cqq.quest_name
-
-,clqo.question
-
-,pefa.qf_cosign_emp_id
-
-,case when coh.pat_id is null then 1 else 0 end pat_in_lz_tbl_yn
-
+   ,pefa.pat_id
+   ,pefa.contact_date
+   ,pefa.qf_lqf_id
+   ,pefa.qf_hqa_id
+   ,pefa.qf_status_c
+   ,qf.form_name
+   ,cqa.answer_id
+   ,cqa.line
+   ,cqa.quest_id
+   ,cqa.quest_dat
+   ,cqa.quest_answer
+   ,cqa.question_instant
+   ,cqa.float_answer
+   ,cqa.numeric_answer
+   ,cqa.varchar_answer
+   ,cqq.quest_name
+   ,clqo.question
+   ,pefa.qf_cosign_emp_id
+   ,case when coh.pat_id is null then 1 else 0 end pat_in_lz_tbl_yn
 from pat_enc_form_ans pefa
-
 left join i2b2.lz_clarity_patient coh on pefa.pat_id = coh.pat_id
-
 left join cl_qform qf on pefa.qf_lqf_id = qf.form_id
-
 left join cl_qanswer_qa cqa on pefa.qf_hqa_id = cqa.answer_id
-
 left join cl_qquest cqq on cqa.quest_id = cqq.quest_id -- question name
-
 left join cl_qquest_ovtm clqo on cqa.quest_id = clqo.quest_id -- question
-
 where pefa.qf_lqf_id in (14010000014 --change according to your requirements
-
 ,1400001701
-
 ,1400001703
-
 )
-
 ;
 
 # Jira Billing Hours
@@ -4572,7 +4336,6 @@ Export results. Remove first column prior to importing.
 -- Steps:
 
 -- 1. Run Jira TT_Billing_All report for all - DELETE first COLUMN
-
 -- 2. Import #1 results to xdr_ttbill_all
 
 --------------------------------------------------------------------------------
@@ -4580,71 +4343,40 @@ Export results. Remove first column prior to importing.
 drop table xdr_ttbill_all purge;
 
 select * from xdr_ttbill_all order by key desc;
-
 --
-
 drop table xdr_ttbill_fin purge;
 
 create table xdr_ttbill_fin as
-
 select distinct 'q' tp
-
 ,key jira_key
-
 ,issue jira_title
-
 ,sum(logged) over (partition by key) logged
-
 from xdr_ttbill_all c
-
 where nvl(key,'TOTAL') like 'XDR%'
-
 and worklog is not null
-
 and do_not_bill_these_hours = 'false'
-
 and to_date(substr(dt,1,9),'dd/mon/yy') between to_date('04/01/2023','mm/dd/yyyy') and sysdate --change to reflect current billable quarter
-
 union
-
 select distinct 'a' tp
-
 ,key jira_key
-
 ,issue jira_title
-
 ,sum(logged) over (partition by key) logged
-
 from xdr_ttbill_all c
-
 where nvl(key,'TOTAL') like 'XDR%'
-
 and worklog is not null
-
 and do_not_bill_these_hours = 'false'
-
 order by jira_key
-
 ;
 
 select distinct c.jira_key
-
 ,c.jira_title
-
 ,c.logged currqtr_logged
-
 ,a.logged all_logged
-
 from xdr_ttbill_fin c
-
 join xdr_ttbill_fin a on c.jira_key = a.jira_key and a.tp = 'a'
-
 where c.tp = 'q'
-
 and a.logged > 20
-
 order by c.jira_key
-
 ;
 
 # Cancer Registrar Datamart METS
@@ -4652,59 +4384,38 @@ order by c.jira_key
 (by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 6/27/2023)
 
 – The following gets determines metastatic cancer (Use I:\\_BIP\\xDR\\Cancer registry integration\\Documentation_asof_12222022\\Code_Library.sql for preliminary tables)
-
 -- Check for mets
-
 --Pre-2018 (#Temp123456CSTG1)
 
 select *
-
 from cancerregistrardm.rpt.cr_codelookupdim zcmdlu
-
 where zcmdlu.fieldname in ('CS Mets at Dx-Bone','CS Mets at Dx-Brain','CS Mets at Dx-Liver','CS Mets at Dx-Lung') --If value = '1', it's METS
-
 order by fieldname, lookupcode
-
 ;
 
 select distinct
-
 CS_MetsAtDiagnosis --Where can I find meaningful values for these? --ASSUMING '10' and '70' as METS
-
 ,CS_MetsEval --Where can I find meaningful values for these? --ASSUMING ='1' as METS
-
 from #Temp123456CSTG1
-
 where CS_MetsAtDiagnosis is not null
-
 and CS_MetsEval is not null
 
 --order by ip_patient_id
-
 ;
 
 --Post-2018 (#Temp123456CSTG2)
 
 select * from cancerregistrardm.rpt.cr_codelookupdim zcmdlu
-
 where zcmdlu.fieldname in ('Mets at DX, Bone','Mets at DX, Brain','Mets at DX, Liver','Mets at DX, Lung','Mets at DX, Other'
-
 ,'Summary Stage 2018','EOD Primary Tumor','EOD Regional Nodes','EOD Mets')
-
 order by fieldname, lookupcode
-
 ;
 
 --METS assumptions:
-
 --mets at dx = '1'
-
 --eod mets between '10' and '70'
-
 --eod primary tumor between '050' and '750'
-
 --eod regional nodes between '050' and '750'
-
 --summary stage 2018 between '1' and '8' --'8'=BENIGN OR BORDERLINE BRAIN???
 
 # Discharge Location
@@ -4716,53 +4427,29 @@ order by fieldname, lookupcode
 drop table xdr_123456_cohex_disch purge;
 
 create table xdr_123456_cohex_disch as
-
 select distinct b.pat_id
-
-,b.pat_enc_csn_id
-
-,B.DISCH_DISP_C
-
-,disp.name as DISCH_DISP_C_name
-
-,B.DISCH_DEST_C
-
-,dest.name as DISCH_DEST_C_name
-
-,b.ed_disposition_c
-
-,edd.name ed_disposition
-
-,zps.name as adt_pat_status
-
-,b.admit_conf_stat_c
-
-,zcs.name as conf_stat
-
+   ,b.pat_enc_csn_id
+   ,B.DISCH_DISP_C
+   ,disp.name as DISCH_DISP_C_name
+   ,B.DISCH_DEST_C
+   ,dest.name as DISCH_DEST_C_name
+   ,b.ed_disposition_c
+   ,edd.name ed_disposition
+   ,zps.name as adt_pat_status
+   ,b.admit_conf_stat_c
+   ,zcs.name as conf_stat
 FROM xdr_123456_cohpat a
-
 join PAT_ENC_HSP B on a.pat_id = b.pat_id
-
 LEFT OUTER JOIN ZC_PAT_CLASS H ON B.ADT_PAT_CLASS_C = H.ADT_PAT_CLASS_C
-
 left outer join ZC_DISCH_DISP disp on disp.DISCH_DISP_C = B.DISCH_DISP_C
-
 left outer join ZC_DISCH_DEST dest on dest.DISCH_DEST_C = B.DISCH_DEST_C
-
 LEFT JOIN zc_ed_disposition edd ON b.ed_disposition_c = edd.ed_disposition_c
-
 left join ZC_PAT_STATUS zps on b.ADT_PATIENT_STAT_C = zps.ADT_PATIENT_STAT_C
-
 left join ZC_conf_stat zcs on b.admit_conf_stat_c = zcs.admit_conf_stat_c
-
 --below where clause is customizable per requirements...
-
 --where regexp_like(nvl(disp.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
-
 -- or regexp_like(nvl(dest.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
-
 -- or regexp_like(nvl(edd.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
-
 ;
 
 create index xdr_123456_cohex_disch_patidx on xdr_123456_cohex_disch (pat_id);
@@ -4778,15 +4465,10 @@ by [Cenan Pirani](https://uclabip.atlassian.net/wiki/people/5f5922bcff2fe2006fb7
 *   The following gets the sex assigned at birth for a cohort
 
 select distinct coh.pat_id
-
     ,s.name sex_assigned_at_birth
-
 from xdr_prinv_coh coh
-
 join patient_4 p on coh.pat_id = p.pat_id
-
 left join zc_sex_asgn_at_birth s on p.sex_asgn_at_birth_c = s.sex_asgn_at_birth_c
-
 ;
 
 # Historical Addresses in MSSQL
@@ -4810,35 +4492,20 @@ drop table xdr_prinv_docs purge;
 create table xdr_prinv_docs as
 
 select distinct coh.pat_id
-
 ,bb.doc_info_id
-
 ,bb.doc_recv_time
-
 ,bb.SCAN_FILE
-
 ,bb.DOC_DESCR
-
 ,bb.DOC_INFO_TYPE_C
-
 ,bt.name as doc_type
-
 --,BT.DOC_GROUP
-
 from xdr_prinv_coh coh
-
 join DOC_INFORMATION bb on bb.doc_pt_id = coh.pat_id
-
 left join ZC_DOC_INFO_TYPE bt on BB.DOC_INFO_TYPE_C = BT.DOC_INFO_TYPE_C
-
 WHERE BB.IS_SCANNED_YN = 'Y'
-
 and (bb.RECORD_STATE_C <> 2 OR bb.RECORD_STATE_C IS NULL) -- Deleted
-
 and (bb.DOC_STAT_C <> 35 OR bb.DOC_STAT_C IS NULL) -- Error
-
 and bb.DOC_REVOK_DT is null
-
 ;
 
 Once this is created pull the list of files names into a CSV with the query:
@@ -4866,91 +4533,48 @@ Use the following for the Subject line and Box folder name: **PODS document requ
 drop table i2b2.bip_driver purge;
 
 --create table i2b2.bip_driver as
-
 --select distinct 'FLOWSHEET' driver_source
-
 -- ,'IP_FLO_GP_DATA.FLO_MEAS_ID' driver_column
-
 -- ,case
-
 -- when regexp_like(gpd.flo_meas_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
-
 -- when regexp_like(gpd.flo_meas_name,'+(phq.+9)+','i') then 'PHQ9'
-
 -- when regexp_like(gpd.flo_meas_name,'+(promis)+','i') then 'PROMIS'
-
 -- when regexp_like(gpd.flo_meas_name,'+(GAD7)+','i') then 'GAD7'
-
 -- when regexp_like(gpd.flo_meas_name,'+(AUDITC)+','i') then 'AUDITC'
-
 -- end driver_type
-
 -- ,gpd.flo_meas_id driver_id
-
 -- ,gpd.flo_meas_name driver_name
-
 -- FROM ip_flo_gp_data gpd
-
 -- where regexp_like(flo_meas_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
-
 --union
-
 --select distinct 'QUESTIONNAIRE_FORM' driver_source
-
 -- ,'CL_QFORM.FORM_ID' driver_column
-
 -- ,case
-
 -- when regexp_like(f.form_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
-
 -- when regexp_like(f.form_name,'+(phq.+9)+','i') then 'PHQ9'
-
 -- when regexp_like(f.form_name,'+(promis)+','i') then 'PROMIS'
-
 -- when regexp_like(f.form_name,'+(GAD7)+','i') then 'GAD7'
-
 -- when regexp_like(f.form_name,'+(AUDITC)+','i') then 'AUDITC'
-
 -- end driver_type
-
 -- ,f.form_id driver_id
-
 -- ,f.form_name driver_name
-
 -- from CL_QFORM f
-
 -- where regexp_like(f.form_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
-
 --union
-
 --select distinct 'QUESTIONNAIRE_QUESTION' driver_source
-
 -- ,'CL_QQUEST.QUEST_NAME' driver_column
-
 -- ,case
-
 -- when regexp_like(quest_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
-
 -- when regexp_like(quest_name,'+(phq.+9)+','i') then 'PHQ9'
-
 -- when regexp_like(quest_name,'+(promis)+','i') then 'PROMIS'
-
 -- when regexp_like(quest_name,'+(GAD7)+','i') then 'GAD7'
-
 -- when regexp_like(quest_name,'+(AUDITC)+','i') then 'AUDITC'
-
 -- end driver_type
-
 -- ,quest_id driver_id
-
 -- ,quest_name driver_name
-
 -- from CL_QQUEST
-
 -- where regexp_like(quest_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
-
 -- order by driver_source, driver_type, driver_id
-
 --;
 
 --alter table bip_driver add constraint bip_driver_pk primary key (driver_source, driver_type, driver_id);
@@ -4958,17 +4582,11 @@ drop table i2b2.bip_driver purge;
 --
 
 --insert into i2b2.bip_driver (driver_source, driver_column, driver_type, driver_id, driver_name)
-
 --select distinct 'FLOWSHEET','IP_FLO_GP_DATA.FLO_MEAS_ID','SDOH',gpd.flo_meas_id, gpd.flo_meas_name
-
 -- from ctsi_research.lz_flowsheet_sdoh_icl_zc js --this is from JS SDOH subitem from Kruse 23-5190 (Project_id=115824)
-
 -- join ip_flo_gp_data gpd on js.flowsheetrowid = gpd.flo_meas_id
-
 -- left join i2b2.bip_driver bd on js.flowsheetrowid = bd.driver_id and bd.driver_source = 'FLOWSHEET' and bd.driver_type = 'SDOH'
-
 -- where bd.driver_id is null
-
 --; --210 rows inserted
 
 --commit;
@@ -4982,317 +4600,169 @@ drop table i2b2.bip_driver purge;
 -- Flowsheets
 
 SELECT DISTINCT coh.pat_id
-
-,enc.pat_enc_csn_id
-
-,enc.inpatient_data_id
-
-,rec.fsd_id
-
-,meas.flt_id
-
-,meas.flo_meas_id
-
-,dta.display_name
-
-,dta.template_name
-
-,gpd.disp_name measure_name
-
-,gpd.flo_meas_name
-
-,meas.meas_value
-
-,meas.recorded_time
-
-,MAX(meas.recorded_time) OVER (PARTITION BY enc.pat_id, meas.flo_meas_id) latest_measure
-
+   ,enc.pat_enc_csn_id
+   ,enc.inpatient_data_id
+   ,rec.fsd_id
+   ,meas.flt_id
+   ,meas.flo_meas_id
+   ,dta.display_name
+   ,dta.template_name
+   ,gpd.disp_name measure_name
+   ,gpd.flo_meas_name
+   ,meas.meas_value
+   ,meas.recorded_time
+   ,MAX(meas.recorded_time) OVER (PARTITION BY enc.pat_id, meas.flo_meas_id) latest_measure
 FROM xdr_123456_coh coh
-
 JOIN i2b2.lz_clarity_enc enc ON coh.pat_id = enc.pat_id
-
 JOIN ip_flwsht_rec rec ON enc.inpatient_data_id = rec.inpatient_data_id
-
 JOIN ip_flwsht_meas meas ON rec.fsd_id = meas.fsd_id
-
 JOIN ip_flo_gp_data gpd ON meas.flo_meas_id = gpd.flo_meas_id
-
 JOIN ip_flt_data dta ON meas.flt_id = dta.template_id
-
 JOIN i2b2.bip_driver fd on meas.flo_meas_id = fd.driver_id
-
 and fd.driver_source = 'FLOWSHEET'
-
 and fd.driver_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
-
 --NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
-
 WHERE meas.recorded_time IS NOT NULL
-
 AND meas.meas_value IS NOT NULL
-
 ;
 
 -- Questionnaires
 
 select distinct coh.pat_id
-
-,f.form_id
-
-,f.form_name
-
-,q.quest_id
-
-,q.quest_name
-
-,qa.answer_id
-
-,qa.line
-
-,qa.quest_answer
-
-,qa.quest_dat datetime_answer
-
+   ,f.form_id
+   ,f.form_name
+   ,q.quest_id
+   ,q.quest_name
+   ,qa.answer_id
+   ,qa.line
+   ,qa.quest_answer
+   ,qa.quest_dat datetime_answer
 from xdr_123456_coh coh
-
 join CL_QANSWER a on coh.pat_id = a.pat_id
-
 join CL_QANSWER_QA qa on a.answer_id = qa.answer_id
-
 join CL_QQUEST q on qa.quest_id = q.quest_id
-
 join CL_QFORM_QUEST fq on q.quest_id = fq.quest_id
-
 join CL_QFORM f on fq.form_id = f.form_id
-
 join i2b2.bip_driver qd on (fq.form_id = qd.driver_id
-
 and qd.driver_source = 'QUESTIONNAIRE_FORM'
-
 and qd.driver_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
-
 --NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
-
 )
-
 or
-
 (fq.quest_id = qd.driver_id
-
 and qd.driver_source = 'QUESTIONNAIRE_QUESTION'
-
 and qd.driver_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
-
 --NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
-
 )
-
 ;
 
 -- Combine flowsheet and questionnaire results
 
 select x.* from (
-
 select pat_id
-
 ,'QUESTIONNAIRE' src
-
 , form_name form_or_template_name
-
 , quest_name question_or_display_name
-
 , null measure_name
-
 , to_char(line) answer_line_or_flow_measure
-
 , quest_answer val
-
 , datetime_answer dt
-
 from xdr_123456_quest
-
 union
-
 select pat_id
-
 ,'FLOWSHEET' src
-
 , template_name form_or_template_name
-
 , display_name question_or_display_name
-
 , measure_name measure_name
-
 , vital_sign_type answer_line_or_flow_measure
-
 , vital_sign_value val
-
 , to_date(vital_sign_taken_time) dt
-
 from xdr_123456_flow
-
 ) x
-
 order by ip_patient_id, sdoh_date
-
 ;
 
 ----------------------------------------------------------------------------------------------
 
 -- For additional SDOH (Social Determinants of Health), developers can query Social History.
-
 -- The following obtains SDOH data using Social History.
-
 -- Many times, social hx does not contain all the information requested for SDOH,
-
 -- so flowsheets/questionnaires should also be queried.
 
 ----------------------------------------------------------------------------------------------
 
 select distinct coh.pat_id, coh.study_id
-
-,soc.contact_date
-
-,xedu.name education_level
-
-,zfrs.name financial_res_strain
-
-,ziea.name ipv_emotional_abuse
-
-,zfear.name ipv_fear
-
-,zisa.name ipv_sexual_abuse
-
-,zipa.name ipv_physical
-
-,zaf.name alcohol_freq
-
-,zadpd.name alcohol_drinks_p_day
-
-,zbinge.name alcohol_binge
-
-,zspouse.name living_w_spouse
-
-,zstress.name daily_stress
-
-,zphone.name phone_communication
-
-,zsocial.name socialize_freq
-
-,zchurch.name church_attendance
-
-,zclub.name club_mtg_attend
-
-,zclubm.name club_member
-
-,zpdpw.name phys_act_days_p_wk
-
-,zpamps.name phys_act_min_p_sess
-
-,zfoods.name food_insec_scarce
-
-,zfoodw.name food_insec_worry
-
-,zmedtr.name med_trans_needs
-
-,zothertr.name other_trans_needs
-
+   ,soc.contact_date
+   ,xedu.name education_level
+   ,zfrs.name financial_res_strain
+   ,ziea.name ipv_emotional_abuse
+   ,zfear.name ipv_fear
+   ,zisa.name ipv_sexual_abuse
+   ,zipa.name ipv_physical
+   ,zaf.name alcohol_freq
+   ,zadpd.name alcohol_drinks_p_day
+   ,zbinge.name alcohol_binge
+   ,zspouse.name living_w_spouse
+   ,zstress.name daily_stress
+   ,zphone.name phone_communication
+   ,zsocial.name socialize_freq
+   ,zchurch.name church_attendance
+   ,zclub.name club_mtg_attend
+   ,zclubm.name club_member
+   ,zpdpw.name phys_act_days_p_wk
+   ,zpamps.name phys_act_min_p_sess
+   ,zfoods.name food_insec_scarce
+   ,zfoodw.name food_insec_worry
+   ,zmedtr.name med_trans_needs
+   ,zothertr.name other_trans_needs
 from p_coh coh
-
 join social_hx soc on coh.pat_id = soc.pat_id
-
 left join zc_edu_level xedu on soc.edu_level_c = xedu.edu_level_c
-
 left join zc_fin_resource_strain zfrs on soc.fin_resource_strain_c = zfrs.fin_resource_strain_c
-
 left join zc_ipv_emotional_abuse ziea on soc.ipv_emotional_abuse_c = ziea.ipv_emotional_abuse_c
-
 left join zc_ipv_fear zfear on soc.ipv_fear_c = zfear.ipv_fear_c
-
 left join zc_ipv_sexual_abuse zisa on soc.ipv_sexual_abuse_c = zisa.ipv_sexual_abuse_c
-
 left join zc_ipv_physical_abuse zipa on soc.ipv_physical_abuse_c = zipa.ipv_physical_abuse_c
-
 left join ZC_ALCOHOL_FREQ zaf on soc.ALCOHOL_FREQ_C = zaf.ALCOHOL_FREQ_C
-
 left join zc_alcohol_drinks_per_day zadpd on soc.alcohol_drinks_per_day_c = zadpd.alcohol_drinks_per_day_c
-
 left join zc_alcohol_binge zbinge on soc.alcohol_binge_c = zbinge.alcohol_binge_c
-
 left join zc_living_w_spouse zspouse on soc.living_w_spouse_c = zspouse.living_w_spouse_c
-
 left join zc_daily_stress zstress on soc.daily_stress_c = zstress.daily_stress_c
-
 left join zc_phone_communication zphone on soc.phone_communication_c = zphone.phone_communication_c
-
 left join zc_socialization_freq zsocial on soc.socialization_freq_c = zsocial.socialization_freq_c
-
 left join zc_church_attendance zchurch on soc.church_attendance_c = zchurch.sdoh_church_attendance_c
-
 left join zc_clubmtg_attendance zclub on soc.clubmtg_attendance_c = zclub.clubmtg_attendance_c
-
 left join zc_club_member zclubm on soc.club_member_c = zclubm.club_member_c
-
 left join zc_phys_act_days_per_week zpdpw on soc.phys_act_days_per_week_c = zpdpw.phys_act_days_per_week_c
-
 left join zc_phys_act_min_per_sess zpamps on soc.phys_act_min_per_sess_c = zpamps.phys_act_min_per_sess_c
-
 left join zc_food_insecurity_scarce zfoods on soc.food_insecurity_scarce_c = zfoods.food_insecurity_scarce_c
-
 left join zc_food_insecurity_worry zfoodw on soc.food_insecurity_worry_c = zfoodw.food_insecurity_worry_c
-
 left join zc_med_transport_needs zmedtr on soc.med_transport_needs_c = zmedtr.med_transport_needs_c
-
 left join zc_other_transport_needs zothertr on soc.other_transport_needs_c = zothertr.other_transport_needs_c
-
 WHERE soc.pat_enc_date_real = (SELECT MAX(soc.pat_enc_date_real) FROM social_hx soc WHERE soc.pat_id = coh.pat_id)
-
 and (soc.edu_level_c is not null
-
 or soc.fin_resource_strain_c is not null
-
 or soc.ipv_emotional_abuse_c is not null
-
 or soc.ipv_fear_c is not null
-
 or soc.ipv_sexual_abuse_c is not null
-
 or oc.ipv_physical_abuse_c is not null
-
 or soc.ALCOHOL_FREQ_C is not null
-
 or soc.alcohol_drinks_per_day_c is not null
-
 or soc.alcohol_binge_c is not null
-
 or soc.living_w_spouse_c is not null
-
 or soc.daily_stress_c is not null
-
 or soc.phone_communication_c is not null
-
 or soc.socialization_freq_c is not null
-
 or soc.church_attendance_c is not null
-
 or soc.clubmtg_attendance_c is not null
-
 or soc.club_member_c is not null
-
 or soc.phys_act_days_per_week_c is not null
-
 or soc.phys_act_min_per_sess_c is not null
-
 or soc.food_insecurity_scarce_c is not null
-
 or soc.food_insecurity_worry_c is not null
-
 or soc.med_transport_needs_c is not null
-
 or soc.other_transport_needs_c is not null
-
 )
-
 ;
 
 # Dispensed Medications
@@ -5304,57 +4774,32 @@ by [Cenan Pirani](https://uclabip.atlassian.net/wiki/people/5f5922bcff2fe2006fb7
 DROP TABLE XDR_PID_MEDFILLALL PURGE;
 
 CREATE TABLE XDR_PID_MEDFILLALL AS
-
 select distinct docs.pat_id
-
-,ip_patient_id
-
-,disp.EXT_MED_ERX_ID
-
-,disp.EXT_DRUG_DISP_INST_DTTM
-
-,disp.EXT_DRUG_DESP
-
-,disp.EXT_DRUG_DISP_AMT
-
-,disp.EXT_DRUG_DISP_UNIT
-
-,disp.EXT_DRUG_DOSE_FORM
-
-,disp.EXT_MED_DAY_SUPPLY
-
---,docs.TYPE_C
-
-,disp.EXT_DRUG_PROV_NAME
-
+   ,ip_patient_id
+   ,disp.EXT_MED_ERX_ID
+   ,disp.EXT_DRUG_DISP_INST_DTTM
+   ,disp.EXT_DRUG_DESP
+   ,disp.EXT_DRUG_DISP_AMT
+   ,disp.EXT_DRUG_DISP_UNIT
+   ,disp.EXT_DRUG_DOSE_FORM
+   ,disp.EXT_MED_DAY_SUPPLY
+   --,docs.TYPE_C
+   ,disp.EXT_DRUG_PROV_NAME
 FROM xdr_PID_pat coh
-
 JOIN DOCS_RCVD docs on docs.pat_id = coh.pat_id
-
 JOIN MED_DISPENSE disp on docs.document_id = disp.document_id
-
 ;
 
 -- PULL
 
 select distinct ip_patient_id
-
-,EXT_MED_ERX_ID
-
-,to_char(EXT_DRUG_DISP_INST_DTTM, 'mm/dd/yyyy hh24:mi') EXT_DRUG_DISP_INST_DTTM
-
-,EXT_DRUG_DESP
-
-,EXT_DRUG_DISP_AMT
-
-,EXT_DRUG_DISP_UNIT
-
-,EXT_DRUG_DOSE_FORM
-
-,EXT_MED_DAY_SUPPLY
-
-,EXT_DRUG_PROV_NAME
-
+   ,EXT_MED_ERX_ID
+   ,to_char(EXT_DRUG_DISP_INST_DTTM, 'mm/dd/yyyy hh24:mi') EXT_DRUG_DISP_INST_DTTM
+   ,EXT_DRUG_DESP
+   ,EXT_DRUG_DISP_AMT
+   ,EXT_DRUG_DISP_UNIT
+   ,EXT_DRUG_DOSE_FORM
+   ,EXT_MED_DAY_SUPPLY
+   ,EXT_DRUG_PROV_NAME
 from XDR_PID_MEDFILLALL
-
 ;
