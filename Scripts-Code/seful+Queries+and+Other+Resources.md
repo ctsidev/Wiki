@@ -29,7 +29,7 @@
 *   [GFR labs](#GFRlabs)
 *   [Kill Sessions](#KillSess)
 *   [Locked Objects](#LockedOb)
-*   [Recruitment Request Prioritization](#Recruitment Request Prioritization)
+*   [Recruitment Request Prioritization](#Recruitment-Request-Prioritization)
 *   [Bone Marrow Transplant (BMT)](#BoneMarr)
 *   [Pregnancy/Delivery](#Pregnancy/Delivery)
 *   [Calculate ICU stay times](#Calculate-ICU-stay-times)
