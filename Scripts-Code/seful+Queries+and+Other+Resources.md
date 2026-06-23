@@ -1160,62 +1160,113 @@ fgd2.value_type_name, fgd2.description, fgd2.disp_name
 
 The following code pulls the Past Medical History information. This is a report that can be seen in CC, and the layout of the pull replicates this format. It uses the dx description for the diagnosis, as this is what it's shown in CC.
 
+SELECT *
+FROM xdr_prinv_coh coh
+JOIN patient pat ON coh.pat_id = pat.pat_id
+left join JSANZ.BIP_PAT_GEOCODE geo on pat.pat_id = geo.pat_id
+where
+
+---------------------------------------------------------------------------------
+
+-- excludes patient's without a valid address, or labeled as homeless
+
+---------------------------------------------------------------------------------
+
+geo.add_line_1is not null
+and UPPER(geo.add_line_1) NOT like '%HOMELESS%'
+and geo.fips is not null
+AND -- OR
+
+---------------------------------------------------------------------------------
+
+-- excludes patients with a placeholder/dummy phone # or no phone# at all
+
+-- This can be extended to other phone numbers as well (work phone, cell, etc...)
+
+---------------------------------------------------------------------------------
+
+( pat.home_phone is not null
+and pat.home_phone NOT IN ('000-000-0000'
+,'000-000-0001'
+,'310-000-0000'
+,'310-450-1748'
+,'999-999-9999'
+)
+)
+
+---------------------------------------------------------------------------------
+
+-- excludes patients without email address
+
+---------------------------------------------------------------------------------
+
+AND -- OR
+pat.email_address is not null
+
+# All Flowsheet Questions on a Template
+
+###### (BY [Robert Follett (Unlicensed)](https://uclabip.atlassian.net/wiki/people/557058:fb90de8e-f6e8-4a11-b471-2992e0b019af?ref=confluence) ON 10/10/19)
+
+The following code pulls the different flowsheet questions on a given template id.  Use this to see what questions are asked on a template.
+
+select
+   t.template_id,
+   t.template_name,
+   t.display_name template_display_name,
+   tc.flo_meas_id group_meas_id,
+   fgd.disp_name group_meas_name,
+   fgd.flo_meas_name group_flo_meas_name,
+   fgd2.flo_meas_id flo_meas_id,
+   fgd2.flo_meas_name flo_meas_name,
+   fgd2.disp_name flo_disp_name
+from
+ip_flt_data t
+left join ip_flt_comps tc on (t.template_id = tc.template_id)
+left join ip_flo_gp_data fgd on (tc.flo_meas_id = fgd.flo_meas_id)
+left join ip_flo_measuremnts fm on (fgd.flo_meas_id = fm.id)
+join ip_flo_gp_data fgd2 on (fm.measurement_id = fgd2.flo_meas_id)
+where t.template_id = 281
+group by
+t.template_id, t.template_name, t.display_name,
+tc.line, tc.flo_meas_id, fgd.disp_name, fgd.flo_meas_name,
+fgd2.flo_meas_id, fgd2.flo_meas_name, fgd2.flo_dis_name, fgd2.flo_row_name, fgd2.flo_row_name,
+fgd2.value_type_name, fgd2.description, fgd2.disp_name
+
+# Past Medical History
+
+###### (BY [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) ON 12/02/19)
+
+The following code pulls the Past Medical History information. This is a report that can be seen in CC, and the layout of the pull replicates this format. It uses the dx description for the diagnosis, as this is what it's shown in CC.
+
 ##### **Past Medical History**
 
 select x.pat_id
-
-,x.study_id
-
-,x.icd_code
-
-,x.dx_name as diagnosis_desc
-
-,x.medical_hx_date
-
-,x.comments
-
-from (select distinct coh.pat_id
-
-,coh.study_id
-
-,case when pl.contact_date <= '01/01/2015' then cin9.code else cin10.code end icd_code
-
-,edg.dx_name
-
-,pl.contact_date
-
-,pl.medical_hx_date
-
-,pl.comments
-
-,pl.dx_id
-
-,MIN(pl.contact_date) OVER (PARTITION BY pl.pat_id, pl.dx_id) AS first_dx
-
+    ,x.study_id
+    ,x.icd_code
+    ,x.dx_name as diagnosis_desc
+    ,x.medical_hx_date
+    ,x.comments
+    from (select distinct coh.pat_id
+    ,coh.study_id
+    ,case when pl.contact_date <= '01/01/2015' then cin9.code else cin10.code end icd_code
+    ,edg.dx_name
+    ,pl.contact_date
+    ,pl.medical_hx_date
+    ,pl.comments
+    ,pl.dx_id
+    ,MIN(pl.contact_date) OVER (PARTITION BY pl.pat_id, pl.dx_id) AS first_dx
 From XDR_PRINV_COH coh
-
 JOIN MEDICAL_HX pl ON coh.pat_id = pl.pat_id
-
 left join ZC_HISTORY_SOURCE zhs on pl.MED_HX_SOURCE_C = zhs.HISTORY_SOURCE_C
-
 --This join helps us find the dx description that matches what can be seen in CC
-
 LEFT JOIN clarity.CLARITY_EDG edg ON pl.dx_id = edg.dx_id --AND cin9.line = 1
-
 -- ICD9 CODES JOIN
-
 LEFT JOIN clarity.edg_current_icd9 cin9 ON pl.dx_id = cin9.dx_id AND cin9.line = 1
-
 --ICD10 CODES JOIN
-
 LEFT JOIN clarity.edg_current_icd10 cin10 ON pl.DX_ID = cin10.dx_id AND cin10.line = 1
-
 ) x
-
 where
-
 first_dx = x.contact_date
-
 order by pat_id,diagnosis_desc;
 ```
 ## Procedure Performing and Billing Providers
@@ -1229,39 +1280,22 @@ The following code enhances the procedure data pull to add the performing and bi
 DROP TABLE xdr_prinv_prc PURGE;
 
 CREATE TABLE xdr_prinv_prc AS
-
 SELECT DISTINCT enc.pat_id
-
-,coh.study_id
-
-,hspt.pat_enc_csn_id
-
-,hspt.service_date AS proc_date
-
-,SUBSTR(COALESCE(hspt.hcpcs_code,hspt.cpt_code),1,5) AS proc_code
-
-,'CPT-Hospital' AS proc_type
-
-,hspt.PERFORMING_PROV_ID
-
-,hspt.BILLING_PROV_ID AS BILLING_PROV_ID
-
-,EAP.PROC_NAME
-
+   ,coh.study_id
+   ,hspt.pat_enc_csn_id
+   ,hspt.service_date AS proc_date
+   ,SUBSTR(COALESCE(hspt.hcpcs_code,hspt.cpt_code),1,5) AS proc_code
+   ,'CPT-Hospital' AS proc_type
+   ,hspt.PERFORMING_PROV_ID
+   ,hspt.BILLING_PROV_ID AS BILLING_PROV_ID
+   ,EAP.PROC_NAME
 FROM i2b2.lz_clarity_enc enc
-
 JOIN xdr_prinv_coh coh ON enc.pat_id = coh.pat_id
-
 JOIN hsp_transactions hspt ON enc.pat_enc_csn_id = hspt.pat_enc_csn_id
-
 LEFT OUTER JOIN f_arhb_inactive_tx fait ON hspt.tx_id = fait.tx_id
-
 LEFT JOIN clarity_eap eap ON SUBSTR(COALESCE(hspt.hcpcs_code,hspt.cpt_code),1,5) = eap.proc_code
-
 WHERE hspt.tx_type_ha_c = 1
-
 AND (LENGTH(hspt.cpt_code) = 5 OR hspt.hcpcs_code IS NOT NULL)
-
 AND fait.tx_id IS NULL;
 
 CREATE INDEX xdr_prinv_prc_patidx ON xdr_prinv_prc (pat_id) nologging;
@@ -1273,35 +1307,20 @@ SELECT COUNT(*),COUNT(DISTINCT pat_id) FROM xdr_prinv_prc WHERE PERFORMING_PROV_
 ALTER TABLE XDR_prinv_PRC MODIFY proc_type varchar2 (200);
 
 INSERT INTO XDR_prinv_PRC (pat_id,STUDY_ID,pat_enc_csn_id,proc_date,proc_code,proc_type,PERFORMING_PROV_ID,PROC_NAME)
-
 SELECT distinct arpb.patient_id AS pat_id
-
-,coh.study_id
-
-,arpb.pat_enc_csn_id
-
-,arpb.service_date AS proc_date
-
-,arpb.cpt_code AS proc_code
-
-,'CPT-Professional' AS proc_type
-
-,arpb.SERV_PROVIDER_ID AS PERFORMING_PROV_ID
-
-,arpb.BILLING_PROV_ID AS BILLING_PROV_ID
-
-,EAP.PROC_NAME
-
+   ,coh.study_id
+   ,arpb.pat_enc_csn_id
+   ,arpb.service_date AS proc_date
+   ,arpb.cpt_code AS proc_code
+   ,'CPT-Professional' AS proc_type
+   ,arpb.SERV_PROVIDER_ID AS PERFORMING_PROV_ID
+   ,arpb.BILLING_PROV_ID AS BILLING_PROV_ID
+   ,EAP.PROC_NAME
 FROM xdr_prinv_enc enc
-
 JOIN xdr_prinv_coh coh ON enc.pat_id = coh.pat_id
-
 JOIN arpb_transactions arpb ON enc.pat_enc_csn_id = arpb.pat_enc_csn_id
-
 LEFT JOIN clarity_eap eap ON arpb.cpt_code = eap.proc_code
-
 WHERE tx_type_c = 1 ----- Charges only
-
 AND void_date IS NULL;
 
 COMMIT;
@@ -1311,7 +1330,6 @@ SELECT proc_type, COUNT(*),COUNT(DISTINCT pat_id) FROM xdr_prinv_prc GROUP BY pr
 /*
 
 CPT-Professional
-
 CPT-Hospital
 
 */
@@ -1319,31 +1337,18 @@ CPT-Hospital
 SELECT * FROM xdr_prinv_prc;
 
 INSERT INTO xdr_prinv_prc (pat_id,STUDY_ID,pat_enc_csn_id,proc_date,proc_code,proc_type,PERFORMING_PROV_ID,PROC_NAME)
-
 SELECT DISTINCT pat.pat_id
-
-,coh.study_id
-
-,px.pat_enc_csn_id
-
-,px.proc_date
-
-,px.px_code AS proc_code
-
-,CASE
-
-WHEN px.icd_code_set = 'ICD-9-CM Volume 3' THEN 'ICD-9'
-
-WHEN px.icd_code_set = 'ICD-10-PCS' THEN 'ICD-10'
-
-END AS proc_type
-
-,px.PROC_PERF_PROV_ID
-
-,px.procedure_name AS proc_name
-
+   ,coh.study_id
+   ,px.pat_enc_csn_id
+   ,px.proc_date
+   ,px.px_code AS proc_code
+   ,CASE
+   WHEN px.icd_code_set = 'ICD-9-CM Volume 3' THEN 'ICD-9'
+   WHEN px.icd_code_set = 'ICD-10-PCS' THEN 'ICD-10'
+   END AS proc_type
+   ,px.PROC_PERF_PROV_ID
+   ,px.procedure_name AS proc_name
 FROM xdr_prinv_coh coh
-
 JOIN i2b2.lz_clarity_procedures px ON pat.pat_enc_csn_id = px.pat_enc_csn_id;
 
 COMMIT;
@@ -1351,11 +1356,8 @@ COMMIT;
 /*
 
 CPT-Professional
-
 CPT-Hospital
-
 ICD-9
-
 ICD-10
 
 */
@@ -1375,177 +1377,93 @@ The following code sets up the drop table queries as well as calculate the curre
 -- Drop tables based on owners/schemas/table names
 
 select 'drop table ' || owner || '.' || t.table_name || ' PURGE; --' || p.investigator sqlq
-
 from all_tables t
-
 join i2b2.bip_project p on substr(t.table_name,5,6) = to_char(p.project_id)
-
 WHERE t.owner in ('TTACORDA','CTSI_RESEARCH','CKD')
-
 AND ((not regexp_like (table_name,'+(drv|coh|bu|ctl|donotdelete)+','i'))
-
 or (regexp_like (table_name,'+(subset)+','i')))
-
 and t.table_name like 'XDR%'
-
 and (t.owner in ('TTACORDA','CKD')
-
 or (t.owner = 'CTSI_RESEARCH'
-
 and lower(p.developer) in ('ehb','ttacorda','redcap2xdr')
-
 )
-
 )
-
 order by sqlq
-
 ;
 
 -- Drop according to own tables sorted by descending size
 
 select distinct 'drop table '
-
 || x.table_name
-
 || ' PURGE; --'
-
 || z.SIZE_MB
-
 || ' | ' || x.developer
-
 || ' | ' || x.investigator
-
 || ' | ' || x.irb
-
 || ' | ' || x.description
-
 sqlq
-
 ,z.SIZE_MB
-
 from (select distinct to_number(substr(t.table_name,5,6)) project_id
-
 ,t.owner || '.' || t.table_name table_name
-
 ,t.table_name table_name_pre
-
 ,p.developer
-
 ,p.investigator
-
 ,p.irb
-
 ,p.description
-
 from all_tables t
-
 join i2b2.bip_project p on to_number(substr(t.table_name,5,6)) = p.project_id
-
 where t.owner = 'CTSI_RESEARCH'
-
 and substr(t.table_name,1,4) = 'XDR_'
-
 and LENGTH(TRIM(TRANSLATE(substr(t.table_name,5,6), '+-.0123456789',' '))) is null
-
 ) x
-
 join (SELECT OBJECT_NAME, OBJECT_TYPE, IOT_TYPE, SEGMENT_NAME, (NVL(KB, 0) + NVL(KBIOT, 0)) /1024 AS SIZE_MB
-
 FROM
-
 (
-
 SELECT do.object_name, do.object_type, DT.IOT_TYPE,
-
 case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 DS_IOT.SEGMENT_NAME
-
 ELSE DS.SEGMENT_NAME
-
 END AS SEGMENT_NAME
-
 , case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 CONS.INDEX_NAME
-
 ELSE NULL
-
 END AS IOT_INDEX_NAME,
-
 sum(DS.bytes)/1024 KB,
-
 sum( case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 DS_IOT.bytes/1024
-
 else null end)
-
 as KBIOT
-
 FROM dba_objects do
-
 LEFT OUTER JOIN DBA_segments DS
-
 ON do.object_name = DS.segment_name
-
 AND DO.OWNER = DS.OWNER
-
 LEFT OUTER JOIN DBA_TABLES DT
-
 ON DO.OBJECT_NAME = DT.TABLE_NAME
-
 AND DO.OWNER = DT.OWNER
-
 LEFT OUTER JOIN all_constraints cons
-
 ON CONS.OWNER = DT.OWNER
-
 AND cons.table_name = DT.table_name
-
 AND cons.constraint_type = 'P'
-
 LEFT OUTER JOIN DBA_segments DS_IOT
-
 ON CONS.INDEX_NAME = DS_IOT.segment_name
-
 AND DS_IOT.OWNER = CONS.OWNER
-
 where do.owner = 'CTSI_RESEARCH'
-
 AND do.object_type = 'TABLE'
-
 and do.object_name like 'XDR%'
-
 group by do.object_name, do.object_type, DT.IOT_TYPE,
-
 case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 DS_IOT.SEGMENT_NAME
-
 ELSE DS.SEGMENT_NAME
-
 END
-
 , case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 CONS.INDEX_NAME
-
 ELSE NULL
-
 END
-
 )
-
 ) z on x.table_name_pre = z.object_name
-
 where x.developer in ('TTACORDA','eHB')
-
 and not regexp_like(x.table_name,'+(coh|drv)+','i')
-
 order by z.SIZE_MB desc --sqlq
-
 ;
 
 -------------------------------------------------------------------------------
@@ -1557,129 +1475,71 @@ order by z.SIZE_MB desc --sqlq
 -- ...for specific users
 
 SELECT (sum(bytes)/1024/1024)*0.0010 as gb_size
-
 FROM user_segments us
-
 JOIN all_tables t ON us.segment_name = t.table_name
-
 left join i2b2.bip_project p on substr(t.table_name,5,6) = to_char(p.project_id)
-
 WHERE (t.owner in ('TTACORDA','CKD')
-
 or (t.owner = 'CTSI_RESEARCH'
-
 and lower(p.developer) in ('ehb','ttacorda')
-
 and p.project_id is not null
-
 )
-
 )
-
 ;
 
 -- ...for specific schemas
 
 SELECT (sum(bytes)/1024/1024)*0.0010 as gb_size --start: 259.60275 end: 244.0289375
-
 FROM user_segments us
-
 JOIN all_tables t ON us.segment_name = t.table_name
-
 WHERE t.owner = 'CTSI_RESEARCH'
-
 ;
 
 -- ...for my tables by size
 
 SELECT OBJECT_NAME, OBJECT_TYPE, IOT_TYPE, SEGMENT_NAME, (NVL(KB, 0) + NVL(KBIOT, 0)) /1024 AS SIZE_MB
-
 FROM
-
 (
-
 SELECT do.object_name, do.object_type, DT.IOT_TYPE,
-
 case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 DS_IOT.SEGMENT_NAME
-
 ELSE DS.SEGMENT_NAME
-
 END AS SEGMENT_NAME
-
 , case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 CONS.INDEX_NAME
-
 ELSE NULL
-
 END AS IOT_INDEX_NAME,
-
 sum(DS.bytes)/1024 KB,
-
 sum( case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 DS_IOT.bytes/1024
-
 else null end)
-
 as KBIOT
-
 FROM dba_objects do
-
 LEFT OUTER JOIN DBA_segments DS
-
 ON do.object_name = DS.segment_name
-
 AND DO.OWNER = DS.OWNER
-
 LEFT OUTER JOIN DBA_TABLES DT
-
 ON DO.OBJECT_NAME = DT.TABLE_NAME
-
 AND DO.OWNER = DT.OWNER
-
 LEFT OUTER JOIN all_constraints cons
-
 ON CONS.OWNER = DT.OWNER
-
 AND cons.table_name = DT.table_name
-
 AND cons.constraint_type = 'P'
-
 LEFT OUTER JOIN DBA_segments DS_IOT
-
 ON CONS.INDEX_NAME = DS_IOT.segment_name
-
 AND DS_IOT.OWNER = CONS.OWNER
-
 where do.owner = 'TTACORDA'
-
 AND do.object_type = 'TABLE'
-
 group by do.object_name, do.object_type, DT.IOT_TYPE,
-
 case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 DS_IOT.SEGMENT_NAME
-
 ELSE DS.SEGMENT_NAME
-
 END
-
 , case when DT.IOT_TYPE LIKE 'IOT%' THEN
-
 CONS.INDEX_NAME
-
 ELSE NULL
-
 END
-
 )
-
 ORDER BY OBJECT_NAME
-
 ;
 
 -------------------------------------------------------------------------------
@@ -1689,19 +1549,12 @@ ORDER BY OBJECT_NAME
 -------------------------------------------------------------------------------
 
 SELECT case
-
 when regexp_like(ord_value,'+(\\.\\.)+','i') then ord_value
-
 when LENGTH(TRIM(TRANSLATE(ord_value, '+-.0123456789',' '))) is null then 'value is numeric: ' || ord_value
-
 else ord_value
-
 end value_is_numeric
-
 FROM i2b2.lz_clarity_labs
-
 where rownum <= 1000
-
 ;
 
 -------------------------------------------------------------------------------
@@ -1711,9 +1564,7 @@ where rownum <= 1000
 -------------------------------------------------------------------------------
 
 SELECT VIEW_NAME, TEXT
-
 FROM all_VIEWS
-
 where view_name = 'V_NOTES_ROUTED';
 
 -------------------------------------------------------------------------------
@@ -1739,53 +1590,29 @@ ANALYZE TABLE i2b2.bip_project VALIDATE STRUCTURE CASCADE;
 -------------------------------------------------------------------------------
 
 SELECT distinct s.SID
-
-,s.serial#
-
-,s.username
-
-,s.osuser
-
-,program
-
-,s.status
-
-,s.sql_exec_start
-
-,sa.rows_processed --will not change if query is hung up or in waiting status
-
-,coalesce(sa.sql_text,sq.sql_text)
-
-,s.sql_id
-
-,s.inst_id
-
-,s.event
-
-,s.logon_time
-
-,sa.cpu_time
-
-,sa.elapsed_time
-
-,sa.runtime_mem
-
+   ,s.serial#
+   ,s.username
+   ,s.osuser
+   ,program
+   ,s.status
+   ,s.sql_exec_start
+   ,sa.rows_processed --will not change if query is hung up or in waiting status
+   ,coalesce(sa.sql_text,sq.sql_text)
+   ,s.sql_id
+   ,s.inst_id
+   ,s.event
+   ,s.logon_time
+   ,sa.cpu_time
+   ,sa.elapsed_time
+   ,sa.runtime_mem
 FROM gv$session s
-
 LEFT JOIN v$sqlarea sa ON s.sql_id = sa.sql_id
-
 LEFT JOIN gv$sql sq ON s.sql_id = sq.sql_id
-
 WHERE s.username IN ('TTACORDA','CKD','CTSI_RESEARCH')
-
 AND program in ('SQL Developer','sqlplus.exe')
-
 and s.osuser = 'TheonaT1'
-
 ORDER BY program desc, status, username DESC
-
 ,sql_exec_start
-
 ;
 
 -------------------------------------------------------------------------------
@@ -1795,13 +1622,9 @@ ORDER BY program desc, status, username DESC
 -------------------------------------------------------------------------------
 
 select a.sid, a.serial #
-
 from v$session a, v$locked_object b, dba_objects c
-
 where b.object_id = c.object_id
-
 and a.sid = b.session_id
-
 and OBJECT_NAME='LZ_CLARITY_PATIENT';
 
 -------------------------------------------------------------------------------
@@ -1813,35 +1636,24 @@ and OBJECT_NAME='LZ_CLARITY_PATIENT';
 -- Revoke
 
 select
-
 'revoke all privileges ON ' || A.OWNER || '.' || A.TABLE_NAME || ' from CTSI_RESEARCH;'
 
 ScriptIt
 
 FROM ALL_TABLES A
-
 where a.owner = 'I2B2'
-
 and lower(a.table_name) like 'lz_clarity%'
-
 order by a.table_name
-
 ;
 
 -- Grant
 
 SELECT
-
 'GRANT SELECT, INSERT, UPDATE, DELETE ON ' || A.OWNER || '.' || A.TABLE_NAME || ' TO CTSI_RESEARCH WITH GRANT OPTION;'
-
 ScriptIt
-
 FROM ALL_TABLES A
-
 WHERE A.OWNER = 'I2B2'
-
 order by a.table_name
-
 ;
 
 -------------------------------------------------------------------------------
@@ -1851,69 +1663,42 @@ order by a.table_name
 -------------------------------------------------------------------------------
 
 select table_name --35 rows found
-
 from all_tables
-
 where owner = 'RFOLLETT'
-
 and length(table_name) > 26
-
 ;
 
 select table_name, length(table_name) len --22 rows found, but max len=26
-
 from all_tables
-
 where owner = 'RFOLLETT'
-
 and substr(table_name,1,4) <> 'XDR_'
-
 order by len desc
-
 ;
 
 select distinct 'create table ctsi_research.'
-
 || case
-
 when table_name like 'XDR%' then regexp_replace(table_name,'XDR_','RFX_',1,1)
-
 else table_name || '_RFX'
-
 end
-
 || ' as select * from rfollett.'
-
 || table_name
-
 || ';'
 
 cr
-
 from all_tables
-
 where owner = 'RFOLLETT'
-
 order by cr
-
 ;
 
 -- run this, then export to a text file...
 
 select case
-
 when line = 1 then 'create or replace ' || text
-
 else text
-
 end
-
 from all_source
-
 where owner = 'RFOLLETT'
-
 order by name, type, line
-
 ;
 
 -------------------------------------------------------------------------------
@@ -1950,103 +1735,56 @@ CTSI_RESEARCH.PKG_COVID_ETL_REDCAP.covid_redcap_amb_covid_labs
 CREATE TABLE XDR_prinv_ce_docs as
 
 select DISTINCT COH.PAT_ID
-
-,doc.DOC_SOURCE_ORG_ID as organization_id
-
-,org.organization_name
-
-,DOC.DOCUMENT_ID
-
-,info.RESULT_INST_CMP_DTTM
-
-,info.RES_PROC_CMP_ID -- this has been empty in my experience
-
-,info.RES_PROC_NAME_CMP
-
-,info.RESULT_KEY_CMP
-
---,eap.PROC_NAME
-
---,eap.proc_code
-
+   ,doc.DOC_SOURCE_ORG_ID as organization_id
+   ,org.organization_name
+   ,DOC.DOCUMENT_ID
+   ,info.RESULT_INST_CMP_DTTM
+   ,info.RES_PROC_CMP_ID -- this has been empty in my experience
+   ,info.RES_PROC_NAME_CMP
+   ,info.RESULT_KEY_CMP
+   --,eap.PROC_NAME
+   --,eap.proc_code
 from xdr_prinv_coh coh
-
 JOIN DOCS_RCVD doc ON coh.PAT_ID = doc.PAT_ID
-
 join DOCS_RCVD_RES_INFO info ON doc.DOCUMENT_ID = info.DOCUMENT_ID
-
 join ORG_DETAILS org on doc.DOC_SOURCE_ORG_ID = org.ORGANIZATION_ID
-
 --driver can be used here, or in some of other steps, since you might need to run this first without restrictions and run it by the PI
-
 --join xdr_prinv_CEdrv DRV ON info.RES_PROC_NAME_CMP = drv.RES_PROC_NAME_CMP
-
 -- and org.organization_id= drv.organization_id
-
 --There doesn't seem to be data to match here but just in case
-
 --left join CLARITY_EAP eap ON info.RES_PROC_CMP_ID = eap.PROC_ID --RES_PROC_CMP_ID is null, therefore it can't be match to clarity_EAP
-
 WHERE
-
 --Pull labs only
-
 (doc.TYPE_C = 8 --Lab Results
-
 or
-
 doc.DOC_CONTENT_TYPE_C = 8);
-
 ------------------------------------------------
-
 -- Create final table with all CE labs documents
-
 -- by adding the component name and the results, and applying the driver
-
 -- if it hasn't been applied yet
-
 -- (note: when I tried these two steps into one, performance was terrible)
-
 ------------------------------------------------
 
 CREATE TABLE XDR_prinv_ce_labs as
 
 select distinct doc.PAT_ID
-
-,doc.organization_id
-
-,doc.organization_name
-
-,DOC.DOCUMENT_ID
-
-,doc.RESULT_INST_CMP_DTTM
-
---,doc.RES_PROC_CMP_ID -- this has been empty in my experience
-
-,doc.RES_PROC_NAME_CMP
-
-,doc.RESULT_KEY_CMP
-
-,res.RES_COMP_LOINC_CMP -- this has been empty in my experience
-
-,res.RES_COMP_NAME_CMP
-
-,res.RES_VAL_COMP
-
+   ,doc.organization_id
+   ,doc.organization_name
+   ,DOC.DOCUMENT_ID
+   ,doc.RESULT_INST_CMP_DTTM
+   --,doc.RES_PROC_CMP_ID -- this has been empty in my experience
+   ,doc.RES_PROC_NAME_CMP
+   ,doc.RESULT_KEY_CMP
+   ,res.RES_COMP_LOINC_CMP -- this has been empty in my experience
+   ,res.RES_COMP_NAME_CMP
+   ,res.RES_VAL_COMP
 from XDR_prinv_ce_docs doc
-
 JOIN DOCS_RCVD_RES_COMP res on doc.document_id = res.document_id
-
 --driver can be used here, or in some of other steps, since you might need to run this first without restrictions and run it by the PI
-
 --join xdr_prinv_CEdrv DRV ON doc.RES_PROC_NAME_CMP = drv.RES_PROC_NAME_CMP
-
 and res.RES_COMP_NAME_CMP = drv.RES_COMP_NAME_CMP
-
 and doc.organization_id = drv.organization_id
-
 where res.RES_COMP_STAT_CMP_C = 4 --4 - completed
-
 ;
 
 ------------------------------------------------
@@ -2056,35 +1794,20 @@ where res.RES_COMP_STAT_CMP_C = 4 --4 - completed
 ------------------------------------------------
 
 CREATE TABLE xdr_prinv_CEdrv AS
-
 SELECT organization_id
-
-,organization_name
-
-,RES_PROC_CMP_ID
-
-,RES_PROC_NAME_CMP
-
-,RES_PROC_CMP_ID
-
-,RES_PROC_NAME_CMP
-
+   ,organization_name
+   ,RES_PROC_CMP_ID
+   ,RES_PROC_NAME_CMP
+   ,RES_PROC_CMP_ID
+   ,RES_PROC_NAME_CMP
 FROM XDR_prinv_ce_docs
-
 ,COUNT(*)
-
 GROUP BY organization_id
-
 ,organization_name
-
 ,RES_PROC_CMP_ID
-
 ,RES_PROC_NAME_CMP
-
 ,RES_PROC_CMP_ID
-
 ,RES_PROC_NAME_CMP
-
 ;
 
 ------------------------------------------------
@@ -2098,29 +1821,17 @@ GROUP BY organization_id
 ------------------------------------------------
 
 SELECT PAT_ID
-
 --,DOCUMENT_ID
-
-,organization_name
-
-,RESULT_INST_CMP_DTTM AS RESULT_TIME
-
-,RES_PROC_NAME_CMP AS PROC_NAME
-
-,RES_COMP_NAME_CMP AS COMPONENT_NAME
-
-,RES_VAL_COMP AS RESULTS
-
+   ,organization_name
+   ,RESULT_INST_CMP_DTTM AS RESULT_TIME
+   ,RES_PROC_NAME_CMP AS PROC_NAME
+   ,RES_COMP_NAME_CMP AS COMPONENT_NAME
+   ,RES_VAL_COMP AS RESULTS
 FROM XDR_prinv_ce_labs lab
-
 --apply driver selection
-
 join xdr_prinv_CEdrv DRV ON lab.RES_PROC_NAME_CMP = drv.RES_PROC_NAME_CMP
-
 and lab.RES_COMP_NAME_CMP = drv.RES_COMP_NAME_CMP
-
 and lab.organization_id = drv.organization_id
-
 ;
 ```
 # Occupation Information
@@ -2131,13 +1842,9 @@ The following code allows you to find a patient's occupation information (patien
 
 ```sq;
 SELECT DISTINCT pat.pat_id
-
 ,pt3.OCCUPATION
-
 FROM xdr_prinv_pat coh
-
 left join PATIENT_3 pt3 ON pat.pat_id = pt4.pat_id
-
 ;
 
 # Health Maintenance Topics
@@ -2151,81 +1858,49 @@ Below is walkthrough of a case to look for Colonoscopy screenings
 /*******************************************
 
 Look up the topic name that you need
-
 and use HM_topic_id in the next query
-
 to identify your topic
 
 *******************************************/
 
 select *
-
 from CLARITY_HM_TOPIC;
 
 /*******************************************
 
 Plug the value from the previous step in QUALIFIED_HMT_ID
-
 in the script below to obtain the most recent status for this topic
-
 Modifier: By modifying the join, you can use a given date
-
 and time threshold to look back at previous instances
-
 (the QUALIFIED_HMT_ID below -7770000132-
-
 pulls Colonoscopy preventive screening
-
 status \[HMT_DUE_STATUS_C\]
-
 within 90 days of a date given by the PI \[date_1\])
 
 *******************************************/
 
 SELECT X.pat_id
-
-,x.period
-
-,x.extract_date
-
-,x.IDEAL_RETURN_DT
-
-,x.due_status
-
-FROM (
-
-select distinct coh.pat_id
-
-,'date_1' as period
-
---,coh.date_2
-
-,hm.extract_date
-
-,hm.TOPIC_NAME
-
-,hm.IDEAL_RETURN_DT
-
-,zst.name as due_status
-
-,MAX(hm.extract_date) OVER (PARTITION BY coh.pat_id) AS latest_measure
-
+   ,x.period
+   ,x.extract_date
+   ,x.IDEAL_RETURN_DT
+   ,x.due_status
+   FROM (
+   select distinct coh.pat_id
+   ,'date_1' as period
+   --,coh.date_2
+   ,hm.extract_date
+   ,hm.TOPIC_NAME
+   ,hm.IDEAL_RETURN_DT
+   ,zst.name as due_status
+   ,MAX(hm.extract_date) OVER (PARTITION BY coh.pat_id) AS latest_measure
 from xdr_prinv_coh coh
-
 left JOIN F_HM_TREND hm ON coh.pat_id = hm.pat_id --and trunc(hm.extract_date) <= coh.date_1 + 90
-
 left join ZC_HMT_DUE_STATUS zst ON hm.HMT_DUE_STATUS_C = zst.HMT_DUE_STATUS_C
-
 where
-
 hm.QUALIFIED_HMT_ID = 770000132 --Colon Ca Screening: COLONOSCOPY
-
 -- 9 --Advanced Directive
-
 ) x
-
 WHERE x.extract_date = latest_measure
-
 ;
 ```
 ## Questionnaires and Answers
@@ -2236,49 +1911,27 @@ This code will pull questions and answers from MyChart questionnaires.
 
 ```sql
 select distinct coh.study_id
-
-,coh.study_csn
-
---pefa.pat_enc_csn_id
-
--- ,pefa.pat_id
-
-,pefa.qf_lqf_id as form_id
-
--- ,pefa.qf_hqa_id as answer_id
-
--- ,qf.form_name
-
-,qf.pat_frndly_name
-
--- ,cqa.quest_id
-
-,clqo.question
-
-,cqa.line as ans_line
-
-,quest_answer
-
-,question_instant as answer_time
-
+   ,coh.study_csn
+   --pefa.pat_enc_csn_id
+   -- ,pefa.pat_id
+   ,pefa.qf_lqf_id as form_id
+   -- ,pefa.qf_hqa_id as answer_id
+   -- ,qf.form_name
+   ,qf.pat_frndly_name
+   -- ,cqa.quest_id
+   ,clqo.question
+   ,cqa.line as ans_line
+   ,quest_answer
+   ,question_instant as answer_time
 from pat_enc_form_ans pefa
-
 ---- Can join on csn or pat_id
-
 join YOUR_COHORT coh on pefa.pat_enc_csn_id = coh.pat_enc_csn_id
-
 -- join YOUR_COHORT coh on pefa.pat_id = coh.pat_id
-
 join cl_qform qf on pefa.qf_lqf_id = qf.form_id
-
 join cl_qanswer_qa cqa on pefa.qf_hqa_id = cqa.answer_id
-
 --join cl_qquest cqq on cqa.quest_id = cqq.quest_id -- question name
-
 join cl_qquest_ovtm clqo on cqa.quest_id = clqo.quest_id -- question
-
 where pefa.qf_lqf_id not in (78002) --- Insurance qestionnaire
-
 order by coh.study_id, pefa.qf_lqf_id, cqa.line;
 
 # Address History (includes homeless)
