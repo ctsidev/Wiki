@@ -4,8 +4,8 @@
 *   [Calculate Time on a Ventilator](#Calculate-Time-on-a-Ventilator)
 *   [Health Maintenance Report](#Health-Maintenance-Report)
 *   [Orders for Inpatient Transfers](#Orders-for-Inpatient-Transfers)
-*   [BMT (Bone Marrow Transplant)]
-*   [MyChart Activity](#MyChartA)
+*   [BMT (Bone Marrow Transplant)](#)
+*   [MyChart Activity](#MyChart-Activity)
     *   [MyChart Session Information (from EPIC docu)](#MyChartS)
     *   [MyChart Patient Status](#MyChartP)
 *   [DEATH TABLE](#DEATH-TABLE)
