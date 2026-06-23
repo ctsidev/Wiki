@@ -69,27 +69,27 @@
 The following code identified the AD/POLST patient records from the scanned documents. It starts by creating a driver list, classifying it, pulling the scanned docs, and exporting them.
 
 ```sql
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/**************************************
 
 AD-POLST
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+***************************************/
 
-\-------------------------------------------
+-------------------------------------------
 
-\--Step 1: Create driver table for the AD/POLST doc types with final set of codes (use your own codes)
+--Step 1: Create driver table for the AD/POLST doc types with final set of codes (use your own codes)
 
-\-------------------------------------------
+-------------------------------------------
 
-DROP TABLE XDR\_MEHTA\_ADPOLST\_DOCTYPE PURGE;
+DROP TABLE XDR_MEHTA_ADPOLST_DOCTYPE PURGE;
 
-CREATE TABLE XDR\_MEHTA\_ADPOLST\_DOCTYPE AS
+CREATE TABLE XDR_MEHTA_ADPOLST_DOCTYPE AS
 
-SELECT \*
+SELECT *
 
-FROM ZC\_DOC\_INFO\_TYPE
+FROM ZC_DOC_INFO_TYPE
 
-where DOC\_INFO\_TYPE\_C in (
+where DOC_INFO_TYPE_C in (
 
 '11' -- Power of Attorney
 
@@ -103,23 +103,23 @@ where DOC\_INFO\_TYPE\_C in (
 
 );
 
-\-------------------------------------------
+-------------------------------------------
 
-\--Step 2: Classify documents into AD or POLST category
+--Step 2: Classify documents into AD or POLST category
 
-\-- Upon revision of your selection, your must group the different docs into these two categories
+-- Upon revision of your selection, your must group the different docs into these two categories
 
-\-------------------------------------------
+-------------------------------------------
 
-ALTER TABLE XDR\_MEHTA\_ADPOLST\_DOCTYPE ADD DOC\_GROUP VARCHAR2(10);
+ALTER TABLE XDR_MEHTA_ADPOLST_DOCTYPE ADD DOC_GROUP VARCHAR2(10);
 
-UPDATE XDR\_MEHTA\_ADPOLST\_DOCTYPE
+UPDATE XDR_MEHTA_ADPOLST_DOCTYPE
 
-SET DOC\_GROUP = 'POLST'
+SET DOC_GROUP = 'POLST'
 
 WHERE
 
-DOC\_INFO\_TYPE\_C IN ('200068' -- DNR (Do Not Resuscitate) Documentation
+DOC_INFO_TYPE_C IN ('200068' -- DNR (Do Not Resuscitate) Documentation
 
 ,'300058' -- POLST);
 
@@ -127,13 +127,13 @@ DOC\_INFO\_TYPE\_C IN ('200068' -- DNR (Do Not Resuscitate) Documentation
 
 COMMIT;
 
-UPDATE XDR\_MEHTA\_ADPOLST\_DOCTYPE
+UPDATE XDR_MEHTA_ADPOLST_DOCTYPE
 
-SET DOC\_GROUP = 'AD'
+SET DOC_GROUP = 'AD'
 
 WHERE
 
-DOC\_INFO\_TYPE\_C in (
+DOC_INFO_TYPE_C in (
 
 '11' -- Power of Attorney
 
@@ -145,77 +145,77 @@ DOC\_INFO\_TYPE\_C in (
 
 COMMIT;
 
-\-------------------------------------------
+-------------------------------------------
 
-\-- Step 3: Pull all scanned docs
+-- Step 3: Pull all scanned docs
 
-\--
+--
 
-\-------------------------------------------
+-------------------------------------------
 
-DROP TABLE xdr\_MEHTA\_scan\_docs PURGE;
+DROP TABLE xdr_MEHTA_scan_docs PURGE;
 
-CREATE TABLE xdr\_MEHTA\_scan\_docs AS
+CREATE TABLE xdr_MEHTA_scan_docs AS
 
-SELECT distinct coh.pat\_id
+SELECT distinct coh.pat_id
 
-,coh.study\_id
+,coh.study_id
 
-,bb.doc\_info\_id
+,bb.doc_info_id
 
-,bb.doc\_recv\_time
+,bb.doc_recv_time
 
-,bb.SCAN\_FILE
+,bb.SCAN_FILE
 
-,bt.name as doc\_type
+,bt.name as doc_type
 
-,BT.DOC\_GROUP
+,BT.DOC_GROUP
 
-FROM xdr\_MEHTA\_PAT COH
+FROM xdr_MEHTA_PAT COH
 
-join DOC\_INFORMATION BB on coh.PAT\_ID = BB.DOC\_PT\_ID
+join DOC_INFORMATION BB on coh.PAT_ID = BB.DOC_PT_ID
 
-join XDR\_MEHTA\_ADPOLST\_DOCTYPE BT on BB.DOC\_INFO\_TYPE\_C = BT.DOC\_INFO\_TYPE\_C
+join XDR_MEHTA_ADPOLST_DOCTYPE BT on BB.DOC_INFO_TYPE_C = BT.DOC_INFO_TYPE_C
 
 WHERE
 
-BB.IS\_SCANNED\_YN = 'Y'
+BB.IS_SCANNED_YN = 'Y'
 
-\--and bb.doc\_recv\_time between sysdate - (365.25 \*3 ) AND sysdate --(last three years);
+--and bb.doc_recv_time between sysdate - (365.25 *3 ) AND sysdate --(last three years);
 
-\-- We noticed that in the case of AD/POLST documents, there were instances where the docs had been deleted
+-- We noticed that in the case of AD/POLST documents, there were instances where the docs had been deleted
 
-and (bb.RECORD\_STATE\_C <> 2 OR bb.RECORD\_STATE\_C IS NULL)-- Deleted
+and (bb.RECORD_STATE_C <> 2 OR bb.RECORD_STATE_C IS NULL)-- Deleted
 
-and (bb.DOC\_STAT\_C <> 35 OR bb.DOC\_STAT\_C IS NULL)-- Error
+and (bb.DOC_STAT_C <> 35 OR bb.DOC_STAT_C IS NULL)-- Error
 
-and bb.DOC\_REVOK\_DT is null
+and bb.DOC_REVOK_DT is null
 
-\-- and bb.DOC\_EXPIR\_TIME is null
+-- and bb.DOC_EXPIR_TIME is null
 
 ;
 
-SELECT COUNT(\*), COUNT(DISTINCT PAT\_ID) FROM xdr\_MEHTA\_scan\_docs;--179 110
+SELECT COUNT(*), COUNT(DISTINCT PAT_ID) FROM xdr_MEHTA_scan_docs;--179 110
 
-\-------------------------------------------
+-------------------------------------------
 
-\-- Step 4: Export
+-- Step 4: Export
 
-\--
+--
 
-\-------------------------------------------
+-------------------------------------------
 
-SELECT DISTINCT PAT\_ID
+SELECT DISTINCT PAT_ID
 
-,STUDY\_ID
+,STUDY_ID
 
-,doc\_recv\_time
+,doc_recv_time
 
-,DOC\_GROUP
+,DOC_GROUP
 
-FROM xdr\_MEHTA\_scan\_docs
+FROM xdr_MEHTA_scan_docs
 
-WHERE doc\_recv\_time IS NOT NULL ;
+WHERE doc_recv_time IS NOT NULL ;
 ```
 ## Calculate Time on a Ventilator
 
@@ -226,189 +226,189 @@ This code will show you how to calculate ventilator time in days for a hospital 
 The official method and MS SQL code sample is kept in Collibra here: [https://uclahealth.collibra.com/asset/cf559613-9b4d-4e73-831a-9429d41d83ef](https://uclahealth.collibra.com/asset/cf559613-9b4d-4e73-831a-9429d41d83ef)
 
 ```sql
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/************************************************************************************************************************
 
 For Ventilator data, restrict to Airway LDAs
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+************************************************************************************************************************/
 
-create table xdr\_PROJECT\_airway\_ids as
+create table xdr_PROJECT_airway_ids as
 
 SELECT t.ID,
 
-t.CONTACT\_DATE\_REAL,
+t.CONTACT_DATE_REAL,
 
-gp.FLO\_MEAS\_NAME as LDA\_NAME
+gp.FLO_MEAS_NAME as LDA_NAME
 
-FROM IP\_FLO\_LDA\_TYPES t
+FROM IP_FLO_LDA_TYPES t
 
-JOIN IP\_FLO\_GP\_DATA gp ON t.ID = gp.FLO\_MEAS\_ID
+JOIN IP_FLO_GP_DATA gp ON t.ID = gp.FLO_MEAS_ID
 
-WHERE t.LDA\_TYPE\_OT\_C = '11'; -- per Vihn Wells, validated by Dr. Neil Parikh
+WHERE t.LDA_TYPE_OT_C = '11'; -- per Vihn Wells, validated by Dr. Neil Parikh
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/************************************************************************************************************************
 
 Get all Airway LDAs associated with discharged inpatient encounters
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+************************************************************************************************************************/
 
-drop table xdr\_PROJECT\_airways purge;
+drop table xdr_PROJECT_airways purge;
 
-create table xdr\_PROJECT\_airways as
+create table xdr_PROJECT_airways as
 
-SELECT ip\_patient\_id
+SELECT ip_patient_id
 
-,ip\_enc\_id
+,ip_enc_id
 
-,enc.pat\_enc\_csn\_id
+,enc.pat_enc_csn_id
 
-,clenc.inpatient\_data\_id
+,clenc.inpatient_data_id
 
 ,florow.LINE
 
-,lda.IP\_LDA\_ID
+,lda.IP_LDA_ID
 
-,lda.FLO\_MEAS\_ID as LDA\_FLO\_MEAS\_ID
+,lda.FLO_MEAS_ID as LDA_FLO_MEAS_ID
 
-,lda.PLACEMENT\_INSTANT
+,lda.PLACEMENT_INSTANT
 
-,lda.REMOVAL\_DTTM
+,lda.REMOVAL_DTTM
 
-,air.LDA\_NAME
+,air.LDA_NAME
 
-,enc.hosp\_admsn\_time
+,enc.hosp_admsn_time
 
-,enc.hosp\_dischrg\_time
+,enc.hosp_dischrg_time
 
-FROM xdr\_PROJECT\_enc enc
+FROM xdr_PROJECT_enc enc
 
-join i2b2.lz\_clarity\_enc clenc on enc.pat\_enc\_csn\_id = clenc.pat\_enc\_csn\_id
+join i2b2.lz_clarity_enc clenc on enc.pat_enc_csn_id = clenc.pat_enc_csn_id
 
-JOIN IP\_FLOWSHEET\_ROWS florow ON clenc.Inpatient\_Data\_ID = florow.INPATIENT\_DATA\_ID
+JOIN IP_FLOWSHEET_ROWS florow ON clenc.Inpatient_Data_ID = florow.INPATIENT_DATA_ID
 
-AND florow.IP\_LDA\_ID IS NOT NULL
+AND florow.IP_LDA_ID IS NOT NULL
 
-JOIN IP\_LDA\_NOADDSINGLE lda ON florow.IP\_LDA\_ID = lda.IP\_LDA\_ID
+JOIN IP_LDA_NOADDSINGLE lda ON florow.IP_LDA_ID = lda.IP_LDA_ID
 
-JOIN xdr\_PROJECT\_airway\_ids air ON lda.FLO\_MEAS\_ID = air.ID
+JOIN xdr_PROJECT_airway_ids air ON lda.FLO_MEAS_ID = air.ID
 
-AND lda.LDA\_GROUP\_CDR = air.CONTACT\_DATE\_REAL
+AND lda.LDA_GROUP_CDR = air.CONTACT_DATE_REAL
 
 ;
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/************************************************************************************************************************
 
 Because Placement and Removal data is unreliable (manual entry), pull RecordedTime from assessment rows
 
-\- exclude LDAs with no assessment rows during the discharge encounter
+- exclude LDAs with no assessment rows during the discharge encounter
 
-\- exclude assessment rows with RecordedTime before admission or after discharge
+- exclude assessment rows with RecordedTime before admission or after discharge
 
-\- exclude assessment rows before Placement, when that is documented
+- exclude assessment rows before Placement, when that is documented
 
-\- exclude assessment rows after Removal, when that is documented
+- exclude assessment rows after Removal, when that is documented
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+************************************************************************************************************************/
 
-create table xdr\_PROJECT\_air\_meas as
+create table xdr_PROJECT_air_meas as
 
-SELECT ip\_patient\_id,
+SELECT ip_patient_id,
 
-ip\_enc\_id,
+ip_enc_id,
 
-hosp\_admsn\_time,
+hosp_admsn_time,
 
-hosp\_dischrg\_time,
+hosp_dischrg_time,
 
-ldarows.LDA\_FLO\_MEAS\_ID,
+ldarows.LDA_FLO_MEAS_ID,
 
-ldarows.LDA\_NAME,
+ldarows.LDA_NAME,
 
-ldarows.IP\_LDA\_ID,
+ldarows.IP_LDA_ID,
 
-ldarows.PLACEMENT\_INSTANT,
+ldarows.PLACEMENT_INSTANT,
 
-ldarows.REMOVAL\_DTTM,
+ldarows.REMOVAL_DTTM,
 
-ldarows.INPATIENT\_DATA\_ID,
+ldarows.INPATIENT_DATA_ID,
 
 ldarows.LINE as RowLine,
 
-flwrec.FSD\_ID,
+flwrec.FSD_ID,
 
 meas.LINE,
 
-meas.FLO\_MEAS\_ID,
+meas.FLO_MEAS_ID,
 
-meas.RECORDED\_TIME,
+meas.RECORDED_TIME,
 
-meas.MEAS\_VALUE
+meas.MEAS_VALUE
 
-FROM XDR\_PROJECT\_AIRWAYS ldarows
+FROM XDR_PROJECT_AIRWAYS ldarows
 
-JOIN IP\_FLWSHT\_REC flwrec ON ldarows.INPATIENT\_DATA\_ID = flwrec.INPATIENT\_DATA\_ID
+JOIN IP_FLWSHT_REC flwrec ON ldarows.INPATIENT_DATA_ID = flwrec.INPATIENT_DATA_ID
 
-JOIN IP\_FLWSHT\_MEAS meas ON flwrec.FSD\_ID = meas.FSD\_ID
+JOIN IP_FLWSHT_MEAS meas ON flwrec.FSD_ID = meas.FSD_ID
 
 AND ldarows.LINE = meas.OCCURANCE
 
-AND meas.MEAS\_VALUE IS NOT NULL
+AND meas.MEAS_VALUE IS NOT NULL
 
 WHERE
 
-( meas.RECORDED\_TIME >= ldarows.hosp\_admsn\_time )
+( meas.RECORDED_TIME >= ldarows.hosp_admsn_time )
 
-AND ( ldarows.hosp\_dischrg\_time IS NULL OR meas.RECORDED\_TIME <= ldarows.hosp\_dischrg\_time )
+AND ( ldarows.hosp_dischrg_time IS NULL OR meas.RECORDED_TIME <= ldarows.hosp_dischrg_time )
 
-AND ( ldarows.PLACEMENT\_INSTANT IS NULL OR meas.RECORDED\_TIME >= ldarows.PLACEMENT\_INSTANT )
+AND ( ldarows.PLACEMENT_INSTANT IS NULL OR meas.RECORDED_TIME >= ldarows.PLACEMENT_INSTANT )
 
-AND ( ldarows.REMOVAL\_DTTM IS NULL OR meas.RECORDED\_TIME <= ldarows.REMOVAL\_DTTM );
+AND ( ldarows.REMOVAL_DTTM IS NULL OR meas.RECORDED_TIME <= ldarows.REMOVAL_DTTM );
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/************************************************************************************************************************
 
 Calculate time for each Airway LDA
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+************************************************************************************************************************/
 
-create table xdr\_PROJECT\_ventminmax as
+create table xdr_PROJECT_ventminmax as
 
-SELECT ip\_enc\_id, IP\_LDA\_ID,
+SELECT ip_enc_id, IP_LDA_ID,
 
-MIN (hosp\_admsn\_time) as HospitalAdmission,
+MIN (hosp_admsn_time) as HospitalAdmission,
 
-MAX (hosp\_dischrg\_time) as HospitalDischarge,
+MAX (hosp_dischrg_time) as HospitalDischarge,
 
-MIN (PLACEMENT\_INSTANT) as PlacementTime,
+MIN (PLACEMENT_INSTANT) as PlacementTime,
 
-MAX (REMOVAL\_DTTM) as RemovalTime,
+MAX (REMOVAL_DTTM) as RemovalTime,
 
-MIN (RECORDED\_TIME) as MinRecorded,
+MIN (RECORDED_TIME) as MinRecorded,
 
-MAX (RECORDED\_TIME) as MaxRecorded
+MAX (RECORDED_TIME) as MaxRecorded
 
-FROM xdr\_PROJECT\_air\_meas
+FROM xdr_PROJECT_air_meas
 
-GROUP BY ip\_enc\_id, IP\_LDA\_ID;
+GROUP BY ip_enc_id, IP_LDA_ID;
 
-drop table xdr\_PROJECT\_venttime purge;
+drop table xdr_PROJECT_venttime purge;
 
-create table xdr\_PROJECT\_venttime as
+create table xdr_PROJECT_venttime as
 
-select ip\_enc\_id,
+select ip_enc_id,
 
-round(sum(airwaydays),1) as total\_vent\_days
+round(sum(airwaydays),1) as total_vent_days
 
 from (
 
-SELECT ip\_enc\_id,
+SELECT ip_enc_id,
 
-IP\_LDA\_ID,
+IP_LDA_ID,
 
 MaxTimePerLDA - MinTimePerLDA as AirwayDays
 
 FROM (
 
-SELECT v.\*,
+SELECT v.*,
 
 CASE
 
@@ -434,64 +434,64 @@ ELSE MaxRecorded
 
 END as MaxTimePerLDA
 
-FROM xdr\_PROJECT\_ventminmax v
+FROM xdr_PROJECT_ventminmax v
 
 ) x)
 
 y
 
-group by ip\_enc\_id;
+group by ip_enc_id;
 
-select \* from XDR\_PROJECT\_VENTTIME;
+select * from XDR_PROJECT_VENTTIME;
 ```
 ## Health Maintenance Report
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 6/26/19)
 
-This code allows to access historical data from the Health Maintenance Report. We just have to use the date given by the PI in reference to the extract\_date in the hm report, and use the last entry to find the corresponding the status and IDEAL\_RETURN\_DT each time.
+This code allows to access historical data from the Health Maintenance Report. We just have to use the date given by the PI in reference to the extract_date in the hm report, and use the last entry to find the corresponding the status and IDEAL_RETURN_DT each time.
 
 Example: We must apply the selection for Colonoscopy screening:
 
 Galaxy link: [https://datahandbook.epic.com/Reports/Details/1239812?rank=1&queryid=63476074&docid=87831](https://datahandbook.epic.com/Reports/Details/1239812?rank=1&queryid=63476074&docid=87831)
 ```sql
-**Table**: **F\_HM\_TREND**, The fact table is a derived table that stores Health Maintenance information.  
+**Table**: **F_HM_TREND**, The fact table is a derived table that stores Health Maintenance information.  
 This table is intended to take monthly snapshots to allow overtime trending on Health Maintenance topic data.  
 Will allow for facility, department and provider level reports. This is an append-only table that does not make  
-use of Start or End dates. [https://datahandbook.epic.com/ClarityDictionary/Details?tblName=F\_HM\_TREND](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=F_HM_TREND)
+use of Start or End dates. [https://datahandbook.epic.com/ClarityDictionary/Details?tblName=F_HM_TREND](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=F_HM_TREND)
 
 ##### **Health Maintenance Report**
 
-\-- The cohort table includes a reference date to use when pulling the health maintenance at a particular point in time
+-- The cohort table includes a reference date to use when pulling the health maintenance at a particular point in time
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-,coh.reference\_date
+,coh.reference_date
 
-,hm.extract\_date
+,hm.extract_date
 
-,hm.TOPIC\_NAME
+,hm.TOPIC_NAME
 
-,hm.IDEAL\_RETURN\_DT
+,hm.IDEAL_RETURN_DT
 
-,zst.name as due\_status\_dt1
+,zst.name as due_status_dt1
 
-,MAX(hm.extract\_date) OVER (PARTITION BY coh.pat\_id) AS latest\_measure
+,MAX(hm.extract_date) OVER (PARTITION BY coh.pat_id) AS latest_measure
 
-from xdr\_prinv\_coh coh
+from xdr_prinv_coh coh
 
-left JOIN F\_HM\_TREND hm ON coh.pat\_id = hm.pat\_id and trunc(hm.extract\_date) <= coh.date\_1
+left JOIN F_HM_TREND hm ON coh.pat_id = hm.pat_id and trunc(hm.extract_date) <= coh.date_1
 
-left join ZC\_HMT\_DUE\_STATUS zst ON hm.HMT\_DUE\_STATUS\_C = zst.HMT\_DUE\_STATUS\_C
+left join ZC_HMT_DUE_STATUS zst ON hm.HMT_DUE_STATUS_C = zst.HMT_DUE_STATUS_C
 
 where
 
-hm.QUALIFIED\_HMT\_ID = 7770000132 --Colon Ca Screening: COLONOSCOPY
+hm.QUALIFIED_HMT_ID = 7770000132 --Colon Ca Screening: COLONOSCOPY
 
 ) x
 
-WHERE x.extract\_date = latest\_measure
+WHERE x.extract_date = latest_measure
 
-) dt1 on coh.pat\_id = dt1.pat\_id;
+) dt1 on coh.pat_id = dt1.pat_id;
 
 # Orders for Inpatient Transfers
 
@@ -501,63 +501,63 @@ This code will pull orders to admit a patient into the hospital.
 
 ##### **Inpatient Orders**
 
-select op.pat\_id,
+select op.pat_id,
 
-          op.pat\_enc\_csn\_id,
+          op.pat_enc_csn_id,
 
-          admit\_ser.prov\_name as admit\_prov\_name,
+          admit_ser.prov_name as admit_prov_name,
 
-          op.order\_time,
+          op.order_time,
 
-          op.display\_name,
+          op.display_name,
 
-          auth\_ser.prov\_name as auth\_prov\_name,
+          auth_ser.prov_name as auth_prov_name,
 
-          op.proc\_id,
+          op.proc_id,
 
-          op.ORD\_CREATR\_USER\_ID
+          op.ORD_CREATR_USER_ID
 
-from order\_proc op
+from order_proc op
 
-join clarity\_eap eap on op.proc\_id = eap.proc\_id
+join clarity_eap eap on op.proc_id = eap.proc_id
 
-join clarity\_ser admit\_ser on op.ORD\_CREATR\_USER\_ID = admit\_ser.user\_id
+join clarity_ser admit_ser on op.ORD_CREATR_USER_ID = admit_ser.user_id
 
-join clarity\_ser auth\_ser on op.authrzing\_prov\_id = auth\_ser.prov\_id
+join clarity_ser auth_ser on op.authrzing_prov_id = auth_ser.prov_id
 
-where op.proc\_id in (263, 327411, 327400,721947) -- Admit to IP
+where op.proc_id in (263, 327411, 327400,721947) -- Admit to IP
 
-and op.order\_status\_c = 5
+and op.order_status_c = 5
 
-order by op.pat\_id, op.order\_time;
+order by op.pat_id, op.order_time;
 ```
 # BMT: Bone Marrow Transplant
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 7/10/19)
 
-I have found some resources on how to find information for Bone Marrow Transplants. Since it's not one of the types in \[**TX\_CLASS\_C**\], the key is to use \[**SUM\_BLK\_TYPE\_ID**\] = 2050001100 "HSCT ALLOGENEIC RECIPIENT"
+I have found some resources on how to find information for Bone Marrow Transplants. Since it's not one of the types in \[**TX_CLASS_C**\], the key is to use \[**SUM_BLK_TYPE_ID**\] = 2050001100 "HSCT ALLOGENEIC RECIPIENT"
 
-Inexplicably, this item is not in \[**ZC\_SUM\_BLK\_TYPE**\] but Ahson Shigri (the person that Star referred me to for transplant questions) told me about it.
+Inexplicably, this item is not in \[**ZC_SUM_BLK_TYPE**\] but Ahson Shigri (the person that Star referred me to for transplant questions) told me about it.
 ```sql
 ##### **BMT counts**
 
-select count(distinct pat.pat\_id)
+select count(distinct pat.pat_id)
 
 from patient pat
 
-join pat\_enc enc on pat.pat\_id = enc.pat\_id
+join pat_enc enc on pat.pat_id = enc.pat_id
 
-join Episode\_Link lnk on enc.pat\_enc\_csn\_id = lnk.pat\_enc\_csn\_id
+join Episode_Link lnk on enc.pat_enc_csn_id = lnk.pat_enc_csn_id
 
-join Episode ep on lnk.episode\_id = ep.episode\_id
+join Episode ep on lnk.episode_id = ep.episode_id
 
-left join BMT\_INFO bmt on ep.episode\_id = bmt.SUMMARY\_BLOCK\_ID
+left join BMT_INFO bmt on ep.episode_id = bmt.SUMMARY_BLOCK_ID
 
 where
 
-lnk.SUM\_BLK\_TYPE\_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
+lnk.SUM_BLK_TYPE_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
 
-\--join TRANSPLANT\_INFO inf on ep.episode\_id = inf.SUMMARY\_BLOCK\_ID --nothing comes from this join
+--join TRANSPLANT_INFO inf on ep.episode_id = inf.SUMMARY_BLOCK_ID --nothing comes from this join
 ```
 # MyChart Activity
 
@@ -565,156 +565,156 @@ lnk.SUM\_BLK\_TYPE\_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
 
 The final solution was to pull directly from
 
-[**MYC\_PT\_USER\_ACCSS**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=MYC_PT_USER_ACCSS): This table stores an audit trail of actions taken within patient facing web applications. This includes MyChart, MyChart Bedside, and audits for web services intended for use by patient facing applications. MyChart Bedside events will populate WPR 535 instead of WPR 530 to indicate the type of audit event. The fields in this table track who took the action (typically the patient), what action was taken and when the action was taken.
+[**MYC_PT_USER_ACCSS**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=MYC_PT_USER_ACCSS): This table stores an audit trail of actions taken within patient facing web applications. This includes MyChart, MyChart Bedside, and audits for web services intended for use by patient facing applications. MyChart Bedside events will populate WPR 535 instead of WPR 530 to indicate the type of audit event. The fields in this table track who took the action (typically the patient), what action was taken and when the action was taken.
 
-*   **UA\_WHO\_ACCESSED:** If a patient accessed their own account, then this field stores that person's WPR ID (WPR .1). It may be the patient or another person who has proxy access to the patient's account.
-*   **MYPT\_ID:** The unique ID of the WPR user record that was accessed. The WPR user could be a user of MyChart or a MyChart Bedside user.
-*   **This means that if a mother(proxy) accessed her child’s account. The mom’s mypt\_id was recorded in this field, while the child’s was stored under mypt\_id. By comparing these two, we can know if the access was the patient herself, or a proxy.**
+*   **UA_WHO_ACCESSED:** If a patient accessed their own account, then this field stores that person's WPR ID (WPR .1). It may be the patient or another person who has proxy access to the patient's account.
+*   **MYPT_ID:** The unique ID of the WPR user record that was accessed. The WPR user could be a user of MyChart or a MyChart Bedside user.
+*   **This means that if a mother(proxy) accessed her child’s account. The mom’s mypt_id was recorded in this field, while the child’s was stored under mypt_id. By comparing these two, we can know if the access was the patient herself, or a proxy.**
 
-Additionally, the [**MYC\_PATIENT**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=MYC_PATIENT) includes a field called **PROXY\_ACCOUNT\_YN** that flags if the patient has a proxy account authorized to access his/her info.
+Additionally, the [**MYC_PATIENT**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=MYC_PATIENT) includes a field called **PROXY_ACCOUNT_YN** that flags if the patient has a proxy account authorized to access his/her info.
 
-The table [**PAT\_MYC\_PRXY\_HX**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=PAT_MYC_PRXY_HX) contains a historical record of all the proxies for any given patient. The field **PROXY\_PAT\_ID**: The unique ID of the patient who has proxy access to the record of the patient who is identified in **PAT\_ID**
+The table [**PAT_MYC_PRXY_HX**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=PAT_MYC_PRXY_HX) contains a historical record of all the proxies for any given patient. The field **PROXY_PAT_ID**: The unique ID of the patient who has proxy access to the record of the patient who is identified in **PAT_ID**
 ```sql
 **Field** 
 
 ##### **MyChart Activity**
 
-SELECT distinct coh.pat\_id
+SELECT distinct coh.pat_id
 
-,MYC.MYPT\_ID
+,MYC.MYPT_ID
 
-,myc.PROXY\_ACCOUNT\_YN
+,myc.PROXY_ACCOUNT_YN
 
-,PRX.PROXY\_PAT\_ID
+,PRX.PROXY_PAT_ID
 
-,mycPRX.MYPT\_ID AS PROXY\_MYPT\_ID
+,mycPRX.MYPT_ID AS PROXY_MYPT_ID
 
-,act.UA\_WHO\_ACCESSED
+,act.UA_WHO_ACCESSED
 
-,CASE WHEN MYC.MYPT\_ID = act.UA\_WHO\_ACCESSED THEN 0 ELSE 1 END PROXY\_ACCESS\_YN
+,CASE WHEN MYC.MYPT_ID = act.UA_WHO_ACCESSED THEN 0 ELSE 1 END PROXY_ACCESS_YN
 
-,act.UA\_SESSION\_NUM
+,act.UA_SESSION_NUM
 
-,act.myc\_ua\_type\_c
+,act.myc_ua_type_c
 
-,act.MYC\_UA\_ACTION\_C
+,act.MYC_UA_ACTION_C
 
-,act.BEDSIDE\_UA\_TYPE\_C
+,act.BEDSIDE_UA_TYPE_C
 
 ,ztyp.name as type
 
 ,zact.name as action
 
-,act.UA\_PERSON\_TYPE\_C
+,act.UA_PERSON_TYPE_C
 
-,act.ua\_time
+,act.ua_time
 
-,act.UA\_EXTENDED\_INFO
+,act.UA_EXTENDED_INFO
 
-FROM xdr\_prinv\_coh COH
+FROM xdr_prinv_coh COH
 
-LEFT JOIN PAT\_MYC\_PRXY\_HX PRX ON COH.PAT\_ID = PRX.PAT\_ID
+LEFT JOIN PAT_MYC_PRXY_HX PRX ON COH.PAT_ID = PRX.PAT_ID
 
-JOIN MYC\_PATIENT myc ON coh.pat\_id = myc.pat\_id
+JOIN MYC_PATIENT myc ON coh.pat_id = myc.pat_id
 
-LEFT JOIN MYC\_PATIENT mycPRX ON PRX.PROXY\_PAT\_ID = mycPRX.pat\_id
+LEFT JOIN MYC_PATIENT mycPRX ON PRX.PROXY_PAT_ID = mycPRX.pat_id
 
-JOIN MYC\_PT\_USER\_ACCSS ACT ON MYC.MYPT\_ID = ACT.MYPT\_ID
+JOIN MYC_PT_USER_ACCSS ACT ON MYC.MYPT_ID = ACT.MYPT_ID
 
-AND act.MYC\_UA\_TYPE\_C IS NOT NULL
+AND act.MYC_UA_TYPE_C IS NOT NULL
 
-LEFT JOIN ZC\_MYC\_UA\_TYPE ztyp ON act.myc\_ua\_type\_c = ztyp.myc\_ua\_type\_c
+LEFT JOIN ZC_MYC_UA_TYPE ztyp ON act.myc_ua_type_c = ztyp.myc_ua_type_c
 
-LEFT JOIN ZC\_MYC\_UA\_ACTION zact ON act.MYC\_UA\_ACTION\_C = zact.MYC\_UA\_ACTION\_C
+LEFT JOIN ZC_MYC_UA_ACTION zact ON act.MYC_UA_ACTION_C = zact.MYC_UA_ACTION_C
 
-LEFT JOIN ZC\_BEDSIDE\_UA\_TYPE zbed ON act.BEDSIDE\_UA\_TYPE\_C = zbed.BEDSIDE\_UA\_TYPE\_C
+LEFT JOIN ZC_BEDSIDE_UA_TYPE zbed ON act.BEDSIDE_UA_TYPE_C = zbed.BEDSIDE_UA_TYPE_C
 
 WHERE
 
-\-- Date range of interest for patient portal activity is 8/1/17 - 7/31/18.
+-- Date range of interest for patient portal activity is 8/1/17 - 7/31/18.
 
-TRUNC(act.ua\_time) BETWEEN '08/01/2015' AND '07/31/2018'
+TRUNC(act.ua_time) BETWEEN '08/01/2015' AND '07/31/2018'
 
-AND act.UA\_PERSON\_TYPE\_C = 1--patient
+AND act.UA_PERSON_TYPE_C = 1--patient
 
 ;
 
-If you need to lookup the session information, you should resort to [**V\_MYC\_SESSIONS:**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=V_MYC_SESSIONS) This view should be used as the base table for reporting content that reports on the MyChart Session because it handles required filtering on the derived table underlying the view query. This view can be joined to MYC\_PT\_USER\_ACCSS for detailed information about what the user did during their MyChart session by using queries of the form outlined below.
+If you need to lookup the session information, you should resort to [**V_MYC_SESSIONS:**](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=V_MYC_SESSIONS) This view should be used as the base table for reporting content that reports on the MyChart Session because it handles required filtering on the derived table underlying the view query. This view can be joined to MYC_PT_USER_ACCSS for detailed information about what the user did during their MyChart session by using queries of the form outlined below.
 
-*   *   **PROXY\_ACCESS\_BOOL**: This column is equal to 1 if the user who logged into MyChart accessed information about another MyChart user(proxy subject) during the session. Join this table to MYC\_PT\_USER\_ACCSS as described in the table description for detailed information on the proxy  
+*   *   **PROXY_ACCESS_BOOL**: This column is equal to 1 if the user who logged into MyChart accessed information about another MyChart user(proxy subject) during the session. Join this table to MYC_PT_USER_ACCSS as described in the table description for detailed information on the proxy  
         subject(s) accessed during the session. _(After doing some work on the proxy access, I encountered this field not to be completely accurate and you should resort to the previous query to draw conclusions in this regard)_
-    *   **MYPT\_ID**: If a patient accessed their own account, then this field stores that person's WPR ID (WPR .1). It may be the patient or another person who has proxy access to the patient's account.
-    *   **PAT\_ID**: If the user who logged into MyChart is a patient, then this column contains a PAT\_ID, commonly used to join to the PATIENT table. If the user who logged into MyChart is a non-patient user, then this column is NULL. Because of this, INNER JOIN may not always be the appropriate join type for linking to the PATIENT table.
+    *   **MYPT_ID**: If a patient accessed their own account, then this field stores that person's WPR ID (WPR .1). It may be the patient or another person who has proxy access to the patient's account.
+    *   **PAT_ID**: If the user who logged into MyChart is a patient, then this column contains a PAT_ID, commonly used to join to the PATIENT table. If the user who logged into MyChart is a non-patient user, then this column is NULL. Because of this, INNER JOIN may not always be the appropriate join type for linking to the PATIENT table.
 
 ##### **MyChart Session Information (from EPIC docu)**
 
-SELECT \* FROM V\_MYC\_SESSIONS INNER JOIN MYC\_PT\_USER\_ACCSS ON MYC\_PT\_USER\_ACCSS.UA\_WHO\_ACCESSED = F\_MYC\_SESSIONS.MYPT\_ID AND MYC\_PT\_USER\_ACCSS.UA\_SESSION\_NUM = F\_MYC\_SESSIONS.UA\_SESSION\_NUM
+SELECT * FROM V_MYC_SESSIONS INNER JOIN MYC_PT_USER_ACCSS ON MYC_PT_USER_ACCSS.UA_WHO_ACCESSED = F_MYC_SESSIONS.MYPT_ID AND MYC_PT_USER_ACCSS.UA_SESSION_NUM = F_MYC_SESSIONS.UA_SESSION_NUM
 
 The query belows check the latest MyChart status of a patient.
 
 ##### **MyChart Patient Status**
 
-select distinct pat\_id
+select distinct pat_id
 
-,end\_dttm
+,end_dttm
 
-,mychart\_status\_c
+,mychart_status_c
 
-from f\_pat\_mychart\_status\_hx
+from f_pat_mychart_status_hx
 
-where end\_dttm is null --this indicates the latest MyChart status of a patient
+where end_dttm is null --this indicates the latest MyChart status of a patient
 
-and mychart\_status\_c = 1 --this indicates that the latest MyChart status of a patient is "active"
+and mychart_status_c = 1 --this indicates that the latest MyChart status of a patient is "active"
 
 ;
 
-/\*
+/*
 
 PREVIOUS LOGIC (replaced by query above)
 
 If you need to check if a patient is active in MyChart:
 
-query i2b2.lz\_clarity\_pat\_contacts and check if active\_mychart is "Yes"
+query i2b2.lz_clarity_pat_contacts and check if active_mychart is "Yes"
 
-or check clarity.patient\_myc directly for mychart\_status\_c
+or check clarity.patient_myc directly for mychart_status_c
 
-or check clarity.myc\_patient directly for status\_cat\_c
+or check clarity.myc_patient directly for status_cat_c
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-,active\_mychart
+,active_mychart
 
-,pmc.mychart\_status\_c
+,pmc.mychart_status_c
 
-,zpmc.name patient\_myc\_status
+,zpmc.name patient_myc_status
 
-,mcp.status\_cat\_c
+,mcp.status_cat_c
 
-,zmcp.name myc\_patient\_status
+,zmcp.name myc_patient_status
 
-from xdr\_prinv\_coh coh
+from xdr_prinv_coh coh
 
-left join i2b2.lz\_clarity\_pat\_contacts con on coh.pat\_id = con.pat\_id
+left join i2b2.lz_clarity_pat_contacts con on coh.pat_id = con.pat_id
 
-left join clarity.patient\_myc pmc on coh.pat\_id = pmc.pat\_id
+left join clarity.patient_myc pmc on coh.pat_id = pmc.pat_id
 
-left join clarity.zc\_alt\_webste\_stat zpmc on pmc.mychart\_status\_c = zpmc.alt\_webste\_stat\_c
+left join clarity.zc_alt_webste_stat zpmc on pmc.mychart_status_c = zpmc.alt_webste_stat_c
 
-left join clarity.myc\_patient mcp on coh.pat\_id = mcp.pat\_id
+left join clarity.myc_patient mcp on coh.pat_id = mcp.pat_id
 
-left join clarity.zc\_myc\_status zmcp on mcp.status\_cat\_c = zmcp.myc\_status\_c
+left join clarity.zc_myc_status zmcp on mcp.status_cat_c = zmcp.myc_status_c
 
-\-- the criteria below selects only active MyChart patients
+-- the criteria below selects only active MyChart patients
 
-\-- where nvl(con.active\_mychart,'No') = 'Yes' --default null to inactive
+-- where nvl(con.active_mychart,'No') = 'Yes' --default null to inactive
 
-\-- or nvl(pmc.mychart\_status\_c,2) = 1 --default null to inactive
+-- or nvl(pmc.mychart_status_c,2) = 1 --default null to inactive
 
-\-- or nvl(mcp.status\_cat\_c,2) = 1 --default null to inactive
+-- or nvl(mcp.status_cat_c,2) = 1 --default null to inactive
 
 ;
 
-\*/
+*/
 ```
 ## DEATH TABLE
 
@@ -724,21 +724,21 @@ We decided to create a death table to capture cases where patients, that do not 
 ```sql
 ##### **DEATH TABLE CREATION**
 
-DROP TABLE I2B2.LZ\_DEATH PURGE;
+DROP TABLE I2B2.LZ_DEATH PURGE;
 
-CREATE TABLE LZ\_DEATH
+CREATE TABLE LZ_DEATH
 
-("PAT\_ID" VARCHAR2(10 BYTE)
+("PAT_ID" VARCHAR2(10 BYTE)
 
 ,"SOURCE" VARCHAR2(256 BYTE) --Example: 'ACP - Project, IRB 18-001612'
 
 ,"USER" VARCHAR2(15 BYTE) --Example: 'JSANZ'
 
-,CREATE\_DATE TIMESTAMP --use SYSDATE
+,CREATE_DATE TIMESTAMP --use SYSDATE
 
 ,"COMMENT" VARCHAR2(1256 BYTE) --Example: 'The patients husband reported her to be deceased when receiving a notification from the research team on early September 2019. The PI team let us know'
 
-,"DEATH\_DATE" DATE); --LEave it blank if we don't have it
+,"DEATH_DATE" DATE); --LEave it blank if we don't have it
 
 We shall incorporate this table to the death function so that it's taken into account when producing the most up to date vital status for each patient. 
 
@@ -754,35 +754,35 @@ Hi, [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:0
 
 The following identifies face-to-face visits.
 
-1.  visit\_type = 'AV'
-    1.  encounter\_date <= sysdate
-    2.  nvl(appointment\_status,'Completed') = 'Completed'
-2.  visit\_type != 'AV'
-    1.  encounter\_date <= sysdate
-    2.  appointment\_status = 'Completed'
-    3.  encounter types listed in face-to-face encounter types sheet (I:\\\_BIP\\xDR\\Lists and Codes\\Face to Face Visits.xlsx)
+1.  visit_type = 'AV'
+    1.  encounter_date <= sysdate
+    2.  nvl(appointment_status,'Completed') = 'Completed'
+2.  visit_type != 'AV'
+    1.  encounter_date <= sysdate
+    2.  appointment_status = 'Completed'
+    3.  encounter types listed in face-to-face encounter types sheet (I:\\_BIP\\xDR\\Lists and Codes\\Face to Face Visits.xlsx)
 
 ##### **Face to Face Visits Query**
 
-FROM i2b2.lz\_clarity\_enc e
+FROM i2b2.lz_clarity_enc e
 
-JOIN i2b2.lz\_enc\_visit\_types vt ON e.pat\_enc\_csn\_id = vt.pat\_enc\_csn\_id
+JOIN i2b2.lz_enc_visit_types vt ON e.pat_enc_csn_id = vt.pat_enc_csn_id
 
-WHERE e.effective\_date\_dt < SYSDATE --Completed appts are prior to current date
+WHERE e.effective_date_dt < SYSDATE --Completed appts are prior to current date
 
-AND ((vt.visit\_type = 'AV' --Ambulatory Visit
+AND ((vt.visit_type = 'AV' --Ambulatory Visit
 
-AND (e.appt\_status\_c IS NULL OR e.appt\_status\_c = '2') --Completed (includes null)
+AND (e.appt_status_c IS NULL OR e.appt_status_c = '2') --Completed (includes null)
 
 )
 
 OR
 
-(vt.visit\_type <> 'AV' --Non-Ambulatory Visit
+(vt.visit_type <> 'AV' --Non-Ambulatory Visit
 
-AND e.appt\_status\_c = '2' --Completed (does not include null)
+AND e.appt_status_c = '2' --Completed (does not include null)
 
-AND e.enc\_type\_c IN ('1000' --Initial consult --Face-to-face encounter types per I:\\\_BIP\\xDR\\Lists and Codes\\Face to Face Visits.xlsx
+AND e.enc_type_c IN ('1000' --Initial consult --Face-to-face encounter types per I:\\_BIP\\xDR\\Lists and Codes\\Face to Face Visits.xlsx
 
 ,'1001' --Anti-coag visit
 
@@ -832,11 +832,11 @@ AND e.enc\_type\_c IN ('1000' --Initial consult --Face-to-face encounter types p
 
 ,'55' --Ancillary Procedure
 
-\--,'70' --Telephone (Remove per DB on 3/14/2022)
+--,'70' --Telephone (Remove per DB on 3/14/2022)
 
 ,'76' --Telemedicine
 
-\--,'21076' --Tele-Medicine (Remove per DB on 3/14/2022)
+--,'21076' --Tele-Medicine (Remove per DB on 3/14/2022)
 
 )
 
@@ -844,79 +844,79 @@ AND e.enc\_type\_c IN ('1000' --Initial consult --Face-to-face encounter types p
 
 # Chief Complaints
 
-PAT\_ENC\_RSN\_VISIT. ENC\_REASON\_NAME obtains the chief complaints for the cohort.
+PAT_ENC_RSN_VISIT. ENC_REASON_NAME obtains the chief complaints for the cohort.
 
-Modified on 06/07/2021 by Rob Follett - Added the CL\_RSN\_FOR\_VISIT lookup table.
+Modified on 06/07/2021 by Rob Follett - Added the CL_RSN_FOR_VISIT lookup table.
 
-left join (select distinct lk.pat\_mrn\_id as mrn
+left join (select distinct lk.pat_mrn_id as mrn
 
-,vs.pat\_enc\_csn\_id
+,vs.pat_enc_csn_id
 
-,listagg(rfv.display\_text, '||') within group (order by vs.line) as chief\_complaint\_list
+,listagg(rfv.display_text, '||') within group (order by vs.line) as chief_complaint_list
 
-from xdr\_nnnnn\_cohort lk
+from xdr_nnnnn_cohort lk
 
-join clarity.pat\_enc\_rsn\_visit vs on lk.pat\_id = vs.pat\_id
+join clarity.pat_enc_rsn_visit vs on lk.pat_id = vs.pat_id
 
-join CL\_RSN\_FOR\_VISIT rfv on vs.enc\_reason\_id = rfv.reason\_visit\_id
+join CL_RSN_FOR_VISIT rfv on vs.enc_reason_id = rfv.reason_visit_id
 
-group by lk.pat\_mrn\_id,vs.pat\_enc\_csn\_id
+group by lk.pat_mrn_id,vs.pat_enc_csn_id
 
-) chief on cohort.pat\_enc\_csn\_id = chief.pat\_enc\_csn\_id
+) chief on cohort.pat_enc_csn_id = chief.pat_enc_csn_id
 
-\--TT-9/26/2023: Alternate query
+--TT-9/26/2023: Alternate query
 
-left join (select pat\_enc\_csn\_id, listagg(trim(enc\_reason\_name), '|') within group (order by pat\_enc\_csn\_id, line) as chief\_complaint\_list
+left join (select pat_enc_csn_id, listagg(trim(enc_reason_name), '|') within group (order by pat_enc_csn_id, line) as chief_complaint_list
 
-from (select distinct vs.pat\_id, vs.pat\_enc\_csn\_id, vs.line, vs.enc\_reason\_name
+from (select distinct vs.pat_id, vs.pat_enc_csn_id, vs.line, vs.enc_reason_name
 
-from p\_coh lk
+from p_coh lk
 
-join clarity.pat\_enc\_rsn\_visit vs on lk.pat\_id = vs.pat\_id)
+join clarity.pat_enc_rsn_visit vs on lk.pat_id = vs.pat_id)
 
-group by pat\_enc\_csn\_id
+group by pat_enc_csn_id
 
-) chief on coh.pat\_enc\_csn\_id = chief.pat\_enc\_csn\_id
+) chief on coh.pat_enc_csn_id = chief.pat_enc_csn_id
 
 # Current Med List
 
 [Robert Follett (Unlicensed)](https://uclabip.atlassian.net/wiki/people/557058:fb90de8e-f6e8-4a11-b471-2992e0b019af?ref=confluence)
 
-PAT\_ENC\_CURR\_MEDS table enables you to report on current (as well as active) medications per encounter as listed in clinical system.
+PAT_ENC_CURR_MEDS table enables you to report on current (as well as active) medications per encounter as listed in clinical system.
 
 ##### **Current Med List**
 
-\--Pull the latest entries in PAT\_ENC\_CURR\_MEDS, then reject if inactive or historical.
+--Pull the latest entries in PAT_ENC_CURR_MEDS, then reject if inactive or historical.
 
-\-- If active flag is null, treat as active.
+-- If active flag is null, treat as active.
 
-select x.\*
+select x.*
 
-,m.\*
+,m.*
 
-from (select distinct cm.pat\_id
+from (select distinct cm.pat_id
 
-,cm.current\_med\_id
+,cm.current_med_id
 
-,cm.contact\_date
+,cm.contact_date
 
-,cm.is\_active\_yn
+,cm.is_active_yn
 
-,max(cm.contact\_date) over (partition by cm.pat\_id) latest\_contact\_date
+,max(cm.contact_date) over (partition by cm.pat_id) latest_contact_date
 
-from pat\_enc\_curr\_meds cm
+from pat_enc_curr_meds cm
 
-where nvl(cm.is\_active\_yn,'Y') = 'Y'
+where nvl(cm.is_active_yn,'Y') = 'Y'
 
 ) x
 
-join i2b2.lz\_clarity\_meds m on x.current\_med\_id = m.order\_med\_id
+join i2b2.lz_clarity_meds m on x.current_med_id = m.order_med_id
 
-where x.contact\_date = x.latest\_contact\_date
+where x.contact_date = x.latest_contact_date
 
-and m.order\_class <> 'Historical Med'
+and m.order_class <> 'Historical Med'
 
-order by x.pat\_id, x.current\_med\_id
+order by x.pat_id, x.current_med_id
 
 ;
 
@@ -943,7 +943,7 @@ The result is an ordered list of phone numbers for each patient base on the pati
 
 ##### **Multiple Phone Number and Patient's Preference**
 
-/\* trying to convert multiple rows/columns into columns per patient using pivot and unpivot
+/* trying to convert multiple rows/columns into columns per patient using pivot and unpivot
 
 phone numbers have multiple values and have to incorporate contact priority
 
@@ -951,39 +951,39 @@ first using unpivot - making all phone numbers and contact priority into multipl
 
 then using pivot - converting values with multiple rows into multiple columns per patient
 
-\*/
+*/
 
-with home\_result as
+with home_result as
 
 (
 
-Select coh.pat\_ID,
+Select coh.pat_ID,
 
-othcom.name as phone\_type,
+othcom.name as phone_type,
 
-cm1.OTHER\_COMMUNIC\_NUM as phone ,
+cm1.OTHER_COMMUNIC_NUM as phone ,
 
 cm1.line,
 
-case when cm1.CONTACT\_PRIORITY is not null then cm1.CONTACT\_PRIORITY else 99 end as CONTACT\_PRIORITY,
+case when cm1.CONTACT_PRIORITY is not null then cm1.CONTACT_PRIORITY else 99 end as CONTACT_PRIORITY,
 
-concat(SUBSTR( othcom.name, 1 , 1 ), (case when cm1.CONTACT\_PRIORITY is not null then cm1.CONTACT\_PRIORITY else 0 end )) as Contactpriorityorder
+concat(SUBSTR( othcom.name, 1 , 1 ), (case when cm1.CONTACT_PRIORITY is not null then cm1.CONTACT_PRIORITY else 0 end )) as Contactpriorityorder
 
-from XDR\_PRINV\_COH coh
+from XDR_PRINV_COH coh
 
-inner join OTHER\_COMMUNCTN cm1 on coh.pat\_id = cm1.pat\_id --and cm1.OTHER\_COMMUNIC\_C = 7 --Home Phone
+inner join OTHER_COMMUNCTN cm1 on coh.pat_id = cm1.pat_id --and cm1.OTHER_COMMUNIC_C = 7 --Home Phone
 
-left outer join ZC\_OTHER\_COMMUNIC othcom on othcom.OTHER\_COMMUNIC\_C = cm1.OTHER\_COMMUNIC\_C
+left outer join ZC_OTHER_COMMUNIC othcom on othcom.OTHER_COMMUNIC_C = cm1.OTHER_COMMUNIC_C
 
-/\* if multiple values, grouping them at patient level \*/
+/* if multiple values, grouping them at patient level */
 
 WHERE
 
-\-- Exclude obvious place holders or invalid phone #s
+-- Exclude obvious place holders or invalid phone #s
 
-cm1.OTHER\_COMMUNIC\_NUM is not null
+cm1.OTHER_COMMUNIC_NUM is not null
 
-and cm1.OTHER\_COMMUNIC\_NUM not in ('000-000-0000'
+and cm1.OTHER_COMMUNIC_NUM not in ('000-000-0000'
 
 ,'000-000-0001'
 
@@ -1005,51 +1005,51 @@ and cm1.OTHER\_COMMUNIC\_NUM not in ('000-000-0000'
 
 SELECT
 
-PAT\_ID
+PAT_ID
 
-,"'PHONE\_1'" as "phone1"
+,"'PHONE_1'" as "phone1"
 
-,"'CONTACTPRIORITYORDER\_2'" AS "contactpriority\_phone1"
+,"'CONTACTPRIORITYORDER_2'" AS "contactpriority_phone1"
 
-,"'PHONE\_3'" AS "phone2"
+,"'PHONE_3'" AS "phone2"
 
-,"'CONTACTPRIORITYORDER\_4'" AS "contactpriority\_phone2"
+,"'CONTACTPRIORITYORDER_4'" AS "contactpriority_phone2"
 
-,"'PHONE\_5'" AS "phone3"
+,"'PHONE_5'" AS "phone3"
 
-,"'CONTACTPRIORITYORDER\_6'" AS "contactpriority\_phone3"
+,"'CONTACTPRIORITYORDER_6'" AS "contactpriority_phone3"
 
-,"'PHONE\_7'" AS "phone4"
+,"'PHONE_7'" AS "phone4"
 
-,"'CONTACTPRIORITYORDER\_8'" AS "contactpriority\_phone4"
+,"'CONTACTPRIORITYORDER_8'" AS "contactpriority_phone4"
 
 ,CONCAT(
 
 CONCAT(
 
-CONCAT(CASE WHEN "'CONTACTPRIORITYORDER\_2'" IS NOT NULL THEN "'CONTACTPRIORITYORDER\_2'" ELSE 'NA' END, '| ')
+CONCAT(CASE WHEN "'CONTACTPRIORITYORDER_2'" IS NOT NULL THEN "'CONTACTPRIORITYORDER_2'" ELSE 'NA' END, '| ')
 
-,CONCAT(CASE WHEN "'CONTACTPRIORITYORDER\_4'" IS NOT NULL THEN "'CONTACTPRIORITYORDER\_4'" ELSE 'NA' END, '| ' )
+,CONCAT(CASE WHEN "'CONTACTPRIORITYORDER_4'" IS NOT NULL THEN "'CONTACTPRIORITYORDER_4'" ELSE 'NA' END, '| ' )
 
 )
 
 ,CONCAT(
 
-CONCAT(CASE WHEN "'CONTACTPRIORITYORDER\_6'" IS NOT NULL THEN "'CONTACTPRIORITYORDER\_6'" ELSE 'NA' END, '| ' )
+CONCAT(CASE WHEN "'CONTACTPRIORITYORDER_6'" IS NOT NULL THEN "'CONTACTPRIORITYORDER_6'" ELSE 'NA' END, '| ' )
 
-,CASE WHEN "'CONTACTPRIORITYORDER\_8'" IS NOT NULL THEN "'CONTACTPRIORITYORDER\_8'" ELSE 'NA' END)
+,CASE WHEN "'CONTACTPRIORITYORDER_8'" IS NOT NULL THEN "'CONTACTPRIORITYORDER_8'" ELSE 'NA' END)
 
 )
 
-AS "contactpriorityorder\_phone1234"
+AS "contactpriorityorder_phone1234"
 
 FROM (
 
-SELECT PAT\_ID
+SELECT PAT_ID
 
 ,concat(
 
-concat( col , '\_'), ROW\_NUMBER() OVER (PARTITION BY PAT\_ID ORDER BY orderpriority ASC)
+concat( col , '_'), ROW_NUMBER() OVER (PARTITION BY PAT_ID ORDER BY orderpriority ASC)
 
 ) AS col
 
@@ -1057,17 +1057,17 @@ concat( col , '\_'), ROW\_NUMBER() OVER (PARTITION BY PAT\_ID ORDER BY orderprio
 
 FROM (
 
-SELECT PAT\_ID
+SELECT PAT_ID
 
 ,cast ( phone as varchar2(30)) as phone
 
 ,cast(Contactpriorityorder as varchar2(30)) as Contactpriorityorder
 
-, ROW\_NUMBER() OVER (PARTITION BY PAT\_ID ORDER BY CONTACT\_PRIORITY ASC) as orderpriority
+, ROW_NUMBER() OVER (PARTITION BY PAT_ID ORDER BY CONTACT_PRIORITY ASC) as orderpriority
 
-FROM home\_result
+FROM home_result
 
-GROUP BY PAT\_ID, phone, Contactpriorityorder, CONTACT\_PRIORITY
+GROUP BY PAT_ID, phone, Contactpriorityorder, CONTACT_PRIORITY
 
 ) rt
 
@@ -1075,11 +1075,11 @@ unpivot ( value FOR col in ( phone, Contactpriorityorder))unpiv
 
 ) tp
 
-pivot ( Max(value) FOR col in ('PHONE\_1'
+pivot ( Max(value) FOR col in ('PHONE_1'
 
-,'CONTACTPRIORITYORDER\_2','PHONE\_3','CONTACTPRIORITYORDER\_4',
+,'CONTACTPRIORITYORDER_2','PHONE_3','CONTACTPRIORITYORDER_4',
 
-'PHONE\_5','CONTACTPRIORITYORDER\_6','PHONE\_7','CONTACTPRIORITYORDER\_8'
+'PHONE_5','CONTACTPRIORITYORDER_6','PHONE_7','CONTACTPRIORITYORDER_8'
 
 )
 
@@ -1091,7 +1091,7 @@ order by 1;
 
 ###### (BY [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) ON 9/26/19)
 
-The following code pulls the text based results (comments, narratives, etc...) using the case\_id as a reference. A common use case for this resource is when the usual query returns "This result contains rich text formatting which cannot be displayed here" as a result. The following script is the original code sent to us. Below it, you can find a more specific application of it.
+The following code pulls the text based results (comments, narratives, etc...) using the case_id as a reference. A common use case for this resource is when the usual query returns "This result contains rich text formatting which cannot be displayed here" as a result. The following script is the original code sent to us. Below it, you can find a more specific application of it.
 
 This script can pull results after January 2016 (Beaker) for previous results this might not work
 ```sql
@@ -1101,27 +1101,27 @@ WITH
 
 CaseIDsToProcess AS (
 
-SELECT LAB\_CASE\_DB\_MAIN.CASE\_ID
+SELECT LAB_CASE_DB_MAIN.CASE_ID
 
-FROM LAB\_CASE\_DB\_MAIN
+FROM LAB_CASE_DB_MAIN
 
-WHERE CASE\_ID IN (818130 )
+WHERE CASE_ID IN (818130 )
 
 ),ExternalPatientInfo AS (
 
-SELECT REQ\_GROUPER\_ID, REQ\_SUBMITTER\_ID, REQ\_SUBM\_PT\_ID, REQ\_INTERVAL\_NUMBER, REQ\_ACCOUNT\_ID, REQ\_CHART\_NUM, EXTERNAL\_VISIT\_ID FROM (
+SELECT REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_SUBM_PT_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM, EXTERNAL_VISIT_ID FROM (
 
-SELECT DISTINCT REQ\_GROUPER\_ID, REQ\_SUBMITTER\_ID, REQ\_SUBM\_PT\_ID, REQ\_INTERVAL\_NUMBER, REQ\_ACCOUNT\_ID, REQ\_CHART\_NUM, EXTERNAL\_VISIT\_ID,
+SELECT DISTINCT REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_SUBM_PT_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM, EXTERNAL_VISIT_ID,
 
-RANK() OVER (PARTITION BY REQ\_GROUPER\_ID, REQ\_SUBMITTER\_ID, REQ\_INTERVAL\_NUMBER, REQ\_ACCOUNT\_ID, REQ\_CHART\_NUM ORDER BY REquisition\_ID DESC, NVL(EXTERNAL\_VISIT\_ID,'-') DESC, REQ\_SUBM\_PT\_ID) as Rankorder
+RANK() OVER (PARTITION BY REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM ORDER BY REquisition_ID DESC, NVL(EXTERNAL_VISIT_ID,'-') DESC, REQ_SUBM_PT_ID) as Rankorder
 
-FROM CLARITY.REQ\_DB\_MAIN
+FROM CLARITY.REQ_DB_MAIN
 
 WHERE
 
-REQ\_DB\_MAIN.REQUISITION\_ID IN (SELECT CASE\_ID FROM CaseIDsToProcess )
+REQ_DB_MAIN.REQUISITION_ID IN (SELECT CASE_ID FROM CaseIDsToProcess )
 
-AND REQ\_SUBMITTER\_ID IS NOT NULL) REQDBMAINResults
+AND REQ_SUBMITTER_ID IS NOT NULL) REQDBMAINResults
 
 WHERE REQDBMAINResults.RankOrder=1
 
@@ -1133,31 +1133,31 @@ SELECT
 
 DISTINCT
 
-CASE WHEN NVL(REQ\_DB\_MAIN.REQ\_GROUPER\_ID,0) <>0 THEN CAST (NVL(REQ\_DB\_MAIN.REQ\_GROUPER\_ID,'0') AS VARCHAR2(25)) ELSE PATIENT.PAT\_ID END || '-' ||LAB\_CASE\_DB\_MAIN.CASE\_ID uniqueid,
+CASE WHEN NVL(REQ_DB_MAIN.REQ_GROUPER_ID,0) <>0 THEN CAST (NVL(REQ_DB_MAIN.REQ_GROUPER_ID,'0') AS VARCHAR2(25)) ELSE PATIENT.PAT_ID END || '-' ||LAB_CASE_DB_MAIN.CASE_ID uniqueid,
 
-LAB\_CASE\_DB\_MAIN.CASE\_ID
+LAB_CASE_DB_MAIN.CASE_ID
 
 FROM CaseIDsToProcess
 
-INNER JOIN CLARITY.LAB\_CASE\_DB\_MAIN ON CaseIDsToProcess.CASE\_ID=LAB\_CASE\_DB\_MAIN.CASE\_ID
+INNER JOIN CLARITY.LAB_CASE_DB_MAIN ON CaseIDsToProcess.CASE_ID=LAB_CASE_DB_MAIN.CASE_ID
 
-LEFT JOIN CLARITY.PATIENT ON PATIENT.PAT\_ID=LAB\_CASE\_DB\_MAIN.CASE\_PAT\_ID
+LEFT JOIN CLARITY.PATIENT ON PATIENT.PAT_ID=LAB_CASE_DB_MAIN.CASE_PAT_ID
 
-LEFT JOIN CLARITY.REQ\_CASES ON REQ\_CASES.CASES\_ID = CaseIDsToProcess.CASE\_ID
+LEFT JOIN CLARITY.REQ_CASES ON REQ_CASES.CASES_ID = CaseIDsToProcess.CASE_ID
 
-LEFT JOIN CLARITY.REQ\_DB\_MAIN ON REQ\_DB\_MAIN.REQUISITION\_ID = CLARITY.REQ\_CASES.REQUISITION\_ID
+LEFT JOIN CLARITY.REQ_DB_MAIN ON REQ_DB_MAIN.REQUISITION_ID = CLARITY.REQ_CASES.REQUISITION_ID
 
-LEFT JOIN CLARITY.RQG\_DB\_MAIN ON REQ\_DB\_MAIN.REQ\_GROUPER\_ID = RQG\_DB\_MAIN.RQG\_GROUPER\_ID
+LEFT JOIN CLARITY.RQG_DB_MAIN ON REQ_DB_MAIN.REQ_GROUPER_ID = RQG_DB_MAIN.RQG_GROUPER_ID
 
-LEFT JOIN CLARITY.SPEC\_DB\_MAIN ON LAB\_CASE\_DB\_MAIN.CASE\_ID=SPEC\_DB\_MAIN.CASE\_ID
+LEFT JOIN CLARITY.SPEC_DB_MAIN ON LAB_CASE_DB_MAIN.CASE_ID=SPEC_DB_MAIN.CASE_ID
 
-LEFT JOIN CLARITY.LAB\_SMT\_NOADD ON SPEC\_DB\_MAIN.REQ\_SMT\_ID = Lab\_Smt\_Noadd.Record\_Id
+LEFT JOIN CLARITY.LAB_SMT_NOADD ON SPEC_DB_MAIN.REQ_SMT_ID = Lab_Smt_Noadd.Record_Id
 
-LEFT JOIN CLARITY.REQ\_ORDER\_GROUP ON REQ\_ORDER\_GROUP.REQUISITION\_ID=LAB\_CASE\_DB\_MAIN.CASE\_ID
+LEFT JOIN CLARITY.REQ_ORDER_GROUP ON REQ_ORDER_GROUP.REQUISITION_ID=LAB_CASE_DB_MAIN.CASE_ID
 
-LEFT JOIN CLARITY.ORDER\_PROC ON REQ\_ORDER\_GROUP.ORDER\_ID=ORDER\_PROC.ORDER\_PROC\_ID
+LEFT JOIN CLARITY.ORDER_PROC ON REQ_ORDER_GROUP.ORDER_ID=ORDER_PROC.ORDER_PROC_ID
 
-LEFT JOIN ExternalPatientInfo ON REQ\_DB\_MAIN.REQ\_GROUPER\_ID = ExternalPatientInfo.REQ\_GROUPER\_ID
+LEFT JOIN ExternalPatientInfo ON REQ_DB_MAIN.REQ_GROUPER_ID = ExternalPatientInfo.REQ_GROUPER_ID
 
 ),
 
@@ -1171,21 +1171,21 @@ DISTINCT
 
 PatientInformation.uniqueid,
 
-LAB\_CASE\_INFO.CASE\_NUM,
+LAB_CASE_INFO.CASE_NUM,
 
-LAB\_CASE\_DB\_MAIN.CASE\_ID,
+LAB_CASE_DB_MAIN.CASE_ID,
 
-LAB\_CASE\_INFO.AP\_CASE\_STATUS\_C
+LAB_CASE_INFO.AP_CASE_STATUS_C
 
 FROM CaseIDsToProcess
 
-INNER JOIN CLARITY.LAB\_CASE\_DB\_MAIN ON CaseIDsToProcess.CASE\_ID=LAB\_CASE\_DB\_MAIN.CASE\_ID
+INNER JOIN CLARITY.LAB_CASE_DB_MAIN ON CaseIDsToProcess.CASE_ID=LAB_CASE_DB_MAIN.CASE_ID
 
-INNER JOIN CLARITY.LAB\_CASE\_INFO ON LAB\_CASE\_INFO.REQUISITION\_ID = LAB\_CASE\_DB\_MAIN.CASE\_ID
+INNER JOIN CLARITY.LAB_CASE_INFO ON LAB_CASE_INFO.REQUISITION_ID = LAB_CASE_DB_MAIN.CASE_ID
 
-INNER JOIN CLARITY.ZC\_AP\_CASE\_STATUS ON ZC\_AP\_CASE\_STATUS.AP\_CASE\_STATUS\_C = LAB\_CASE\_INFO.AP\_CASE\_STATUS\_C
+INNER JOIN CLARITY.ZC_AP_CASE_STATUS ON ZC_AP_CASE_STATUS.AP_CASE_STATUS_C = LAB_CASE_INFO.AP_CASE_STATUS_C
 
-INNER JOIN PatientInformation ON CaseIDsToProcess.CASE\_ID=PatientInformation.Case\_Id
+INNER JOIN PatientInformation ON CaseIDsToProcess.CASE_ID=PatientInformation.Case_Id
 
 ),
 
@@ -1195,27 +1195,27 @@ SELECT
 
 UNIQUEID,
 
-CASE\_ID,
+CASE_ID,
 
-CASE\_NUM,
+CASE_NUM,
 
-RESULT\_ID,
+RESULT_ID,
 
-AP\_CASE\_STATUS\_C,
+AP_CASE_STATUS_C,
 
-RES\_VAL\_STATUS\_C,
+RES_VAL_STATUS_C,
 
 Line,
 
-Value\_Line,
+Value_Line,
 
-COMPONENT\_ID,
+COMPONENT_ID,
 
-EXTERNAL\_NAME,
+EXTERNAL_NAME,
 
-REPLACE(REPLACE(MULT\_LN\_VAL\_STORAGE,'\\','\\\\'),'"','\\"') AS ResultText,
+REPLACE(REPLACE(MULT_LN_VAL_STORAGE,'\\','\\\\'),'"','\\"') AS ResultText,
 
-CMP\_MULTILINE\_VALUE
+CMP_MULTILINE_VALUE
 
 FROM
 
@@ -1225,257 +1225,257 @@ SELECT DISTINCT
 
 h.uniqueid,
 
-a.Case\_ID,
+a.Case_ID,
 
-h.CASE\_NUM,
+h.CASE_NUM,
 
-c.RESULT\_ID,
+c.RESULT_ID,
 
-d.COMPONENT\_ID,
+d.COMPONENT_ID,
 
-NVL(e.CMP\_MULTILINE\_VALUE,1) AS CMP\_MULTILINE\_VALUE,
+NVL(e.CMP_MULTILINE_VALUE,1) AS CMP_MULTILINE_VALUE,
 
 NVL(d.LINE,1) AS LINE,
 
-NVL(f.VALUE\_LINE,1) AS VALUE\_LINE ,
+NVL(f.VALUE_LINE,1) AS VALUE_LINE ,
 
-g.EXTERNAL\_NAME,
+g.EXTERNAL_NAME,
 
-NVL(f.MULT\_LN\_VAL\_STORAGE,NVL(d.COMPONENT\_RESULT,'')) AS "MULT\_LN\_VAL\_STORAGE",
+NVL(f.MULT_LN_VAL_STORAGE,NVL(d.COMPONENT_RESULT,'')) AS "MULT_LN_VAL_STORAGE",
 
-RANK() OVER ( Partition BY a.CASE\_ID Order by c.Result\_ID DESC) AS "RANK",
+RANK() OVER ( Partition BY a.CASE_ID Order by c.Result_ID DESC) AS "RANK",
 
-c.RES\_VAL\_STATUS\_C,
+c.RES_VAL_STATUS_C,
 
-h.AP\_CASE\_STATUS\_C
+h.AP_CASE_STATUS_C
 
 FROM CaseIDsToProcess a
 
-, CLARITY.SPEC\_DB\_MAIN b
+, CLARITY.SPEC_DB_MAIN b
 
-, CLARITY.RES\_DB\_MAIN c
+, CLARITY.RES_DB_MAIN c
 
-, CLARITY.Res\_Components d
+, CLARITY.Res_Components d
 
-, CLARITY.RES\_VAL\_PTR\_RM e
+, CLARITY.RES_VAL_PTR_RM e
 
-, CLARITY.RES\_VAL\_DATA\_RM f
+, CLARITY.RES_VAL_DATA_RM f
 
-, CLARITY.CLARITY\_COMPONENT g
+, CLARITY.CLARITY_COMPONENT g
 
 , PatientCases h
 
 WHERE
 
-a.CASE\_ID=b.CASE\_ID
+a.CASE_ID=b.CASE_ID
 
-AND a.CASE\_ID=h.CASE\_ID
+AND a.CASE_ID=h.CASE_ID
 
-AND b.SPECIMEN\_ID = c.RES\_SPECIMEN\_ID
+AND b.SPECIMEN_ID = c.RES_SPECIMEN_ID
 
-AND c.RESULT\_ID = d.RESULT\_ID
+AND c.RESULT_ID = d.RESULT_ID
 
-AND d.LINE = e.GROUP\_LINE (+)
+AND d.LINE = e.GROUP_LINE (+)
 
-AND d.RESULT\_ID = e.RESULT\_ID (+)
+AND d.RESULT_ID = e.RESULT_ID (+)
 
-AND e.CMP\_MULTILINE\_VALUE = f.GROUP\_LINE (+)
+AND e.CMP_MULTILINE_VALUE = f.GROUP_LINE (+)
 
-AND e.RESULT\_ID = f.RESULT\_ID (+)
+AND e.RESULT_ID = f.RESULT_ID (+)
 
-AND d.COMPONENT\_ID= g.COMPONENT\_ID
+AND d.COMPONENT_ID= g.COMPONENT_ID
 
-\-- AND c.RES\_VAL\_STATUS\_C = 9
+-- AND c.RES_VAL_STATUS_C = 9
 
-AND d.COMPONENT\_REPORT\_YN=1
+AND d.COMPONENT_REPORT_YN=1
 
-AND d.COMPONENT\_ID <> 7100796
+AND d.COMPONENT_ID <> 7100796
 
 ) RESULT
 
 WHERE RANK=1
 
-AND MULT\_LN\_VAL\_STORAGE IS NOT NULL
+AND MULT_LN_VAL_STORAGE IS NOT NULL
 
-)SELECT UNIQUEID,CASE\_ID,CASE\_NUM, RESULT\_ID,AP\_CASE\_STATUS\_C,RES\_VAL\_STATUS\_C,Line,Value\_Line,COMPONENT\_ID,EXTERNAL\_NAME,ResultText,CMP\_MULTILINE\_VALUE FROM CaseResult ORDER BY UNIQUEID, LINE, CMP\_MULTILINE\_VALUE, VALUE\_LINE;
+)SELECT UNIQUEID,CASE_ID,CASE_NUM, RESULT_ID,AP_CASE_STATUS_C,RES_VAL_STATUS_C,Line,Value_Line,COMPONENT_ID,EXTERNAL_NAME,ResultText,CMP_MULTILINE_VALUE FROM CaseResult ORDER BY UNIQUEID, LINE, CMP_MULTILINE_VALUE, VALUE_LINE;
 
 ##### **Pull Beaker Results - Use Case**
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/**************************************************
 
 Pull the orders for your cohort
 
-\---------------------------------------------------
+---------------------------------------------------
 
 Use any selections that might apply to your particular case
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+**************************************************/
 
-DROP TABLE xdr\_prinv\_opr PURGE;
+DROP TABLE xdr_prinv_opr PURGE;
 
-CREATE TABLE xdr\_prinv\_opr AS
+CREATE TABLE xdr_prinv_opr AS
 
-SELECT DISTINCT pat.pat\_id
+SELECT DISTINCT pat.pat_id
 
-,pat.pat\_mrn\_id
+,pat.pat_mrn_id
 
-,pat.study\_id
+,pat.study_id
 
-,opr.order\_proc\_id
+,opr.order_proc_id
 
-,opr.proc\_id
+,opr.proc_id
 
 ,opr.description
 
-,eap.proc\_name
+,eap.proc_name
 
-,opr.proc\_code
+,opr.proc_code
 
-,opr.order\_time
+,opr.order_time
 
-,opr.result\_time
+,opr.result_time
 
-,opr.order\_type\_c
+,opr.order_type_c
 
-,xot.NAME AS order\_type
+,xot.NAME AS order_type
 
-,opr.abnormal\_yn
+,opr.abnormal_yn
 
-,opr.order\_status\_c
+,opr.order_status_c
 
-,opr.radiology\_status\_c
+,opr.radiology_status_c
 
-,opr.specimen\_source\_c
+,opr.specimen_source_c
 
-,opr.specimen\_type\_c
+,opr.specimen_type_c
 
-,acc.acc\_num
+,acc.acc_num
 
-,xpt.NAME AS specimen\_type
+,xpt.NAME AS specimen_type
 
 ,res.line
 
-,res.ord\_value
+,res.ord_value
 
-,res.component\_id
+,res.component_id
 
-,cmp.NAME AS component\_name
+,cmp.NAME AS component_name
 
-,res.component\_comment
+,res.component_comment
 
-,res.result\_time AS res\_result\_time
+,res.result_time AS res_result_time
 
-,res.result\_val\_start\_ln
+,res.result_val_start_ln
 
-,res.result\_val\_end\_ln
+,res.result_val_end_ln
 
-,res.result\_cmt\_start\_ln
+,res.result_cmt_start_ln
 
-,res.result\_cmt\_end\_ln
+,res.result_cmt_end_ln
 
-,res.lrr\_based\_organ\_id
+,res.lrr_based_organ_id
 
-FROM xdr\_prinv\_enc pat
+FROM xdr_prinv_enc pat
 
-JOIN order\_proc opr ON pat.pat\_enc\_csn\_id = opr.pat\_enc\_csn\_id
+JOIN order_proc opr ON pat.pat_enc_csn_id = opr.pat_enc_csn_id
 
-LEFT JOIN order\_results res ON opr.order\_proc\_id = res.order\_proc\_id
+LEFT JOIN order_results res ON opr.order_proc_id = res.order_proc_id
 
-LEFT JOIN order\_rad\_acc\_num acc ON opr.order\_proc\_id = acc.order\_proc\_id
+LEFT JOIN order_rad_acc_num acc ON opr.order_proc_id = acc.order_proc_id
 
-LEFT JOIN clarity\_eap eap ON opr.proc\_id = eap.proc\_id
+LEFT JOIN clarity_eap eap ON opr.proc_id = eap.proc_id
 
-LEFT JOIN clarity\_component cmp ON res.component\_id = cmp.component\_id
+LEFT JOIN clarity_component cmp ON res.component_id = cmp.component_id
 
-LEFT JOIN zc\_order\_type xot ON opr.order\_type\_c = xot.order\_type\_c
+LEFT JOIN zc_order_type xot ON opr.order_type_c = xot.order_type_c
 
-LEFT JOIN zc\_specimen\_type xpt ON opr.specimen\_type\_c = xpt.specimen\_type\_c
+LEFT JOIN zc_specimen_type xpt ON opr.specimen_type_c = xpt.specimen_type_c
 
-WHERE opr.order\_status\_c = 5
+WHERE opr.order_status_c = 5
 
-\-- for referrals, see comments above for order\_status\_c IN (2,4)
+-- for referrals, see comments above for order_status_c IN (2,4)
 
-\--AND opr.order\_type\_c NOT IN (7,26,62,63) --Not labs --not really necessary when a selection is made in the following lines
+--AND opr.order_type_c NOT IN (7,26,62,63) --Not labs --not really necessary when a selection is made in the following lines
 
-\--AND (opr.order\_type\_c IN (5,1003) OR opr.radiology\_status\_c = 99) --Imaging
+--AND (opr.order_type_c IN (5,1003) OR opr.radiology_status_c = 99) --Imaging
 
-\--AND (opr.order\_type\_c = 3) --Microbiology
+--AND (opr.order_type_c = 3) --Microbiology
 
-\--AND (opr.order\_type\_c = 59) --Pathology
+--AND (opr.order_type_c = 59) --Pathology
 
-\--AND (opr.order\_type\_c = 8) --Outpatient Referral
+--AND (opr.order_type_c = 8) --Outpatient Referral
 
 ;
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/**************************************************
 
 After you investigate the specific procedures/components
 
-that apply to your case, pull the case\_id's related
+that apply to your case, pull the case_id's related
 
 to them
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+**************************************************/
 
-DROP TABLE xdr\_prinv\_opr\_selection PURGE;
+DROP TABLE xdr_prinv_opr_selection PURGE;
 
-CREATE TABLE xdr\_prinv\_selection AS
+CREATE TABLE xdr_prinv_selection AS
 
 select DISTINCT
 
-\-- requisition\_id matches the case\_id
+-- requisition_id matches the case_id
 
-cas.requisition\_id
+cas.requisition_id
 
-,opr.\*
+,opr.*
 
-from XDR\_ABDALLA\_OPR\_SAMPLE opr
+from XDR_ABDALLA_OPR_SAMPLE opr
 
-JOIN LAB\_CASE\_INFO cas ON opr.acc\_num = cas.CASE\_NUM -- this is added join that allows to find the case\_idwhere
+JOIN LAB_CASE_INFO cas ON opr.acc_num = cas.CASE_NUM -- this is added join that allows to find the case_idwhere
 
-opr.proc\_id = '77929'
+opr.proc_id = '77929'
 
-and opr.component\_id = '7000004'
+and opr.component_id = '7000004'
 
 ;
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/**************************************************
 
 Investigate the specific procedures/components
 
 that apply to your case
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+**************************************************/
 
-drop table xdr\_prinv\_opr\_results purge;
+drop table xdr_prinv_opr_results purge;
 
-create table xdr\_prinv\_opr\_results as
+create table xdr_prinv_opr_results as
 
 WITH
 
 CaseIDsToProcess AS (
 
-SELECT requisition\_id as CASE\_ID
+SELECT requisition_id as CASE_ID
 
-FROM xdr\_prinv\_selection
+FROM xdr_prinv_selection
 
 )
 
 ),ExternalPatientInfo AS (
 
-SELECT REQ\_GROUPER\_ID, REQ\_SUBMITTER\_ID, REQ\_SUBM\_PT\_ID, REQ\_INTERVAL\_NUMBER, REQ\_ACCOUNT\_ID, REQ\_CHART\_NUM, EXTERNAL\_VISIT\_ID FROM (
+SELECT REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_SUBM_PT_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM, EXTERNAL_VISIT_ID FROM (
 
-SELECT DISTINCT REQ\_GROUPER\_ID, REQ\_SUBMITTER\_ID, REQ\_SUBM\_PT\_ID, REQ\_INTERVAL\_NUMBER, REQ\_ACCOUNT\_ID, REQ\_CHART\_NUM, EXTERNAL\_VISIT\_ID,
+SELECT DISTINCT REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_SUBM_PT_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM, EXTERNAL_VISIT_ID,
 
-RANK() OVER (PARTITION BY REQ\_GROUPER\_ID, REQ\_SUBMITTER\_ID, REQ\_INTERVAL\_NUMBER, REQ\_ACCOUNT\_ID, REQ\_CHART\_NUM ORDER BY REquisition\_ID DESC, NVL(EXTERNAL\_VISIT\_ID,'-') DESC, REQ\_SUBM\_PT\_ID) as Rankorder
+RANK() OVER (PARTITION BY REQ_GROUPER_ID, REQ_SUBMITTER_ID, REQ_INTERVAL_NUMBER, REQ_ACCOUNT_ID, REQ_CHART_NUM ORDER BY REquisition_ID DESC, NVL(EXTERNAL_VISIT_ID,'-') DESC, REQ_SUBM_PT_ID) as Rankorder
 
-FROM CLARITY.REQ\_DB\_MAIN
+FROM CLARITY.REQ_DB_MAIN
 
 WHERE
 
-REQ\_DB\_MAIN.REQUISITION\_ID IN (SELECT CASE\_ID FROM CaseIDsToProcess )
+REQ_DB_MAIN.REQUISITION_ID IN (SELECT CASE_ID FROM CaseIDsToProcess )
 
-AND REQ\_SUBMITTER\_ID IS NOT NULL) REQDBMAINResults
+AND REQ_SUBMITTER_ID IS NOT NULL) REQDBMAINResults
 
 WHERE REQDBMAINResults.RankOrder=1
 
@@ -1487,31 +1487,31 @@ SELECT
 
 DISTINCT
 
-CASE WHEN NVL(REQ\_DB\_MAIN.REQ\_GROUPER\_ID,0) <>0 THEN CAST (NVL(REQ\_DB\_MAIN.REQ\_GROUPER\_ID,'0') AS VARCHAR2(25)) ELSE PATIENT.PAT\_ID END || '-' ||LAB\_CASE\_DB\_MAIN.CASE\_ID uniqueid,
+CASE WHEN NVL(REQ_DB_MAIN.REQ_GROUPER_ID,0) <>0 THEN CAST (NVL(REQ_DB_MAIN.REQ_GROUPER_ID,'0') AS VARCHAR2(25)) ELSE PATIENT.PAT_ID END || '-' ||LAB_CASE_DB_MAIN.CASE_ID uniqueid,
 
-LAB\_CASE\_DB\_MAIN.CASE\_ID
+LAB_CASE_DB_MAIN.CASE_ID
 
 FROM CaseIDsToProcess
 
-INNER JOIN CLARITY.LAB\_CASE\_DB\_MAIN ON CaseIDsToProcess.CASE\_ID=LAB\_CASE\_DB\_MAIN.CASE\_ID
+INNER JOIN CLARITY.LAB_CASE_DB_MAIN ON CaseIDsToProcess.CASE_ID=LAB_CASE_DB_MAIN.CASE_ID
 
-LEFT JOIN CLARITY.PATIENT ON PATIENT.PAT\_ID=LAB\_CASE\_DB\_MAIN.CASE\_PAT\_ID
+LEFT JOIN CLARITY.PATIENT ON PATIENT.PAT_ID=LAB_CASE_DB_MAIN.CASE_PAT_ID
 
-LEFT JOIN CLARITY.REQ\_CASES ON REQ\_CASES.CASES\_ID = CaseIDsToProcess.CASE\_ID
+LEFT JOIN CLARITY.REQ_CASES ON REQ_CASES.CASES_ID = CaseIDsToProcess.CASE_ID
 
-LEFT JOIN CLARITY.REQ\_DB\_MAIN ON REQ\_DB\_MAIN.REQUISITION\_ID = CLARITY.REQ\_CASES.REQUISITION\_ID
+LEFT JOIN CLARITY.REQ_DB_MAIN ON REQ_DB_MAIN.REQUISITION_ID = CLARITY.REQ_CASES.REQUISITION_ID
 
-LEFT JOIN CLARITY.RQG\_DB\_MAIN ON REQ\_DB\_MAIN.REQ\_GROUPER\_ID = RQG\_DB\_MAIN.RQG\_GROUPER\_ID
+LEFT JOIN CLARITY.RQG_DB_MAIN ON REQ_DB_MAIN.REQ_GROUPER_ID = RQG_DB_MAIN.RQG_GROUPER_ID
 
-LEFT JOIN CLARITY.SPEC\_DB\_MAIN ON LAB\_CASE\_DB\_MAIN.CASE\_ID=SPEC\_DB\_MAIN.CASE\_ID
+LEFT JOIN CLARITY.SPEC_DB_MAIN ON LAB_CASE_DB_MAIN.CASE_ID=SPEC_DB_MAIN.CASE_ID
 
-LEFT JOIN CLARITY.LAB\_SMT\_NOADD ON SPEC\_DB\_MAIN.REQ\_SMT\_ID = Lab\_Smt\_Noadd.Record\_Id
+LEFT JOIN CLARITY.LAB_SMT_NOADD ON SPEC_DB_MAIN.REQ_SMT_ID = Lab_Smt_Noadd.Record_Id
 
-LEFT JOIN CLARITY.REQ\_ORDER\_GROUP ON REQ\_ORDER\_GROUP.REQUISITION\_ID=LAB\_CASE\_DB\_MAIN.CASE\_ID
+LEFT JOIN CLARITY.REQ_ORDER_GROUP ON REQ_ORDER_GROUP.REQUISITION_ID=LAB_CASE_DB_MAIN.CASE_ID
 
-LEFT JOIN CLARITY.ORDER\_PROC ON REQ\_ORDER\_GROUP.ORDER\_ID=ORDER\_PROC.ORDER\_PROC\_ID
+LEFT JOIN CLARITY.ORDER_PROC ON REQ_ORDER_GROUP.ORDER_ID=ORDER_PROC.ORDER_PROC_ID
 
-LEFT JOIN ExternalPatientInfo ON REQ\_DB\_MAIN.REQ\_GROUPER\_ID = ExternalPatientInfo.REQ\_GROUPER\_ID
+LEFT JOIN ExternalPatientInfo ON REQ_DB_MAIN.REQ_GROUPER_ID = ExternalPatientInfo.REQ_GROUPER_ID
 
 ),
 
@@ -1525,21 +1525,21 @@ DISTINCT
 
 PatientInformation.uniqueid,
 
-LAB\_CASE\_INFO.CASE\_NUM,
+LAB_CASE_INFO.CASE_NUM,
 
-LAB\_CASE\_DB\_MAIN.CASE\_ID,
+LAB_CASE_DB_MAIN.CASE_ID,
 
-LAB\_CASE\_INFO.AP\_CASE\_STATUS\_C
+LAB_CASE_INFO.AP_CASE_STATUS_C
 
 FROM CaseIDsToProcess
 
-INNER JOIN CLARITY.LAB\_CASE\_DB\_MAIN ON CaseIDsToProcess.CASE\_ID=LAB\_CASE\_DB\_MAIN.CASE\_ID
+INNER JOIN CLARITY.LAB_CASE_DB_MAIN ON CaseIDsToProcess.CASE_ID=LAB_CASE_DB_MAIN.CASE_ID
 
-INNER JOIN CLARITY.LAB\_CASE\_INFO ON LAB\_CASE\_INFO.REQUISITION\_ID = LAB\_CASE\_DB\_MAIN.CASE\_ID
+INNER JOIN CLARITY.LAB_CASE_INFO ON LAB_CASE_INFO.REQUISITION_ID = LAB_CASE_DB_MAIN.CASE_ID
 
-INNER JOIN CLARITY.ZC\_AP\_CASE\_STATUS ON ZC\_AP\_CASE\_STATUS.AP\_CASE\_STATUS\_C = LAB\_CASE\_INFO.AP\_CASE\_STATUS\_C
+INNER JOIN CLARITY.ZC_AP_CASE_STATUS ON ZC_AP_CASE_STATUS.AP_CASE_STATUS_C = LAB_CASE_INFO.AP_CASE_STATUS_C
 
-INNER JOIN PatientInformation ON CaseIDsToProcess.CASE\_ID=PatientInformation.Case\_Id
+INNER JOIN PatientInformation ON CaseIDsToProcess.CASE_ID=PatientInformation.Case_Id
 
 ),
 
@@ -1549,27 +1549,27 @@ SELECT
 
 UNIQUEID,
 
-CASE\_ID,
+CASE_ID,
 
-CASE\_NUM,
+CASE_NUM,
 
-RESULT\_ID,
+RESULT_ID,
 
-AP\_CASE\_STATUS\_C,
+AP_CASE_STATUS_C,
 
-RES\_VAL\_STATUS\_C,
+RES_VAL_STATUS_C,
 
 Line,
 
-Value\_Line,
+Value_Line,
 
-COMPONENT\_ID,
+COMPONENT_ID,
 
-EXTERNAL\_NAME,
+EXTERNAL_NAME,
 
-REPLACE(REPLACE(MULT\_LN\_VAL\_STORAGE,'\\','\\\\'),'"','\\"') AS ResultText,
+REPLACE(REPLACE(MULT_LN_VAL_STORAGE,'\\','\\\\'),'"','\\"') AS ResultText,
 
-CMP\_MULTILINE\_VALUE
+CMP_MULTILINE_VALUE
 
 FROM
 
@@ -1579,151 +1579,151 @@ SELECT DISTINCT
 
 h.uniqueid,
 
-a.Case\_ID,
+a.Case_ID,
 
-h.CASE\_NUM,
+h.CASE_NUM,
 
-c.RESULT\_ID,
+c.RESULT_ID,
 
-d.COMPONENT\_ID,
+d.COMPONENT_ID,
 
-NVL(e.CMP\_MULTILINE\_VALUE,1) AS CMP\_MULTILINE\_VALUE,
+NVL(e.CMP_MULTILINE_VALUE,1) AS CMP_MULTILINE_VALUE,
 
 NVL(d.LINE,1) AS LINE,
 
-NVL(f.VALUE\_LINE,1) AS VALUE\_LINE ,
+NVL(f.VALUE_LINE,1) AS VALUE_LINE ,
 
-g.EXTERNAL\_NAME,
+g.EXTERNAL_NAME,
 
-NVL(f.MULT\_LN\_VAL\_STORAGE,NVL(d.COMPONENT\_RESULT,'')) AS "MULT\_LN\_VAL\_STORAGE",
+NVL(f.MULT_LN_VAL_STORAGE,NVL(d.COMPONENT_RESULT,'')) AS "MULT_LN_VAL_STORAGE",
 
-RANK() OVER ( Partition BY a.CASE\_ID Order by c.Result\_ID DESC) AS "RANK",
+RANK() OVER ( Partition BY a.CASE_ID Order by c.Result_ID DESC) AS "RANK",
 
-c.RES\_VAL\_STATUS\_C,
+c.RES_VAL_STATUS_C,
 
-h.AP\_CASE\_STATUS\_C
+h.AP_CASE_STATUS_C
 
 FROM CaseIDsToProcess a
 
-, CLARITY.SPEC\_DB\_MAIN b
+, CLARITY.SPEC_DB_MAIN b
 
-, CLARITY.RES\_DB\_MAIN c
+, CLARITY.RES_DB_MAIN c
 
-, CLARITY.Res\_Components d
+, CLARITY.Res_Components d
 
-, CLARITY.RES\_VAL\_PTR\_RM e
+, CLARITY.RES_VAL_PTR_RM e
 
-, CLARITY.RES\_VAL\_DATA\_RM f
+, CLARITY.RES_VAL_DATA_RM f
 
-, CLARITY.CLARITY\_COMPONENT g
+, CLARITY.CLARITY_COMPONENT g
 
 , PatientCases h
 
 WHERE
 
-a.CASE\_ID=b.CASE\_ID
+a.CASE_ID=b.CASE_ID
 
-AND a.CASE\_ID=h.CASE\_ID
+AND a.CASE_ID=h.CASE_ID
 
-AND b.SPECIMEN\_ID = c.RES\_SPECIMEN\_ID
+AND b.SPECIMEN_ID = c.RES_SPECIMEN_ID
 
-AND c.RESULT\_ID = d.RESULT\_ID
+AND c.RESULT_ID = d.RESULT_ID
 
-AND d.LINE = e.GROUP\_LINE (+)
+AND d.LINE = e.GROUP_LINE (+)
 
-AND d.RESULT\_ID = e.RESULT\_ID (+)
+AND d.RESULT_ID = e.RESULT_ID (+)
 
-AND e.CMP\_MULTILINE\_VALUE = f.GROUP\_LINE (+)
+AND e.CMP_MULTILINE_VALUE = f.GROUP_LINE (+)
 
-AND e.RESULT\_ID = f.RESULT\_ID (+)
+AND e.RESULT_ID = f.RESULT_ID (+)
 
-AND d.COMPONENT\_ID= g.COMPONENT\_ID
+AND d.COMPONENT_ID= g.COMPONENT_ID
 
-\-- AND c.RES\_VAL\_STATUS\_C = 9
+-- AND c.RES_VAL_STATUS_C = 9
 
-AND d.COMPONENT\_REPORT\_YN=1
+AND d.COMPONENT_REPORT_YN=1
 
-AND d.COMPONENT\_ID <> 7100796
+AND d.COMPONENT_ID <> 7100796
 
 ) RESULT
 
 WHERE RANK=1
 
-AND MULT\_LN\_VAL\_STORAGE IS NOT NULL
+AND MULT_LN_VAL_STORAGE IS NOT NULL
 
-)SELECT UNIQUEID,CASE\_ID,CASE\_NUM, RESULT\_ID,AP\_CASE\_STATUS\_C,RES\_VAL\_STATUS\_C,Line,Value\_Line,COMPONENT\_ID,EXTERNAL\_NAME,ResultText,CMP\_MULTILINE\_VALUE
+)SELECT UNIQUEID,CASE_ID,CASE_NUM, RESULT_ID,AP_CASE_STATUS_C,RES_VAL_STATUS_C,Line,Value_Line,COMPONENT_ID,EXTERNAL_NAME,ResultText,CMP_MULTILINE_VALUE
 
 FROM CaseResult
 
-where component\_id = 7000004 --MICROSCOPIC DESCRIPTION
+where component_id = 7000004 --MICROSCOPIC DESCRIPTION
 
-ORDER BY UNIQUEID, LINE, CMP\_MULTILINE\_VALUE, VALUE\_LINE
+ORDER BY UNIQUEID, LINE, CMP_MULTILINE_VALUE, VALUE_LINE
 
 ;
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/**************************************************
 
 If you need to merge the results into one line,
 
 you may use the following pice
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+**************************************************/
 
-DROP TABLE xdr\_prinv\_opr\_results\_merge PURGE;
+DROP TABLE xdr_prinv_opr_results_merge PURGE;
 
-CREATE TABLE xdr\_prinv\_opr\_results\_merge AS
+CREATE TABLE xdr_prinv_opr_results_merge AS
 
-SELECT uniqueid,case\_id,RTRIM(XMLAGG(XMLELEMENT(E,resulttext,'').EXTRACT('//text()')
+SELECT uniqueid,case_id,RTRIM(XMLAGG(XMLELEMENT(E,resulttext,'').EXTRACT('//text()')
 
-ORDER BY value\_line).GetClobVal(),',') as result\_text\_merged
+ORDER BY value_line).GetClobVal(),',') as result_text_merged
 
-from xdr\_prinv\_opr\_results
+from xdr_prinv_opr_results
 
-GROUP BY uniqueid,case\_id;
+GROUP BY uniqueid,case_id;
 ```
 ## Check Patient's Contact Information
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 10/08/19)
 
-The following code can be used to check if/when a patient has (or not) different forms of contact. The BIP\_PAT\_GEOCODE table contains patient's geocoded address.
+The following code can be used to check if/when a patient has (or not) different forms of contact. The BIP_PAT_GEOCODE table contains patient's geocoded address.
 
 Note: this looks for valid address AND phone AND email.   If you want to pull a patient that has at least one form of valid contact use OR instead of AND in the code below
 ```sql
-SELECT \*
+SELECT *
 
-FROM xdr\_prinv\_coh coh
+FROM xdr_prinv_coh coh
 
-JOIN patient pat ON coh.pat\_id = pat.pat\_id
+JOIN patient pat ON coh.pat_id = pat.pat_id
 
-left join JSANZ.BIP\_PAT\_GEOCODE geo on pat.pat\_id = geo.pat\_id
+left join JSANZ.BIP_PAT_GEOCODE geo on pat.pat_id = geo.pat_id
 
 where
 
-\---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
-\-- excludes patient's without a valid address, or labeled as homeless
+-- excludes patient's without a valid address, or labeled as homeless
 
-\---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
-geo.add\_line\_1is not null
+geo.add_line_1is not null
 
-and UPPER(geo.add\_line\_1) NOT like '%HOMELESS%'
+and UPPER(geo.add_line_1) NOT like '%HOMELESS%'
 
 and geo.fips is not null
 
 AND -- OR
 
-\---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
-\-- excludes patients with a placeholder/dummy phone # or no phone# at all
+-- excludes patients with a placeholder/dummy phone # or no phone# at all
 
-\-- This can be extended to other phone numbers as well (work phone, cell, etc...)
+-- This can be extended to other phone numbers as well (work phone, cell, etc...)
 
-\---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
-( pat.home\_phone is not null
+( pat.home_phone is not null
 
-and pat.home\_phone NOT IN ('000-000-0000'
+and pat.home_phone NOT IN ('000-000-0000'
 
 ,'000-000-0001'
 
@@ -1737,15 +1737,15 @@ and pat.home\_phone NOT IN ('000-000-0000'
 
 )
 
-\---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
-\-- excludes patients without email address
+-- excludes patients without email address
 
-\---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
 
 AND -- OR
 
-pat.email\_address is not null
+pat.email_address is not null
 
 # All Flowsheet Questions on a Template
 
@@ -1755,47 +1755,47 @@ The following code pulls the different flowsheet questions on a given template i
 
 select
 
-t.template\_id,
+t.template_id,
 
-t.template\_name,
+t.template_name,
 
-t.display\_name template\_display\_name,
+t.display_name template_display_name,
 
-tc.flo\_meas\_id group\_meas\_id,
+tc.flo_meas_id group_meas_id,
 
-fgd.disp\_name group\_meas\_name,
+fgd.disp_name group_meas_name,
 
-fgd.flo\_meas\_name group\_flo\_meas\_name,
+fgd.flo_meas_name group_flo_meas_name,
 
-fgd2.flo\_meas\_id flo\_meas\_id,
+fgd2.flo_meas_id flo_meas_id,
 
-fgd2.flo\_meas\_name flo\_meas\_name,
+fgd2.flo_meas_name flo_meas_name,
 
-fgd2.disp\_name flo\_disp\_name
+fgd2.disp_name flo_disp_name
 
 from
 
-ip\_flt\_data t
+ip_flt_data t
 
-left join ip\_flt\_comps tc on (t.template\_id = tc.template\_id)
+left join ip_flt_comps tc on (t.template_id = tc.template_id)
 
-left join ip\_flo\_gp\_data fgd on (tc.flo\_meas\_id = fgd.flo\_meas\_id)
+left join ip_flo_gp_data fgd on (tc.flo_meas_id = fgd.flo_meas_id)
 
-left join ip\_flo\_measuremnts fm on (fgd.flo\_meas\_id = fm.id)
+left join ip_flo_measuremnts fm on (fgd.flo_meas_id = fm.id)
 
-join ip\_flo\_gp\_data fgd2 on (fm.measurement\_id = fgd2.flo\_meas\_id)
+join ip_flo_gp_data fgd2 on (fm.measurement_id = fgd2.flo_meas_id)
 
-where t.template\_id = 281
+where t.template_id = 281
 
 group by
 
-t.template\_id, t.template\_name, t.display\_name,
+t.template_id, t.template_name, t.display_name,
 
-tc.line, tc.flo\_meas\_id, fgd.disp\_name, fgd.flo\_meas\_name,
+tc.line, tc.flo_meas_id, fgd.disp_name, fgd.flo_meas_name,
 
-fgd2.flo\_meas\_id, fgd2.flo\_meas\_name, fgd2.flo\_dis\_name, fgd2.flo\_row\_name, fgd2.flo\_row\_name,
+fgd2.flo_meas_id, fgd2.flo_meas_name, fgd2.flo_dis_name, fgd2.flo_row_name, fgd2.flo_row_name,
 
-fgd2.value\_type\_name, fgd2.description, fgd2.disp\_name
+fgd2.value_type_name, fgd2.description, fgd2.disp_name
 
 # Past Medical History
 
@@ -1805,193 +1805,193 @@ The following code pulls the Past Medical History information. This is a report 
 
 ##### **Past Medical History**
 
-select x.pat\_id
+select x.pat_id
 
-,x.study\_id
+,x.study_id
 
-,x.icd\_code
+,x.icd_code
 
-,x.dx\_name as diagnosis\_desc
+,x.dx_name as diagnosis_desc
 
-,x.medical\_hx\_date
+,x.medical_hx_date
 
 ,x.comments
 
-from (select distinct coh.pat\_id
+from (select distinct coh.pat_id
 
-,coh.study\_id
+,coh.study_id
 
-,case when pl.contact\_date <= '01/01/2015' then cin9.code else cin10.code end icd\_code
+,case when pl.contact_date <= '01/01/2015' then cin9.code else cin10.code end icd_code
 
-,edg.dx\_name
+,edg.dx_name
 
-,pl.contact\_date
+,pl.contact_date
 
-,pl.medical\_hx\_date
+,pl.medical_hx_date
 
 ,pl.comments
 
-,pl.dx\_id
+,pl.dx_id
 
-,MIN(pl.contact\_date) OVER (PARTITION BY pl.pat\_id, pl.dx\_id) AS first\_dx
+,MIN(pl.contact_date) OVER (PARTITION BY pl.pat_id, pl.dx_id) AS first_dx
 
-From XDR\_PRINV\_COH coh
+From XDR_PRINV_COH coh
 
-JOIN MEDICAL\_HX pl ON coh.pat\_id = pl.pat\_id
+JOIN MEDICAL_HX pl ON coh.pat_id = pl.pat_id
 
-left join ZC\_HISTORY\_SOURCE zhs on pl.MED\_HX\_SOURCE\_C = zhs.HISTORY\_SOURCE\_C
+left join ZC_HISTORY_SOURCE zhs on pl.MED_HX_SOURCE_C = zhs.HISTORY_SOURCE_C
 
-\--This join helps us find the dx description that matches what can be seen in CC
+--This join helps us find the dx description that matches what can be seen in CC
 
-LEFT JOIN clarity.CLARITY\_EDG edg ON pl.dx\_id = edg.dx\_id --AND cin9.line = 1
+LEFT JOIN clarity.CLARITY_EDG edg ON pl.dx_id = edg.dx_id --AND cin9.line = 1
 
-\-- ICD9 CODES JOIN
+-- ICD9 CODES JOIN
 
-LEFT JOIN clarity.edg\_current\_icd9 cin9 ON pl.dx\_id = cin9.dx\_id AND cin9.line = 1
+LEFT JOIN clarity.edg_current_icd9 cin9 ON pl.dx_id = cin9.dx_id AND cin9.line = 1
 
-\--ICD10 CODES JOIN
+--ICD10 CODES JOIN
 
-LEFT JOIN clarity.edg\_current\_icd10 cin10 ON pl.DX\_ID = cin10.dx\_id AND cin10.line = 1
+LEFT JOIN clarity.edg_current_icd10 cin10 ON pl.DX_ID = cin10.dx_id AND cin10.line = 1
 
 ) x
 
 where
 
-first\_dx = x.contact\_date
+first_dx = x.contact_date
 
-order by pat\_id,diagnosis\_desc;
+order by pat_id,diagnosis_desc;
 ```
 ## Procedure Performing and Billing Providers
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 3/2/20)
 
-The following code enhances the procedure data pull to add the performing and billing providers. It only applies to the CPT (not legacy but **hsp\_transactions**, and **arpb\_transactions**) and ICD-9/10 codes (**i2b2**.**lz\_clarity\_procedures**)
+The following code enhances the procedure data pull to add the performing and billing providers. It only applies to the CPT (not legacy but **hsp_transactions**, and **arpb_transactions**) and ICD-9/10 codes (**i2b2**.**lz_clarity_procedures**)
 ```sql
 -- Procedure Performance Provider**
 
-DROP TABLE xdr\_prinv\_prc PURGE;
+DROP TABLE xdr_prinv_prc PURGE;
 
-CREATE TABLE xdr\_prinv\_prc AS
+CREATE TABLE xdr_prinv_prc AS
 
-SELECT DISTINCT enc.pat\_id
+SELECT DISTINCT enc.pat_id
 
-,coh.study\_id
+,coh.study_id
 
-,hspt.pat\_enc\_csn\_id
+,hspt.pat_enc_csn_id
 
-,hspt.service\_date AS proc\_date
+,hspt.service_date AS proc_date
 
-,SUBSTR(COALESCE(hspt.hcpcs\_code,hspt.cpt\_code),1,5) AS proc\_code
+,SUBSTR(COALESCE(hspt.hcpcs_code,hspt.cpt_code),1,5) AS proc_code
 
-,'CPT-Hospital' AS proc\_type
+,'CPT-Hospital' AS proc_type
 
-,hspt.PERFORMING\_PROV\_ID
+,hspt.PERFORMING_PROV_ID
 
-,hspt.BILLING\_PROV\_ID AS BILLING\_PROV\_ID
+,hspt.BILLING_PROV_ID AS BILLING_PROV_ID
 
-,EAP.PROC\_NAME
+,EAP.PROC_NAME
 
-FROM i2b2.lz\_clarity\_enc enc
+FROM i2b2.lz_clarity_enc enc
 
-JOIN xdr\_prinv\_coh coh ON enc.pat\_id = coh.pat\_id
+JOIN xdr_prinv_coh coh ON enc.pat_id = coh.pat_id
 
-JOIN hsp\_transactions hspt ON enc.pat\_enc\_csn\_id = hspt.pat\_enc\_csn\_id
+JOIN hsp_transactions hspt ON enc.pat_enc_csn_id = hspt.pat_enc_csn_id
 
-LEFT OUTER JOIN f\_arhb\_inactive\_tx fait ON hspt.tx\_id = fait.tx\_id
+LEFT OUTER JOIN f_arhb_inactive_tx fait ON hspt.tx_id = fait.tx_id
 
-LEFT JOIN clarity\_eap eap ON SUBSTR(COALESCE(hspt.hcpcs\_code,hspt.cpt\_code),1,5) = eap.proc\_code
+LEFT JOIN clarity_eap eap ON SUBSTR(COALESCE(hspt.hcpcs_code,hspt.cpt_code),1,5) = eap.proc_code
 
-WHERE hspt.tx\_type\_ha\_c = 1
+WHERE hspt.tx_type_ha_c = 1
 
-AND (LENGTH(hspt.cpt\_code) = 5 OR hspt.hcpcs\_code IS NOT NULL)
+AND (LENGTH(hspt.cpt_code) = 5 OR hspt.hcpcs_code IS NOT NULL)
 
-AND fait.tx\_id IS NULL;
+AND fait.tx_id IS NULL;
 
-CREATE INDEX xdr\_prinv\_prc\_patidx ON xdr\_prinv\_prc (pat\_id) nologging;
+CREATE INDEX xdr_prinv_prc_patidx ON xdr_prinv_prc (pat_id) nologging;
 
-SELECT COUNT(\*),COUNT(DISTINCT pat\_id) FROM xdr\_prinv\_prc; --
+SELECT COUNT(*),COUNT(DISTINCT pat_id) FROM xdr_prinv_prc; --
 
-SELECT COUNT(\*),COUNT(DISTINCT pat\_id) FROM xdr\_prinv\_prc WHERE PERFORMING\_PROV\_ID IS NOT NULL; --
+SELECT COUNT(*),COUNT(DISTINCT pat_id) FROM xdr_prinv_prc WHERE PERFORMING_PROV_ID IS NOT NULL; --
 
-ALTER TABLE XDR\_prinv\_PRC MODIFY proc\_type varchar2 (200);
+ALTER TABLE XDR_prinv_PRC MODIFY proc_type varchar2 (200);
 
-INSERT INTO XDR\_prinv\_PRC (pat\_id,STUDY\_ID,pat\_enc\_csn\_id,proc\_date,proc\_code,proc\_type,PERFORMING\_PROV\_ID,PROC\_NAME)
+INSERT INTO XDR_prinv_PRC (pat_id,STUDY_ID,pat_enc_csn_id,proc_date,proc_code,proc_type,PERFORMING_PROV_ID,PROC_NAME)
 
-SELECT distinct arpb.patient\_id AS pat\_id
+SELECT distinct arpb.patient_id AS pat_id
 
-,coh.study\_id
+,coh.study_id
 
-,arpb.pat\_enc\_csn\_id
+,arpb.pat_enc_csn_id
 
-,arpb.service\_date AS proc\_date
+,arpb.service_date AS proc_date
 
-,arpb.cpt\_code AS proc\_code
+,arpb.cpt_code AS proc_code
 
-,'CPT-Professional' AS proc\_type
+,'CPT-Professional' AS proc_type
 
-,arpb.SERV\_PROVIDER\_ID AS PERFORMING\_PROV\_ID
+,arpb.SERV_PROVIDER_ID AS PERFORMING_PROV_ID
 
-,arpb.BILLING\_PROV\_ID AS BILLING\_PROV\_ID
+,arpb.BILLING_PROV_ID AS BILLING_PROV_ID
 
-,EAP.PROC\_NAME
+,EAP.PROC_NAME
 
-FROM xdr\_prinv\_enc enc
+FROM xdr_prinv_enc enc
 
-JOIN xdr\_prinv\_coh coh ON enc.pat\_id = coh.pat\_id
+JOIN xdr_prinv_coh coh ON enc.pat_id = coh.pat_id
 
-JOIN arpb\_transactions arpb ON enc.pat\_enc\_csn\_id = arpb.pat\_enc\_csn\_id
+JOIN arpb_transactions arpb ON enc.pat_enc_csn_id = arpb.pat_enc_csn_id
 
-LEFT JOIN clarity\_eap eap ON arpb.cpt\_code = eap.proc\_code
+LEFT JOIN clarity_eap eap ON arpb.cpt_code = eap.proc_code
 
-WHERE tx\_type\_c = 1 ----- Charges only
+WHERE tx_type_c = 1 ----- Charges only
 
-AND void\_date IS NULL;
+AND void_date IS NULL;
 
 COMMIT;
 
-SELECT proc\_type, COUNT(\*),COUNT(DISTINCT pat\_id) FROM xdr\_prinv\_prc GROUP BY proc\_type;
+SELECT proc_type, COUNT(*),COUNT(DISTINCT pat_id) FROM xdr_prinv_prc GROUP BY proc_type;
 
-/\*
+/*
 
 CPT-Professional
 
 CPT-Hospital
 
-\*/
+*/
 
-SELECT \* FROM xdr\_prinv\_prc;
+SELECT * FROM xdr_prinv_prc;
 
-INSERT INTO xdr\_prinv\_prc (pat\_id,STUDY\_ID,pat\_enc\_csn\_id,proc\_date,proc\_code,proc\_type,PERFORMING\_PROV\_ID,PROC\_NAME)
+INSERT INTO xdr_prinv_prc (pat_id,STUDY_ID,pat_enc_csn_id,proc_date,proc_code,proc_type,PERFORMING_PROV_ID,PROC_NAME)
 
-SELECT DISTINCT pat.pat\_id
+SELECT DISTINCT pat.pat_id
 
-,coh.study\_id
+,coh.study_id
 
-,px.pat\_enc\_csn\_id
+,px.pat_enc_csn_id
 
-,px.proc\_date
+,px.proc_date
 
-,px.px\_code AS proc\_code
+,px.px_code AS proc_code
 
 ,CASE
 
-WHEN px.icd\_code\_set = 'ICD-9-CM Volume 3' THEN 'ICD-9'
+WHEN px.icd_code_set = 'ICD-9-CM Volume 3' THEN 'ICD-9'
 
-WHEN px.icd\_code\_set = 'ICD-10-PCS' THEN 'ICD-10'
+WHEN px.icd_code_set = 'ICD-10-PCS' THEN 'ICD-10'
 
-END AS proc\_type
+END AS proc_type
 
-,px.PROC\_PERF\_PROV\_ID
+,px.PROC_PERF_PROV_ID
 
-,px.procedure\_name AS proc\_name
+,px.procedure_name AS proc_name
 
-FROM xdr\_prinv\_coh coh
+FROM xdr_prinv_coh coh
 
-JOIN i2b2.lz\_clarity\_procedures px ON pat.pat\_enc\_csn\_id = px.pat\_enc\_csn\_id;
+JOIN i2b2.lz_clarity_procedures px ON pat.pat_enc_csn_id = px.pat_enc_csn_id;
 
 COMMIT;
 
-/\*
+/*
 
 CPT-Professional
 
@@ -2001,7 +2001,7 @@ ICD-9
 
 ICD-10
 
-\*/
+*/
 
 # Database Cleanup/Queries
 
@@ -2009,31 +2009,31 @@ The following code sets up the drop table queries as well as calculate the curre
 
 ##### **Database Cleanup/Queries**
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Generate queries to drop tables for cleanup
+-- Generate queries to drop tables for cleanup
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Drop tables based on owners/schemas/table names
+-- Drop tables based on owners/schemas/table names
 
-select 'drop table ' || owner || '.' || t.table\_name || ' PURGE; --' || p.investigator sqlq
+select 'drop table ' || owner || '.' || t.table_name || ' PURGE; --' || p.investigator sqlq
 
-from all\_tables t
+from all_tables t
 
-join i2b2.bip\_project p on substr(t.table\_name,5,6) = to\_char(p.project\_id)
+join i2b2.bip_project p on substr(t.table_name,5,6) = to_char(p.project_id)
 
-WHERE t.owner in ('TTACORDA','CTSI\_RESEARCH','CKD')
+WHERE t.owner in ('TTACORDA','CTSI_RESEARCH','CKD')
 
-AND ((not regexp\_like (table\_name,'+(drv|coh|bu|ctl|donotdelete)+','i'))
+AND ((not regexp_like (table_name,'+(drv|coh|bu|ctl|donotdelete)+','i'))
 
-or (regexp\_like (table\_name,'+(subset)+','i')))
+or (regexp_like (table_name,'+(subset)+','i')))
 
-and t.table\_name like 'XDR%'
+and t.table_name like 'XDR%'
 
 and (t.owner in ('TTACORDA','CKD')
 
-or (t.owner = 'CTSI\_RESEARCH'
+or (t.owner = 'CTSI_RESEARCH'
 
 and lower(p.developer) in ('ehb','ttacorda','redcap2xdr')
 
@@ -2045,15 +2045,15 @@ order by sqlq
 
 ;
 
-\-- Drop according to own tables sorted by descending size
+-- Drop according to own tables sorted by descending size
 
 select distinct 'drop table '
 
-|| x.table\_name
+|| x.table_name
 
 || ' PURGE; --'
 
-|| z.SIZE\_MB
+|| z.SIZE_MB
 
 || ' | ' || x.developer
 
@@ -2065,13 +2065,13 @@ select distinct 'drop table '
 
 sqlq
 
-,z.SIZE\_MB
+,z.SIZE_MB
 
-from (select distinct to\_number(substr(t.table\_name,5,6)) project\_id
+from (select distinct to_number(substr(t.table_name,5,6)) project_id
 
-,t.owner || '.' || t.table\_name table\_name
+,t.owner || '.' || t.table_name table_name
 
-,t.table\_name table\_name\_pre
+,t.table_name table_name_pre
 
 ,p.developer
 
@@ -2081,99 +2081,99 @@ from (select distinct to\_number(substr(t.table\_name,5,6)) project\_id
 
 ,p.description
 
-from all\_tables t
+from all_tables t
 
-join i2b2.bip\_project p on to\_number(substr(t.table\_name,5,6)) = p.project\_id
+join i2b2.bip_project p on to_number(substr(t.table_name,5,6)) = p.project_id
 
-where t.owner = 'CTSI\_RESEARCH'
+where t.owner = 'CTSI_RESEARCH'
 
-and substr(t.table\_name,1,4) = 'XDR\_'
+and substr(t.table_name,1,4) = 'XDR_'
 
-and LENGTH(TRIM(TRANSLATE(substr(t.table\_name,5,6), '+-.0123456789',' '))) is null
+and LENGTH(TRIM(TRANSLATE(substr(t.table_name,5,6), '+-.0123456789',' '))) is null
 
 ) x
 
-join (SELECT OBJECT\_NAME, OBJECT\_TYPE, IOT\_TYPE, SEGMENT\_NAME, (NVL(KB, 0) + NVL(KBIOT, 0)) /1024 AS SIZE\_MB
+join (SELECT OBJECT_NAME, OBJECT_TYPE, IOT_TYPE, SEGMENT_NAME, (NVL(KB, 0) + NVL(KBIOT, 0)) /1024 AS SIZE_MB
 
 FROM
 
 (
 
-SELECT do.object\_name, do.object\_type, DT.IOT\_TYPE,
+SELECT do.object_name, do.object_type, DT.IOT_TYPE,
 
-case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-DS\_IOT.SEGMENT\_NAME
+DS_IOT.SEGMENT_NAME
 
-ELSE DS.SEGMENT\_NAME
+ELSE DS.SEGMENT_NAME
 
-END AS SEGMENT\_NAME
+END AS SEGMENT_NAME
 
-, case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+, case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-CONS.INDEX\_NAME
+CONS.INDEX_NAME
 
 ELSE NULL
 
-END AS IOT\_INDEX\_NAME,
+END AS IOT_INDEX_NAME,
 
 sum(DS.bytes)/1024 KB,
 
-sum( case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+sum( case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-DS\_IOT.bytes/1024
+DS_IOT.bytes/1024
 
 else null end)
 
 as KBIOT
 
-FROM dba\_objects do
+FROM dba_objects do
 
-LEFT OUTER JOIN DBA\_segments DS
+LEFT OUTER JOIN DBA_segments DS
 
-ON do.object\_name = DS.segment\_name
+ON do.object_name = DS.segment_name
 
 AND DO.OWNER = DS.OWNER
 
-LEFT OUTER JOIN DBA\_TABLES DT
+LEFT OUTER JOIN DBA_TABLES DT
 
-ON DO.OBJECT\_NAME = DT.TABLE\_NAME
+ON DO.OBJECT_NAME = DT.TABLE_NAME
 
 AND DO.OWNER = DT.OWNER
 
-LEFT OUTER JOIN all\_constraints cons
+LEFT OUTER JOIN all_constraints cons
 
 ON CONS.OWNER = DT.OWNER
 
-AND cons.table\_name = DT.table\_name
+AND cons.table_name = DT.table_name
 
-AND cons.constraint\_type = 'P'
+AND cons.constraint_type = 'P'
 
-LEFT OUTER JOIN DBA\_segments DS\_IOT
+LEFT OUTER JOIN DBA_segments DS_IOT
 
-ON CONS.INDEX\_NAME = DS\_IOT.segment\_name
+ON CONS.INDEX_NAME = DS_IOT.segment_name
 
-AND DS\_IOT.OWNER = CONS.OWNER
+AND DS_IOT.OWNER = CONS.OWNER
 
-where do.owner = 'CTSI\_RESEARCH'
+where do.owner = 'CTSI_RESEARCH'
 
-AND do.object\_type = 'TABLE'
+AND do.object_type = 'TABLE'
 
-and do.object\_name like 'XDR%'
+and do.object_name like 'XDR%'
 
-group by do.object\_name, do.object\_type, DT.IOT\_TYPE,
+group by do.object_name, do.object_type, DT.IOT_TYPE,
 
-case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-DS\_IOT.SEGMENT\_NAME
+DS_IOT.SEGMENT_NAME
 
-ELSE DS.SEGMENT\_NAME
+ELSE DS.SEGMENT_NAME
 
 END
 
-, case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+, case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-CONS.INDEX\_NAME
+CONS.INDEX_NAME
 
 ELSE NULL
 
@@ -2181,39 +2181,39 @@ END
 
 )
 
-) z on x.table\_name\_pre = z.object\_name
+) z on x.table_name_pre = z.object_name
 
 where x.developer in ('TTACORDA','eHB')
 
-and not regexp\_like(x.table\_name,'+(coh|drv)+','i')
+and not regexp_like(x.table_name,'+(coh|drv)+','i')
 
-order by z.SIZE\_MB desc --sqlq
+order by z.SIZE_MB desc --sqlq
 
 ;
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Calculate total allotted database sizes...
+-- Calculate total allotted database sizes...
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- ...for specific users
+-- ...for specific users
 
-SELECT (sum(bytes)/1024/1024)\*0.0010 as gb\_size
+SELECT (sum(bytes)/1024/1024)*0.0010 as gb_size
 
-FROM user\_segments us
+FROM user_segments us
 
-JOIN all\_tables t ON us.segment\_name = t.table\_name
+JOIN all_tables t ON us.segment_name = t.table_name
 
-left join i2b2.bip\_project p on substr(t.table\_name,5,6) = to\_char(p.project\_id)
+left join i2b2.bip_project p on substr(t.table_name,5,6) = to_char(p.project_id)
 
 WHERE (t.owner in ('TTACORDA','CKD')
 
-or (t.owner = 'CTSI\_RESEARCH'
+or (t.owner = 'CTSI_RESEARCH'
 
 and lower(p.developer) in ('ehb','ttacorda')
 
-and p.project\_id is not null
+and p.project_id is not null
 
 )
 
@@ -2221,99 +2221,99 @@ and p.project\_id is not null
 
 ;
 
-\-- ...for specific schemas
+-- ...for specific schemas
 
-SELECT (sum(bytes)/1024/1024)\*0.0010 as gb\_size --start: 259.60275 end: 244.0289375
+SELECT (sum(bytes)/1024/1024)*0.0010 as gb_size --start: 259.60275 end: 244.0289375
 
-FROM user\_segments us
+FROM user_segments us
 
-JOIN all\_tables t ON us.segment\_name = t.table\_name
+JOIN all_tables t ON us.segment_name = t.table_name
 
-WHERE t.owner = 'CTSI\_RESEARCH'
+WHERE t.owner = 'CTSI_RESEARCH'
 
 ;
 
-\-- ...for my tables by size
+-- ...for my tables by size
 
-SELECT OBJECT\_NAME, OBJECT\_TYPE, IOT\_TYPE, SEGMENT\_NAME, (NVL(KB, 0) + NVL(KBIOT, 0)) /1024 AS SIZE\_MB
+SELECT OBJECT_NAME, OBJECT_TYPE, IOT_TYPE, SEGMENT_NAME, (NVL(KB, 0) + NVL(KBIOT, 0)) /1024 AS SIZE_MB
 
 FROM
 
 (
 
-SELECT do.object\_name, do.object\_type, DT.IOT\_TYPE,
+SELECT do.object_name, do.object_type, DT.IOT_TYPE,
 
-case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-DS\_IOT.SEGMENT\_NAME
+DS_IOT.SEGMENT_NAME
 
-ELSE DS.SEGMENT\_NAME
+ELSE DS.SEGMENT_NAME
 
-END AS SEGMENT\_NAME
+END AS SEGMENT_NAME
 
-, case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+, case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-CONS.INDEX\_NAME
+CONS.INDEX_NAME
 
 ELSE NULL
 
-END AS IOT\_INDEX\_NAME,
+END AS IOT_INDEX_NAME,
 
 sum(DS.bytes)/1024 KB,
 
-sum( case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+sum( case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-DS\_IOT.bytes/1024
+DS_IOT.bytes/1024
 
 else null end)
 
 as KBIOT
 
-FROM dba\_objects do
+FROM dba_objects do
 
-LEFT OUTER JOIN DBA\_segments DS
+LEFT OUTER JOIN DBA_segments DS
 
-ON do.object\_name = DS.segment\_name
+ON do.object_name = DS.segment_name
 
 AND DO.OWNER = DS.OWNER
 
-LEFT OUTER JOIN DBA\_TABLES DT
+LEFT OUTER JOIN DBA_TABLES DT
 
-ON DO.OBJECT\_NAME = DT.TABLE\_NAME
+ON DO.OBJECT_NAME = DT.TABLE_NAME
 
 AND DO.OWNER = DT.OWNER
 
-LEFT OUTER JOIN all\_constraints cons
+LEFT OUTER JOIN all_constraints cons
 
 ON CONS.OWNER = DT.OWNER
 
-AND cons.table\_name = DT.table\_name
+AND cons.table_name = DT.table_name
 
-AND cons.constraint\_type = 'P'
+AND cons.constraint_type = 'P'
 
-LEFT OUTER JOIN DBA\_segments DS\_IOT
+LEFT OUTER JOIN DBA_segments DS_IOT
 
-ON CONS.INDEX\_NAME = DS\_IOT.segment\_name
+ON CONS.INDEX_NAME = DS_IOT.segment_name
 
-AND DS\_IOT.OWNER = CONS.OWNER
+AND DS_IOT.OWNER = CONS.OWNER
 
 where do.owner = 'TTACORDA'
 
-AND do.object\_type = 'TABLE'
+AND do.object_type = 'TABLE'
 
-group by do.object\_name, do.object\_type, DT.IOT\_TYPE,
+group by do.object_name, do.object_type, DT.IOT_TYPE,
 
-case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-DS\_IOT.SEGMENT\_NAME
+DS_IOT.SEGMENT_NAME
 
-ELSE DS.SEGMENT\_NAME
+ELSE DS.SEGMENT_NAME
 
 END
 
-, case when DT.IOT\_TYPE LIKE 'IOT%' THEN
+, case when DT.IOT_TYPE LIKE 'IOT%' THEN
 
-CONS.INDEX\_NAME
+CONS.INDEX_NAME
 
 ELSE NULL
 
@@ -2321,65 +2321,65 @@ END
 
 )
 
-ORDER BY OBJECT\_NAME
+ORDER BY OBJECT_NAME
 
 ;
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Check for numeric values (example)
+-- Check for numeric values (example)
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 SELECT case
 
-when regexp\_like(ord\_value,'+(\\.\\.)+','i') then ord\_value
+when regexp_like(ord_value,'+(\\.\\.)+','i') then ord_value
 
-when LENGTH(TRIM(TRANSLATE(ord\_value, '+-.0123456789',' '))) is null then 'value is numeric: ' || ord\_value
+when LENGTH(TRIM(TRANSLATE(ord_value, '+-.0123456789',' '))) is null then 'value is numeric: ' || ord_value
 
-else ord\_value
+else ord_value
 
-end value\_is\_numeric
+end value_is_numeric
 
-FROM i2b2.lz\_clarity\_labs
+FROM i2b2.lz_clarity_labs
 
 where rownum <= 1000
 
 ;
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Check code behind views
+-- Check code behind views
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-SELECT VIEW\_NAME, TEXT
+SELECT VIEW_NAME, TEXT
 
-FROM all\_VIEWS
+FROM all_VIEWS
 
-where view\_name = 'V\_NOTES\_ROUTED';
+where view_name = 'V_NOTES_ROUTED';
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Set date formats for output
+-- Set date formats for output
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-alter session set nls\_date\_format = 'MM/DD/YYYY HH24:MI';
+alter session set nls_date_format = 'MM/DD/YYYY HH24:MI';
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Analyze tables
+-- Analyze tables
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-ANALYZE TABLE i2b2.bip\_project VALIDATE STRUCTURE CASCADE;
+ANALYZE TABLE i2b2.bip_project VALIDATE STRUCTURE CASCADE;
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Check running queries
+-- Check running queries
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 SELECT distinct s.SID
 
@@ -2393,33 +2393,33 @@ SELECT distinct s.SID
 
 ,s.status
 
-,s.sql\_exec\_start
+,s.sql_exec_start
 
-,sa.rows\_processed --will not change if query is hung up or in waiting status
+,sa.rows_processed --will not change if query is hung up or in waiting status
 
-,coalesce(sa.sql\_text,sq.sql\_text)
+,coalesce(sa.sql_text,sq.sql_text)
 
-,s.sql\_id
+,s.sql_id
 
-,s.inst\_id
+,s.inst_id
 
 ,s.event
 
-,s.logon\_time
+,s.logon_time
 
-,sa.cpu\_time
+,sa.cpu_time
 
-,sa.elapsed\_time
+,sa.elapsed_time
 
-,sa.runtime\_mem
+,sa.runtime_mem
 
 FROM gv$session s
 
-LEFT JOIN v$sqlarea sa ON s.sql\_id = sa.sql\_id
+LEFT JOIN v$sqlarea sa ON s.sql_id = sa.sql_id
 
-LEFT JOIN gv$sql sq ON s.sql\_id = sq.sql\_id
+LEFT JOIN gv$sql sq ON s.sql_id = sq.sql_id
 
-WHERE s.username IN ('TTACORDA','CKD','CTSI\_RESEARCH')
+WHERE s.username IN ('TTACORDA','CKD','CTSI_RESEARCH')
 
 AND program in ('SQL Developer','sqlplus.exe')
 
@@ -2427,113 +2427,113 @@ and s.osuser = 'TheonaT1'
 
 ORDER BY program desc, status, username DESC
 
-,sql\_exec\_start
+,sql_exec_start
 
 ;
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Check sessions that have table locks
+-- Check sessions that have table locks
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
 select a.sid, a.serial #
 
-from v$session a, v$locked\_object b, dba\_objects c
+from v$session a, v$locked_object b, dba_objects c
 
-where b.object\_id = c.object\_id
+where b.object_id = c.object_id
 
-and a.sid = b.session\_id
+and a.sid = b.session_id
 
-and OBJECT\_NAME='LZ\_CLARITY\_PATIENT';
+and OBJECT_NAME='LZ_CLARITY_PATIENT';
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Set privileges
+-- Set privileges
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Revoke
+-- Revoke
 
 select
 
-'revoke all privileges ON ' || A.OWNER || '.' || A.TABLE\_NAME || ' from CTSI\_RESEARCH;'
+'revoke all privileges ON ' || A.OWNER || '.' || A.TABLE_NAME || ' from CTSI_RESEARCH;'
 
 ScriptIt
 
-FROM ALL\_TABLES A
+FROM ALL_TABLES A
 
 where a.owner = 'I2B2'
 
-and lower(a.table\_name) like 'lz\_clarity%'
+and lower(a.table_name) like 'lz_clarity%'
 
-order by a.table\_name
+order by a.table_name
 
 ;
 
-\-- Grant
+-- Grant
 
 SELECT
 
-'GRANT SELECT, INSERT, UPDATE, DELETE ON ' || A.OWNER || '.' || A.TABLE\_NAME || ' TO CTSI\_RESEARCH WITH GRANT OPTION;'
+'GRANT SELECT, INSERT, UPDATE, DELETE ON ' || A.OWNER || '.' || A.TABLE_NAME || ' TO CTSI_RESEARCH WITH GRANT OPTION;'
 
 ScriptIt
 
-FROM ALL\_TABLES A
+FROM ALL_TABLES A
 
 WHERE A.OWNER = 'I2B2'
 
-order by a.table\_name
+order by a.table_name
 
 ;
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Copy from Rob's schema to ctsi\_research
+-- Copy from Rob's schema to ctsi_research
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-select table\_name --35 rows found
+select table_name --35 rows found
 
-from all\_tables
+from all_tables
 
 where owner = 'RFOLLETT'
 
-and length(table\_name) > 26
+and length(table_name) > 26
 
 ;
 
-select table\_name, length(table\_name) len --22 rows found, but max len=26
+select table_name, length(table_name) len --22 rows found, but max len=26
 
-from all\_tables
+from all_tables
 
 where owner = 'RFOLLETT'
 
-and substr(table\_name,1,4) <> 'XDR\_'
+and substr(table_name,1,4) <> 'XDR_'
 
 order by len desc
 
 ;
 
-select distinct 'create table ctsi\_research.'
+select distinct 'create table ctsi_research.'
 
 || case
 
-when table\_name like 'XDR%' then regexp\_replace(table\_name,'XDR\_','RFX\_',1,1)
+when table_name like 'XDR%' then regexp_replace(table_name,'XDR_','RFX_',1,1)
 
-else table\_name || '\_RFX'
+else table_name || '_RFX'
 
 end
 
-|| ' as select \* from rfollett.'
+|| ' as select * from rfollett.'
 
-|| table\_name
+|| table_name
 
 || ';'
 
 cr
 
-from all\_tables
+from all_tables
 
 where owner = 'RFOLLETT'
 
@@ -2541,7 +2541,7 @@ order by cr
 
 ;
 
-\-- run this, then export to a text file...
+-- run this, then export to a text file...
 
 select case
 
@@ -2551,7 +2551,7 @@ else text
 
 end
 
-from all\_source
+from all_source
 
 where owner = 'RFOLLETT'
 
@@ -2559,21 +2559,21 @@ order by name, type, line
 
 ;
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Get a random password
+-- Get a random password
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-select dbms\_random.string('l',1) || dbms\_random.string('x',4) ||dbms\_random.string('l',1) ||dbms\_random.string('x',2) from dual;
+select dbms_random.string('l',1) || dbms_random.string('x',4) ||dbms_random.string('l',1) ||dbms_random.string('x',2) from dual;
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-\-- Get the timestamp for when a table was created
+-- Get the timestamp for when a table was created
 
-\-------------------------------------------------------------------------------
+-------------------------------------------------------------------------------
 
-select created from user\_objects where lower(object\_name)='xdr\_123456\_demo';
+select created from user_objects where lower(object_name)='xdr_123456_demo';
 ```
 ## Care Everywhere Labs
 
@@ -2584,185 +2584,185 @@ there is a practrical application for this for COVID tests in the ETL under
 CTSI_RESEARCH.PKG_COVID_ETL_REDCAP.covid_redcap_amb_covid_labs
 
 ``` sql
-\------------------------------------------------
+------------------------------------------------
 
-\-- Create table with all CE labs documents
+-- Create table with all CE labs documents
 
-\------------------------------------------------
+------------------------------------------------
 
-CREATE TABLE XDR\_prinv\_ce\_docs as
+CREATE TABLE XDR_prinv_ce_docs as
 
-select DISTINCT COH.PAT\_ID
+select DISTINCT COH.PAT_ID
 
-,doc.DOC\_SOURCE\_ORG\_ID as organization\_id
+,doc.DOC_SOURCE_ORG_ID as organization_id
 
-,org.organization\_name
+,org.organization_name
 
-,DOC.DOCUMENT\_ID
+,DOC.DOCUMENT_ID
 
-,info.RESULT\_INST\_CMP\_DTTM
+,info.RESULT_INST_CMP_DTTM
 
-,info.RES\_PROC\_CMP\_ID -- this has been empty in my experience
+,info.RES_PROC_CMP_ID -- this has been empty in my experience
 
-,info.RES\_PROC\_NAME\_CMP
+,info.RES_PROC_NAME_CMP
 
-,info.RESULT\_KEY\_CMP
+,info.RESULT_KEY_CMP
 
-\--,eap.PROC\_NAME
+--,eap.PROC_NAME
 
-\--,eap.proc\_code
+--,eap.proc_code
 
-from xdr\_prinv\_coh coh
+from xdr_prinv_coh coh
 
-JOIN DOCS\_RCVD doc ON coh.PAT\_ID = doc.PAT\_ID
+JOIN DOCS_RCVD doc ON coh.PAT_ID = doc.PAT_ID
 
-join DOCS\_RCVD\_RES\_INFO info ON doc.DOCUMENT\_ID = info.DOCUMENT\_ID
+join DOCS_RCVD_RES_INFO info ON doc.DOCUMENT_ID = info.DOCUMENT_ID
 
-join ORG\_DETAILS org on doc.DOC\_SOURCE\_ORG\_ID = org.ORGANIZATION\_ID
+join ORG_DETAILS org on doc.DOC_SOURCE_ORG_ID = org.ORGANIZATION_ID
 
-\--driver can be used here, or in some of other steps, since you might need to run this first without restrictions and run it by the PI
+--driver can be used here, or in some of other steps, since you might need to run this first without restrictions and run it by the PI
 
-\--join xdr\_prinv\_CEdrv DRV ON info.RES\_PROC\_NAME\_CMP = drv.RES\_PROC\_NAME\_CMP
+--join xdr_prinv_CEdrv DRV ON info.RES_PROC_NAME_CMP = drv.RES_PROC_NAME_CMP
 
-\-- and org.organization\_id= drv.organization\_id
+-- and org.organization_id= drv.organization_id
 
-\--There doesn't seem to be data to match here but just in case
+--There doesn't seem to be data to match here but just in case
 
-\--left join CLARITY\_EAP eap ON info.RES\_PROC\_CMP\_ID = eap.PROC\_ID --RES\_PROC\_CMP\_ID is null, therefore it can't be match to clarity\_EAP
+--left join CLARITY_EAP eap ON info.RES_PROC_CMP_ID = eap.PROC_ID --RES_PROC_CMP_ID is null, therefore it can't be match to clarity_EAP
 
 WHERE
 
-\--Pull labs only
+--Pull labs only
 
-(doc.TYPE\_C = 8 --Lab Results
+(doc.TYPE_C = 8 --Lab Results
 
 or
 
-doc.DOC\_CONTENT\_TYPE\_C = 8);
+doc.DOC_CONTENT_TYPE_C = 8);
 
-\------------------------------------------------
+------------------------------------------------
 
-\-- Create final table with all CE labs documents
+-- Create final table with all CE labs documents
 
-\-- by adding the component name and the results, and applying the driver
+-- by adding the component name and the results, and applying the driver
 
-\-- if it hasn't been applied yet
+-- if it hasn't been applied yet
 
-\-- (note: when I tried these two steps into one, performance was terrible)
+-- (note: when I tried these two steps into one, performance was terrible)
 
-\------------------------------------------------
+------------------------------------------------
 
-CREATE TABLE XDR\_prinv\_ce\_labs as
+CREATE TABLE XDR_prinv_ce_labs as
 
-select distinct doc.PAT\_ID
+select distinct doc.PAT_ID
 
-,doc.organization\_id
+,doc.organization_id
 
-,doc.organization\_name
+,doc.organization_name
 
-,DOC.DOCUMENT\_ID
+,DOC.DOCUMENT_ID
 
-,doc.RESULT\_INST\_CMP\_DTTM
+,doc.RESULT_INST_CMP_DTTM
 
-\--,doc.RES\_PROC\_CMP\_ID -- this has been empty in my experience
+--,doc.RES_PROC_CMP_ID -- this has been empty in my experience
 
-,doc.RES\_PROC\_NAME\_CMP
+,doc.RES_PROC_NAME_CMP
 
-,doc.RESULT\_KEY\_CMP
+,doc.RESULT_KEY_CMP
 
-,res.RES\_COMP\_LOINC\_CMP -- this has been empty in my experience
+,res.RES_COMP_LOINC_CMP -- this has been empty in my experience
 
-,res.RES\_COMP\_NAME\_CMP
+,res.RES_COMP_NAME_CMP
 
-,res.RES\_VAL\_COMP
+,res.RES_VAL_COMP
 
-from XDR\_prinv\_ce\_docs doc
+from XDR_prinv_ce_docs doc
 
-JOIN DOCS\_RCVD\_RES\_COMP res on doc.document\_id = res.document\_id
+JOIN DOCS_RCVD_RES_COMP res on doc.document_id = res.document_id
 
-\--driver can be used here, or in some of other steps, since you might need to run this first without restrictions and run it by the PI
+--driver can be used here, or in some of other steps, since you might need to run this first without restrictions and run it by the PI
 
-\--join xdr\_prinv\_CEdrv DRV ON doc.RES\_PROC\_NAME\_CMP = drv.RES\_PROC\_NAME\_CMP
+--join xdr_prinv_CEdrv DRV ON doc.RES_PROC_NAME_CMP = drv.RES_PROC_NAME_CMP
 
-and res.RES\_COMP\_NAME\_CMP = drv.RES\_COMP\_NAME\_CMP
+and res.RES_COMP_NAME_CMP = drv.RES_COMP_NAME_CMP
 
-and doc.organization\_id = drv.organization\_id
+and doc.organization_id = drv.organization_id
 
-where res.RES\_COMP\_STAT\_CMP\_C = 4 --4 - completed
-
-;
-
-\------------------------------------------------
-
-\-- Create driver table for PI
-
-\------------------------------------------------
-
-CREATE TABLE xdr\_prinv\_CEdrv AS
-
-SELECT organization\_id
-
-,organization\_name
-
-,RES\_PROC\_CMP\_ID
-
-,RES\_PROC\_NAME\_CMP
-
-,RES\_PROC\_CMP\_ID
-
-,RES\_PROC\_NAME\_CMP
-
-FROM XDR\_prinv\_ce\_docs
-
-,COUNT(\*)
-
-GROUP BY organization\_id
-
-,organization\_name
-
-,RES\_PROC\_CMP\_ID
-
-,RES\_PROC\_NAME\_CMP
-
-,RES\_PROC\_CMP\_ID
-
-,RES\_PROC\_NAME\_CMP
+where res.RES_COMP_STAT_CMP_C = 4 --4 - completed
 
 ;
 
-\------------------------------------------------
+------------------------------------------------
 
-\-- Final data pull
+-- Create driver table for PI
 
-\--It's possible that the results aren't compatible from site to site
+------------------------------------------------
 
-\-- but this will require further investigation on a case by case basis
+CREATE TABLE xdr_prinv_CEdrv AS
 
-\------------------------------------------------
+SELECT organization_id
 
-SELECT PAT\_ID
+,organization_name
 
-\--,DOCUMENT\_ID
+,RES_PROC_CMP_ID
 
-,organization\_name
+,RES_PROC_NAME_CMP
 
-,RESULT\_INST\_CMP\_DTTM AS RESULT\_TIME
+,RES_PROC_CMP_ID
 
-,RES\_PROC\_NAME\_CMP AS PROC\_NAME
+,RES_PROC_NAME_CMP
 
-,RES\_COMP\_NAME\_CMP AS COMPONENT\_NAME
+FROM XDR_prinv_ce_docs
 
-,RES\_VAL\_COMP AS RESULTS
+,COUNT(*)
 
-FROM XDR\_prinv\_ce\_labs lab
+GROUP BY organization_id
 
-\--apply driver selection
+,organization_name
 
-join xdr\_prinv\_CEdrv DRV ON lab.RES\_PROC\_NAME\_CMP = drv.RES\_PROC\_NAME\_CMP
+,RES_PROC_CMP_ID
 
-and lab.RES\_COMP\_NAME\_CMP = drv.RES\_COMP\_NAME\_CMP
+,RES_PROC_NAME_CMP
 
-and lab.organization\_id = drv.organization\_id
+,RES_PROC_CMP_ID
+
+,RES_PROC_NAME_CMP
+
+;
+
+------------------------------------------------
+
+-- Final data pull
+
+--It's possible that the results aren't compatible from site to site
+
+-- but this will require further investigation on a case by case basis
+
+------------------------------------------------
+
+SELECT PAT_ID
+
+--,DOCUMENT_ID
+
+,organization_name
+
+,RESULT_INST_CMP_DTTM AS RESULT_TIME
+
+,RES_PROC_NAME_CMP AS PROC_NAME
+
+,RES_COMP_NAME_CMP AS COMPONENT_NAME
+
+,RES_VAL_COMP AS RESULTS
+
+FROM XDR_prinv_ce_labs lab
+
+--apply driver selection
+
+join xdr_prinv_CEdrv DRV ON lab.RES_PROC_NAME_CMP = drv.RES_PROC_NAME_CMP
+
+and lab.RES_COMP_NAME_CMP = drv.RES_COMP_NAME_CMP
+
+and lab.organization_id = drv.organization_id
 
 ;
 ```
@@ -2770,16 +2770,16 @@ and lab.organization\_id = drv.organization\_id
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 10/21/20)
 
-The following code allows you to find a patient's occupation information (patient\_4.occupation\_c is not currently being used at the time of adding this script here)
+The following code allows you to find a patient's occupation information (patient_4.occupation_c is not currently being used at the time of adding this script here)
 
 ```sq;
-SELECT DISTINCT pat.pat\_id
+SELECT DISTINCT pat.pat_id
 
 ,pt3.OCCUPATION
 
-FROM xdr\_prinv\_pat coh
+FROM xdr_prinv_pat coh
 
-left join PATIENT\_3 pt3 ON pat.pat\_id = pt4.pat\_id
+left join PATIENT_3 pt3 ON pat.pat_id = pt4.pat_id
 
 ;
 
@@ -2787,27 +2787,27 @@ left join PATIENT\_3 pt3 ON pat.pat\_id = pt4.pat\_id
 
 ###### (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 12/04/20)
 
-The following code allows you to find information from the Health Maintenance panel for any given patient. This is the [link to Galaxy](https://uclabip.atlassian.net/wiki/spaces/WISE/pages/6455318/JIRA+reports) where to read about the Panel. And this is the link to learn about the table storing the data [\[F\_HM\_TREND\]](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=F_HM_TREND)
+The following code allows you to find information from the Health Maintenance panel for any given patient. This is the [link to Galaxy](https://uclabip.atlassian.net/wiki/spaces/WISE/pages/6455318/JIRA+reports) where to read about the Panel. And this is the link to learn about the table storing the data [\[F_HM_TREND\]](https://datahandbook.epic.com/ClarityDictionary/Details?tblName=F_HM_TREND)
 
 Below is walkthrough of a case to look for Colonoscopy screenings
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/*******************************************
 
 Look up the topic name that you need
 
-and use HM\_topic\_id in the next query
+and use HM_topic_id in the next query
 
 to identify your topic
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+*******************************************/
 
-select \*
+select *
 
-from CLARITY\_HM\_TOPIC;
+from CLARITY_HM_TOPIC;
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/*******************************************
 
-Plug the value from the previous step in QUALIFIED\_HMT\_ID
+Plug the value from the previous step in QUALIFIED_HMT_ID
 
 in the script below to obtain the most recent status for this topic
 
@@ -2815,59 +2815,59 @@ Modifier: By modifying the join, you can use a given date
 
 and time threshold to look back at previous instances
 
-(the QUALIFIED\_HMT\_ID below -7770000132-
+(the QUALIFIED_HMT_ID below -7770000132-
 
 pulls Colonoscopy preventive screening
 
-status \[HMT\_DUE\_STATUS\_C\]
+status \[HMT_DUE_STATUS_C\]
 
-within 90 days of a date given by the PI \[date\_1\])
+within 90 days of a date given by the PI \[date_1\])
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+*******************************************/
 
-SELECT X.pat\_id
+SELECT X.pat_id
 
 ,x.period
 
-,x.extract\_date
+,x.extract_date
 
-,x.IDEAL\_RETURN\_DT
+,x.IDEAL_RETURN_DT
 
-,x.due\_status
+,x.due_status
 
 FROM (
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-,'date\_1' as period
+,'date_1' as period
 
-\--,coh.date\_2
+--,coh.date_2
 
-,hm.extract\_date
+,hm.extract_date
 
-,hm.TOPIC\_NAME
+,hm.TOPIC_NAME
 
-,hm.IDEAL\_RETURN\_DT
+,hm.IDEAL_RETURN_DT
 
-,zst.name as due\_status
+,zst.name as due_status
 
-,MAX(hm.extract\_date) OVER (PARTITION BY coh.pat\_id) AS latest\_measure
+,MAX(hm.extract_date) OVER (PARTITION BY coh.pat_id) AS latest_measure
 
-from xdr\_prinv\_coh coh
+from xdr_prinv_coh coh
 
-left JOIN F\_HM\_TREND hm ON coh.pat\_id = hm.pat\_id --and trunc(hm.extract\_date) <= coh.date\_1 + 90
+left JOIN F_HM_TREND hm ON coh.pat_id = hm.pat_id --and trunc(hm.extract_date) <= coh.date_1 + 90
 
-left join ZC\_HMT\_DUE\_STATUS zst ON hm.HMT\_DUE\_STATUS\_C = zst.HMT\_DUE\_STATUS\_C
+left join ZC_HMT_DUE_STATUS zst ON hm.HMT_DUE_STATUS_C = zst.HMT_DUE_STATUS_C
 
 where
 
-hm.QUALIFIED\_HMT\_ID = 770000132 --Colon Ca Screening: COLONOSCOPY
+hm.QUALIFIED_HMT_ID = 770000132 --Colon Ca Screening: COLONOSCOPY
 
-\-- 9 --Advanced Directive
+-- 9 --Advanced Directive
 
 ) x
 
-WHERE x.extract\_date = latest\_measure
+WHERE x.extract_date = latest_measure
 
 ;
 ```
@@ -2878,51 +2878,51 @@ WHERE x.extract\_date = latest\_measure
 This code will pull questions and answers from MyChart questionnaires.
 
 ```sql
-select distinct coh.study\_id
+select distinct coh.study_id
 
-,coh.study\_csn
+,coh.study_csn
 
-\--pefa.pat\_enc\_csn\_id
+--pefa.pat_enc_csn_id
 
-\-- ,pefa.pat\_id
+-- ,pefa.pat_id
 
-,pefa.qf\_lqf\_id as form\_id
+,pefa.qf_lqf_id as form_id
 
-\-- ,pefa.qf\_hqa\_id as answer\_id
+-- ,pefa.qf_hqa_id as answer_id
 
-\-- ,qf.form\_name
+-- ,qf.form_name
 
-,qf.pat\_frndly\_name
+,qf.pat_frndly_name
 
-\-- ,cqa.quest\_id
+-- ,cqa.quest_id
 
 ,clqo.question
 
-,cqa.line as ans\_line
+,cqa.line as ans_line
 
-,quest\_answer
+,quest_answer
 
-,question\_instant as answer\_time
+,question_instant as answer_time
 
-from pat\_enc\_form\_ans pefa
+from pat_enc_form_ans pefa
 
-\---- Can join on csn or pat\_id
+---- Can join on csn or pat_id
 
-join YOUR\_COHORT coh on pefa.pat\_enc\_csn\_id = coh.pat\_enc\_csn\_id
+join YOUR_COHORT coh on pefa.pat_enc_csn_id = coh.pat_enc_csn_id
 
-\-- join YOUR\_COHORT coh on pefa.pat\_id = coh.pat\_id
+-- join YOUR_COHORT coh on pefa.pat_id = coh.pat_id
 
-join cl\_qform qf on pefa.qf\_lqf\_id = qf.form\_id
+join cl_qform qf on pefa.qf_lqf_id = qf.form_id
 
-join cl\_qanswer\_qa cqa on pefa.qf\_hqa\_id = cqa.answer\_id
+join cl_qanswer_qa cqa on pefa.qf_hqa_id = cqa.answer_id
 
-\--join cl\_qquest cqq on cqa.quest\_id = cqq.quest\_id -- question name
+--join cl_qquest cqq on cqa.quest_id = cqq.quest_id -- question name
 
-join cl\_qquest\_ovtm clqo on cqa.quest\_id = clqo.quest\_id -- question
+join cl_qquest_ovtm clqo on cqa.quest_id = clqo.quest_id -- question
 
-where pefa.qf\_lqf\_id not in (78002) --- Insurance qestionnaire
+where pefa.qf_lqf_id not in (78002) --- Insurance qestionnaire
 
-order by coh.study\_id, pefa.qf\_lqf\_id, cqa.line;
+order by coh.study_id, pefa.qf_lqf_id, cqa.line;
 
 # Address History (includes homeless)
 
@@ -2930,59 +2930,59 @@ order by coh.study\_id, pefa.qf\_lqf\_id, cqa.line;
 
 This code will obtain address history per patient encounter. Flags are set if the patient is currently homeless or homeless at the visit.
 
-select distinct enc.pat\_id
+select distinct enc.pat_id
 
-,enc.pat\_enc\_csn\_id
+,enc.pat_enc_csn_id
 
-,enc.effective\_date\_dt
+,enc.effective_date_dt
 
-,pat.add\_line\_1
+,pat.add_line_1
 
 ,case
 
-when pat2.pat\_id is not null
+when pat2.pat_id is not null
 
 then 1
 
 else 0
 
-end homeless\_currently
+end homeless_currently
 
-,pe4.pat\_homeless\_yn
+,pe4.pat_homeless_yn
 
-,pahx.eff\_start\_date
+,pahx.eff_start_date
 
-,pahx.eff\_end\_date
+,pahx.eff_end_date
 
-,pahx.addr\_hx\_line1
+,pahx.addr_hx_line1
 
 ,case
 
-when pe4.pat\_enc\_csn\_id is not null
+when pe4.pat_enc_csn_id is not null
 
-or pahx2.pat\_id is not null
+or pahx2.pat_id is not null
 
 then 1
 
 else 0
 
-end homeless\_at\_visit
+end homeless_at_visit
 
-from i2b2.lz\_clarity\_enc enc
+from i2b2.lz_clarity_enc enc
 
-left join patient pat on enc.pat\_id = pat.pat\_id
+left join patient pat on enc.pat_id = pat.pat_id
 
-left join pat\_addr\_chng\_hx pahx on enc.pat\_id = pahx.pat\_id
+left join pat_addr_chng_hx pahx on enc.pat_id = pahx.pat_id
 
-and enc.effective\_date\_dt between pahx.eff\_start\_date
+and enc.effective_date_dt between pahx.eff_start_date
 
-and pahx.eff\_end\_date
+and pahx.eff_end_date
 
-left join patient pat2 on pat.pat\_id = pat2.pat\_id
+left join patient pat2 on pat.pat_id = pat2.pat_id
 
-and ((pat.add\_line\_1 = pat2.add\_line\_1
+and ((pat.add_line_1 = pat2.add_line_1
 
-and regexp\_like(pat2.add\_line\_1,'+(homeless)+','i')
+and regexp_like(pat2.add_line_1,'+(homeless)+','i')
 
 )
 
@@ -2990,33 +2990,33 @@ or
 
 (pat.city= pat2.city
 
-and regexp\_like(pat2.city,'+(homeless)+','i')
+and regexp_like(pat2.city,'+(homeless)+','i')
 
 )
 
 )
 
-left join pat\_enc\_4 pe4 on enc.pat\_enc\_csn\_id = pe4.pat\_enc\_csn\_id
+left join pat_enc_4 pe4 on enc.pat_enc_csn_id = pe4.pat_enc_csn_id
 
-and (nvl(pe4.pat\_homeless\_yn,'N') <> 'N')
+and (nvl(pe4.pat_homeless_yn,'N') <> 'N')
 
-left join pat\_addr\_chng\_hx pahx2 on pahx.pat\_id = pahx2.pat\_id
+left join pat_addr_chng_hx pahx2 on pahx.pat_id = pahx2.pat_id
 
-and pahx.addr\_hx\_line1 = pahx2.addr\_hx\_line1
+and pahx.addr_hx_line1 = pahx2.addr_hx_line1
 
-and pahx.city\_hx = pahx2.city\_hx
+and pahx.city_hx = pahx2.city_hx
 
-and pahx.eff\_start\_date = pahx2.eff\_start\_date
+and pahx.eff_start_date = pahx2.eff_start_date
 
-and pahx.eff\_end\_date = pahx2.eff\_end\_date
+and pahx.eff_end_date = pahx2.eff_end_date
 
-and (regexp\_like(pahx2.addr\_hx\_line1,'+(homeless)+','i')
+and (regexp_like(pahx2.addr_hx_line1,'+(homeless)+','i')
 
-or regexp\_like(pahx2.city\_hx,'+(homeless)+','i')
+or regexp_like(pahx2.city_hx,'+(homeless)+','i')
 
 )
 
-order by enc.pat\_id, enc.effective\_date\_dt
+order by enc.pat_id, enc.effective_date_dt
 
 ;
 
@@ -3026,49 +3026,49 @@ order by enc.pat\_id, enc.effective\_date\_dt
 
 This code will obtain patient cause of death.
 
-\--Cause of Death during an admission
+--Cause of Death during an admission
 
-select distinct adm.pat\_id,
+select distinct adm.pat_id,
 
-adm.pat\_enc\_csn\_id,
+adm.pat_enc_csn_id,
 
-dpl10.code as icd\_code,
+dpl10.code as icd_code,
 
-dpl10.icd\_desc
+dpl10.icd_desc
 
-from i2b2.lz\_clarity\_enc adm --or your cohort
+from i2b2.lz_clarity_enc adm --or your cohort
 
-join patient\_3 p3 on adm.pat\_id = p3.pat\_id --(left join if entire cohort is needed)
+join patient_3 p3 on adm.pat_id = p3.pat_id --(left join if entire cohort is needed)
 
-left join edg\_current\_icd10 cit on p3.pcod\_cause\_dx\_id = cit.dx\_id
+left join edg_current_icd10 cit on p3.pcod_cause_dx_id = cit.dx_id
 
 and cit.line = 1
 
-left join i2b2.lz\_dx\_px\_lookup dpl10 on cit.code = dpl10.code
+left join i2b2.lz_dx_px_lookup dpl10 on cit.code = dpl10.code
 
-and dpl10.icd\_type = 10
+and dpl10.icd_type = 10
 
-and dpl10.code\_type = 'DX'
+and dpl10.code_type = 'DX'
 
-WHERE trunc(p3.PCOD\_INST\_REC\_DTTM) between trunc(adm.hosp\_admsn\_time)
+WHERE trunc(p3.PCOD_INST_REC_DTTM) between trunc(adm.hosp_admsn_time)
 
-and trunc(adm.hosp\_dischrg\_time);
+and trunc(adm.hosp_dischrg_time);
 
-\--Cause of Death for transplant donors: see Github Code Library (https://github.com/ctsidev/bipdata/blob/master/CodeLibrary/Transplant.sql)
+--Cause of Death for transplant donors: see Github Code Library (https://github.com/ctsidev/bipdata/blob/master/CodeLibrary/Transplant.sql)
 
 # GFR labs
 
 (by [Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 6/16/2021)
 
-Code to calculate GFR results taking into account race. You will have to left join to patient table and lookup patient\_race\_c (2 = Black Afircan American)
+Code to calculate GFR results taking into account race. You will have to left join to patient table and lookup patient_race_c (2 = Black Afircan American)
 
 where
 
-(lab.component\_id not in (2452, 11539, 3000375, 10000661, 10010349, 2453, 11540, 3000376, 10000660, 10010348)
+(lab.component_id not in (2452, 11539, 3000375, 10000661, 10010349, 2453, 11540, 3000376, 10000660, 10010348)
 
-OR (lab.component\_id in (2452, 11539, 3000375, 10000661, 10010349) and race.patient\_race\_c <> 2)
+OR (lab.component_id in (2452, 11539, 3000375, 10000661, 10010349) and race.patient_race_c <> 2)
 
-OR (lab.component\_id in (2453, 11540, 3000376, 10000660, 10010348) and race.patient\_race\_c = 2)
+OR (lab.component_id in (2453, 11540, 3000376, 10000660, 10010348) and race.patient_race_c = 2)
 
 # Kill Sessions
 
@@ -3076,7 +3076,7 @@ OR (lab.component\_id in (2453, 11540, 3000376, 10000660, 10010348) and race.pat
 
 Code to find SQL Developer sessions open based on user’s schema, and statement to kill that session (this needs to be run by the DBA, but we can help them by providing this information).
 
-select INST\_ID,SID,SERIAL#,USERNAME,STATUS,sql\_exec\_start,LOGON\_TIME
+select INST_ID,SID,SERIAL#,USERNAME,STATUS,sql_exec_start,LOGON_TIME
 
 from gv$session
 
@@ -3098,49 +3098,49 @@ alter system kill session '827, 24565';
 
 Code to find lock objects and even generate statement to kill the session that might be keeping it locked.
 
-SELECT SESSION\_ID FROM DBA\_DML\_LOCKS WHERE NAME = 'OBSERVATION\_FACT';
+SELECT SESSION_ID FROM DBA_DML_LOCKS WHERE NAME = 'OBSERVATION_FACT';
 
 SELECT SID, SERIAL# FROM V$SESSION WHERE SID IN (
 
-SELECT SESSION\_ID FROM DBA\_DML\_LOCKS WHERE NAME = 'OBSERVATION\_FACT'
+SELECT SESSION_ID FROM DBA_DML_LOCKS WHERE NAME = 'OBSERVATION_FACT'
 
 );
 
 ALTER SYSTEM KILL SESSION '3669, 14655';
 
-SELECT a.session\_id,
+SELECT a.session_id,
 
-a.oracle\_username,
+a.oracle_username,
 
-a.os\_user\_name,
+a.os_user_name,
 
 b.owner,
 
-b.object\_name,
+b.object_name,
 
-b.object\_type,
+b.object_type,
 
-DECODE(a.locked\_mode, 0, '0 - NONE: lock requested but not yet obtained',
+DECODE(a.locked_mode, 0, '0 - NONE: lock requested but not yet obtained',
 
 1, '1 - NULL',
 
-2, '2 - ROWS\_S (SS): Row Share Lock',
+2, '2 - ROWS_S (SS): Row Share Lock',
 
-3, '3 - ROW\_X (SX): Row Exclusive Table Lock',
+3, '3 - ROW_X (SX): Row Exclusive Table Lock',
 
 4, '4 - SHARE (S): Share Table Lock',
 
 5, '5 - S/ROW-X (SSX): Share Row Exclusive Table Lock',
 
-6, '6 - Exclusive (X): Exclusive Table Lock') LOCKED\_MODE
+6, '6 - Exclusive (X): Exclusive Table Lock') LOCKED_MODE
 
-FROM v$locked\_object a,
+FROM v$locked_object a,
 
-dba\_objects b
+dba_objects b
 
-Where A.Object\_Id = B.Object\_Id
+Where A.Object_Id = B.Object_Id
 
-and a.os\_user\_name = 'JavierS1';
+and a.os_user_name = 'JavierS1';
 ```
 ## Recruitment Request Prioritization
 
@@ -3149,7 +3149,7 @@ and a.os\_user\_name = 'JavierS1';
 ```sql
 Criteria to narrow down patient selection to meet disclousure criteria (count).
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/*******************************************************************************************
 
 1\. patients have the contact information field(s) completed
 
@@ -3159,47 +3159,47 @@ Criteria to narrow down patient selection to meet disclousure criteria (count).
 
 Once PI team goes through the list and request more, we will send another release (ex 499).
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+*******************************************************************************************/
 
-create table XDR\_PRINV\_COH\_recruit\_release as
+create table XDR_PRINV_COH_recruit_release as
 
-SELECT distinct coh.ip\_patient\_id
+SELECT distinct coh.ip_patient_id
 
-,coh.pat\_fist\_name
+,coh.pat_fist_name
 
-,coh.pat\_last\_name
+,coh.pat_last_name
 
 ,coh.phone
 
-,coh.addr\_line\_1
+,coh.addr_line_1
 
 ,coh.email
 
-FROM XDR\_PRINV\_COH coh
+FROM XDR_PRINV_COH coh
 
-left join i2b2.lz\_clarity\_enc enc on enc.pat\_id = coh.pat\_id
+left join i2b2.lz_clarity_enc enc on enc.pat_id = coh.pat_id
 
-\-- UCLA encounter completed in the last 12 months
+-- UCLA encounter completed in the last 12 months
 
-and enc.effective\_date\_dt between current\_time - 365.25 and current\_time
+and enc.effective_date_dt between current_time - 365.25 and current_time
 
-and ((enc.enc\_type\_c <> '5' --TT-4/11/2016: Exclude Canceled appointments
+and ((enc.enc_type_c <> '5' --TT-4/11/2016: Exclude Canceled appointments
 
-OR enc.appt\_status\_c is null or enc.appt\_status\_c = 2)
+OR enc.appt_status_c is null or enc.appt_status_c = 2)
 
 WHERE
 
-\-- contant information available
+-- contant information available
 
 (PHONE IS NOT NULL
 
-ADDR\_LINE1 IS NOT NULL
+ADDR_LINE1 IS NOT NULL
 
 AND EMAIL IS NOT NULL
 
 )
 
-and enc.pat\_id is not null
+and enc.pat_id is not null
 
 ;
 
@@ -3212,25 +3212,25 @@ randomization (pending)
 ```sql
 Code to find the BMT records.
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-,ep.START\_DATE as tx\_date
+,ep.START_DATE as tx_date
 
-,'Bone marrow' as tx\_name
+,'Bone marrow' as tx_name
 
-from xdr\_prinv\_coh coh
+from xdr_prinv_coh coh
 
-join pat\_enc enc on coh.pat\_id = enc.pat\_id and coh.deleted\_yn is null
+join pat_enc enc on coh.pat_id = enc.pat_id and coh.deleted_yn is null
 
-join Episode\_Link lnk on enc.pat\_enc\_csn\_id = lnk.pat\_enc\_csn\_id
+join Episode_Link lnk on enc.pat_enc_csn_id = lnk.pat_enc_csn_id
 
-join Episode ep on lnk.episode\_id = ep.episode\_id
+join Episode ep on lnk.episode_id = ep.episode_id
 
-left join BMT\_INFO bmt on ep.episode\_id = bmt.SUMMARY\_BLOCK\_ID
+left join BMT_INFO bmt on ep.episode_id = bmt.SUMMARY_BLOCK_ID
 
 where --64 cases
 
-lnk.SUM\_BLK\_TYPE\_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
+lnk.SUM_BLK_TYPE_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
 
 ```
 
@@ -3241,221 +3241,221 @@ lnk.SUM\_BLK\_TYPE\_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
 ```sql
 Code to find pregnancy data.
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- This query results in all pregnancies per patient.
+-- This query results in all pregnancies per patient.
 
-\-- To check for "current" pregnancies, see where clause.
+-- To check for "current" pregnancies, see where clause.
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-select distinct x.\*
+select distinct x.*
 
-from (select distinct coh.pat\_id
+from (select distinct coh.pat_id
 
-,dx.contact\_date dx\_diagnosis\_date
+,dx.contact_date dx_diagnosis_date
 
-,dx2.effective\_date dx2\_diagnosis\_date
+,dx2.effective_date dx2_diagnosis_date
 
-,round(months\_between(sysdate, dx.contact\_date),2) dx\_mos
+,round(months_between(sysdate, dx.contact_date),2) dx_mos
 
-,round(months\_between(sysdate, dx2.effective\_date),2) dx2\_mos
+,round(months_between(sysdate, dx2.effective_date),2) dx2_mos
 
-,lab.specimn\_taken\_time
+,lab.specimn_taken_time
 
-,round(months\_between(sysdate, lab.specimn\_taken\_time),2) lab\_mos
+,round(months_between(sysdate, lab.specimn_taken_time),2) lab_mos
 
-,preg.pat\_id preg\_pat\_id
+,preg.pat_id preg_pat_id
 
-,prge.pat\_enc\_csn\_id preg\_pat\_enc\_csn\_id
+,prge.pat_enc_csn_id preg_pat_enc_csn_id
 
-,prge.effective\_date\_dt preg\_effective\_date\_dt
+,prge.effective_date_dt preg_effective_date_dt
 
-,round(months\_between(sysdate, prge.effective\_date\_dt),2) preg\_mos
+,round(months_between(sysdate, prge.effective_date_dt),2) preg_mos
 
-,ob.mom\_id mom\_pat\_id
+,ob.mom_id mom_pat_id
 
-,ob.del\_dttm delivery\_date
+,ob.del_dttm delivery_date
 
-,max(ob.del\_dttm) over (partition by coh.pat\_id) delivery\_date\_last
+,max(ob.del_dttm) over (partition by coh.pat_id) delivery_date_last
 
-,round(months\_between(sysdate, ob.del\_dttm),2) ob\_mos
+,round(months_between(sysdate, ob.del_dttm),2) ob_mos
 
-,ob.ga gestational\_age
+,ob.ga gestational_age
 
-,ob.delmeth\_c delivery\_method\_c
+,ob.delmeth_c delivery_method_c
 
-,zdt.name delivery\_method
+,zdt.name delivery_method
 
-from xdr\_prinv\_cohpat coh
+from xdr_prinv_cohpat coh
 
-left join i2b2.lz\_clarity\_diagnosis\_new dx on coh.pat\_id = dx.pat\_id
+left join i2b2.lz_clarity_diagnosis_new dx on coh.pat_id = dx.pat_id
 
-and ((dx.icd\_type = 9 --no need to check icd9 for current pregnancy
+and ((dx.icd_type = 9 --no need to check icd9 for current pregnancy
 
-and trunc(dx.contact\_date) between to\_date('01/01/2013','mm/dd/yyyy')
+and trunc(dx.contact_date) between to_date('01/01/2013','mm/dd/yyyy')
 
-and to\_date('09/30/2015','mm/dd/yyyy')
+and to_date('09/30/2015','mm/dd/yyyy')
 
-and dx.icd\_code between '630' and '679.9999999999'
+and dx.icd_code between '630' and '679.9999999999'
 
 )
 
 or
 
-(dx.icd\_type = 10
+(dx.icd_type = 10
 
-and trunc(dx.contact\_date) >= to\_date('10/01/2015','mm/dd/yyyy')
+and trunc(dx.contact_date) >= to_date('10/01/2015','mm/dd/yyyy')
 
-and regexp\_like(dx.icd\_code,'^(O|Z3(4|A|7))','i')
-
-)
+and regexp_like(dx.icd_code,'^(O|Z3(4|A|7))','i')
 
 )
 
-left join i2b2.int\_dx dx2 on coh.pat\_id = dx2.pat\_id
+)
 
-and trunc(dx2.effective\_date) between to\_date('01/01/2013','mm/dd/yyyy')
+left join i2b2.int_dx dx2 on coh.pat_id = dx2.pat_id
 
-and to\_date('09/30/2015','mm/dd/yyyy')
+and trunc(dx2.effective_date) between to_date('01/01/2013','mm/dd/yyyy')
 
-and dx2.icd9\_code between '630' and '679.9999999999'
+and to_date('09/30/2015','mm/dd/yyyy')
 
-left join i2b2.bip\_encounter\_pat\_link enc on coh.pat\_id = enc.pat\_id
+and dx2.icd9_code between '630' and '679.9999999999'
 
-left join i2b2.lz\_clarity\_labs lab on enc.pat\_enc\_csn\_id = lab.pat\_enc\_csn\_id
+left join i2b2.bip_encounter_pat_link enc on coh.pat_id = enc.pat_id
 
-and upper(lab.ord\_value) = 'POSITIVE' and lab.proc\_code in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
+left join i2b2.lz_clarity_labs lab on enc.pat_enc_csn_id = lab.pat_enc_csn_id
 
-\-- driver being used by Covid registry ETL
+and upper(lab.ord_value) = 'POSITIVE' and lab.proc_code in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
 
-left join i2b2.xdr\_covid\_preg\_lab\_drv drv on lab.component\_id = drv.component\_id
+-- driver being used by Covid registry ETL
 
-left join clarity.v\_ob\_enc\_obgyn\_stat preg on coh.pat\_id = preg.pat\_id
+left join i2b2.xdr_covid_preg_lab_drv drv on lab.component_id = drv.component_id
 
-and preg.obgyn\_stat\_c = 4 --pregnant at some point - for "current" pregnancies, see where clause below
+left join clarity.v_ob_enc_obgyn_stat preg on coh.pat_id = preg.pat_id
 
-left join i2b2.lz\_clarity\_enc prge on preg.pat\_enc\_csn\_id = prge.pat\_enc\_csn\_id
+and preg.obgyn_stat_c = 4 --pregnant at some point - for "current" pregnancies, see where clause below
 
-left join clarity.v\_ob\_del\_records ob on coh.pat\_id = ob.mom\_id
+left join i2b2.lz_clarity_enc prge on preg.pat_enc_csn_id = prge.pat_enc_csn_id
 
-left join clarity.ZC\_DELIVERY\_TYPE zdt on ob.delmeth\_c = zdt.DELIVERY\_TYPE\_C
+left join clarity.v_ob_del_records ob on coh.pat_id = ob.mom_id
+
+left join clarity.ZC_DELIVERY_TYPE zdt on ob.delmeth_c = zdt.DELIVERY_TYPE_C
 
 ) x
 
-\--the following where clause is for "current" pregnancies
+--the following where clause is for "current" pregnancies
 
-\-- where (dx\_mos <= 9 --qualified for current pregnancy using dx codes (no need to check dx2 because icd-9 codes are before 10/1/2015)
+-- where (dx_mos <= 9 --qualified for current pregnancy using dx codes (no need to check dx2 because icd-9 codes are before 10/1/2015)
 
-\-- or lab\_mos <= 9 --qualified for current pregnancy using lab results
+-- or lab_mos <= 9 --qualified for current pregnancy using lab results
 
-\-- or preg\_mos <= 9 --qualified for current pregnancy using ob data
+-- or preg_mos <= 9 --qualified for current pregnancy using ob data
 
-\-- )
+-- )
 
-\-- and (ob\_mos is null --if currently pregnant, has not delivered in the past 9 months
+-- and (ob_mos is null --if currently pregnant, has not delivered in the past 9 months
 
-\-- or ob\_mos > 9 --older deliveries
+-- or ob_mos > 9 --older deliveries
 
-\-- )
-
-;
-
-\--------------------------------------------------------------------------------
-
-\-- Notes:
-
-\-- 1. This query obtains pregnancies based on encounters
-
-\-- 2. Change the date criterion of 1/1/2013 per project.
-
-\--------------------------------------------------------------------------------
-
-select dx.pat\_enc\_csn\_id
-
-from i2b2.lz\_clarity\_diagnosis\_new dx
-
-where (dx.icd\_type = 9
-
-and trunc(dx.contact\_date) between to\_date('01/01/2013','mm/dd/yyyy')
-
-and to\_date('09/30/2015','mm/dd/yyyy')
-
-and dx.icd\_code between '630' and '679.9999999999'
-
-)
-
-or (dx.icd\_type = 10
-
-and trunc(dx.contact\_date) >= to\_date('10/01/2015','mm/dd/yyyy')
-
-and regexp\_like(dx.icd\_code,'^(O|Z3(4|A|7))','i')
-
-)
-
-union
-
-select dx.pat\_enc\_csn\_id
-
-from i2b2.int\_dx dx
-
-where trunc(dx.effective\_date) between to\_date('01/01/2013','mm/dd/yyyy')
-
-and to\_date('09/30/2015','mm/dd/yyyy')
-
-and dx.icd9\_code between '630' and '679.9999999999'
-
-union
-
-select lab.pat\_enc\_csn\_id
-
-from i2b2.bip\_encounter\_pat\_link enc
-
-join i2b2.lz\_clarity\_labs lab on enc.pat\_enc\_csn\_id = enc.pat\_enc\_csn\_id
-
-\-- driver being used by Covid registry ETL
-
-join i2b2.xdr\_covid\_preg\_lab\_drv drv on lab.component\_id = drv.component\_id
-
-where upper(lab.ord\_value) = 'POSITIVE'
-
-and lab.specimn\_taken\_time >= to\_date('01/01/2013','mm/dd/yyyy')
-
-and lab.proc\_code in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
-
-union
-
-select enc.pat\_enc\_csn\_id
-
-from i2b2.lz\_clarity\_enc enc
-
-join clarity.v\_ob\_enc\_obgyn\_stat preg on enc.pat\_enc\_csn\_id = preg.pat\_enc\_csn\_id
-
-where enc.effective\_date\_dt >= to\_date('01/01/2013','mm/dd/yyyy')
-
-and preg.obgyn\_stat\_c = 4 --pregnant
+-- )
 
 ;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Notes:
+-- Notes:
 
-\-- 1. This query obtains specific labs during a pregnancy
+-- 1. This query obtains pregnancies based on encounters
 
-\-- 2. ep.ob\_wrk\_edd\_dt is the estimated due date
+-- 2. Change the date criterion of 1/1/2013 per project.
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-from xdr\_123456\_lab lab --lab cohort containing pat\_id
+select dx.pat_enc_csn_id
 
-join i2b2.lz\_clarity\_enc e on lab.pat\_id = e.pat\_id
+from i2b2.lz_clarity_diagnosis_new dx
 
-join episode\_link el on e.pat\_enc\_csn\_id = el.pat\_enc\_csn\_id
+where (dx.icd_type = 9
 
-join episode ep on el.episode\_id = ep.episode\_id
+and trunc(dx.contact_date) between to_date('01/01/2013','mm/dd/yyyy')
 
-and lab.specimn\_taken\_time between ep.ob\_wrk\_edd\_dt - 280 and ep.ob\_wrk\_edd\_dt --280=40 pregnancy weeks \* 7
+and to_date('09/30/2015','mm/dd/yyyy')
+
+and dx.icd_code between '630' and '679.9999999999'
+
+)
+
+or (dx.icd_type = 10
+
+and trunc(dx.contact_date) >= to_date('10/01/2015','mm/dd/yyyy')
+
+and regexp_like(dx.icd_code,'^(O|Z3(4|A|7))','i')
+
+)
+
+union
+
+select dx.pat_enc_csn_id
+
+from i2b2.int_dx dx
+
+where trunc(dx.effective_date) between to_date('01/01/2013','mm/dd/yyyy')
+
+and to_date('09/30/2015','mm/dd/yyyy')
+
+and dx.icd9_code between '630' and '679.9999999999'
+
+union
+
+select lab.pat_enc_csn_id
+
+from i2b2.bip_encounter_pat_link enc
+
+join i2b2.lz_clarity_labs lab on enc.pat_enc_csn_id = enc.pat_enc_csn_id
+
+-- driver being used by Covid registry ETL
+
+join i2b2.xdr_covid_preg_lab_drv drv on lab.component_id = drv.component_id
+
+where upper(lab.ord_value) = 'POSITIVE'
+
+and lab.specimn_taken_time >= to_date('01/01/2013','mm/dd/yyyy')
+
+and lab.proc_code in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
+
+union
+
+select enc.pat_enc_csn_id
+
+from i2b2.lz_clarity_enc enc
+
+join clarity.v_ob_enc_obgyn_stat preg on enc.pat_enc_csn_id = preg.pat_enc_csn_id
+
+where enc.effective_date_dt >= to_date('01/01/2013','mm/dd/yyyy')
+
+and preg.obgyn_stat_c = 4 --pregnant
+
+;
+
+--------------------------------------------------------------------------------
+
+-- Notes:
+
+-- 1. This query obtains specific labs during a pregnancy
+
+-- 2. ep.ob_wrk_edd_dt is the estimated due date
+
+--------------------------------------------------------------------------------
+
+from xdr_123456_lab lab --lab cohort containing pat_id
+
+join i2b2.lz_clarity_enc e on lab.pat_id = e.pat_id
+
+join episode_link el on e.pat_enc_csn_id = el.pat_enc_csn_id
+
+join episode ep on el.episode_id = ep.episode_id
+
+and lab.specimn_taken_time between ep.ob_wrk_edd_dt - 280 and ep.ob_wrk_edd_dt --280=40 pregnancy weeks * 7
 
 ```
 ## Calculate ICU stay times
@@ -3464,231 +3464,231 @@ and lab.specimn\_taken\_time between ep.ob\_wrk\_edd\_dt - 280 and ep.ob\_wrk\_e
 
 This code will create a table that will calculate the start and end date/times of each ICU that happened during each encounter. If the patient went in and out of the ICU multiple times during the same encounter. Then the record will show multiple entries for that encounter, one per each episode. In order to calculate the aggregated total time that a patient spent in the ICU during a particular encounter, you can calculate the time from start to end, for each individual stay, and add them by encounter. (this last calculation is not in the code below).
 ```sql
-\--------------------------------------
+--------------------------------------
 
-\-- create ADT table:
+-- create ADT table:
 
-\-- this code is slightly different from the LZ ADT table
+-- this code is slightly different from the LZ ADT table
 
-\-- becuase it brings in some additional variables that we use
+-- becuase it brings in some additional variables that we use
 
-\-- to identify ICU stays. Which can be detemrined by the department name
+-- to identify ICU stays. Which can be detemrined by the department name
 
-\-- or by the level of care provided to the patient
+-- or by the level of care provided to the patient
 
-\----------------------------------------
+----------------------------------------
 
-CREATE TABLE xdr\_prinv\_adt AS
+CREATE TABLE xdr_prinv_adt AS
 
-select distinct adt.pat\_id,
+select distinct adt.pat_id,
 
-adt.pat\_enc\_csn\_id,
+adt.pat_enc_csn_id,
 
-case when adt.event\_type\_c = 1 and adt.next\_out\_event\_id = enc2.hsp\_dis\_event\_id then 'Admit/Discharge'
+case when adt.event_type_c = 1 and adt.next_out_event_id = enc2.hsp_dis_event_id then 'Admit/Discharge'
 
-when adt.event\_type\_c = 1 then 'Admit'
+when adt.event_type_c = 1 then 'Admit'
 
-when adt.event\_type\_c = 3 and adt.next\_out\_event\_id = enc2.hsp\_dis\_event\_id then 'Discharge'
+when adt.event_type_c = 3 and adt.next_out_event_id = enc2.hsp_dis_event_id then 'Discharge'
 
-else 'Transfer' end as event\_type,
+else 'Transfer' end as event_type,
 
-adt.event\_id as in\_event\_id,
+adt.event_id as in_event_id,
 
-adt.department\_id,
+adt.department_id,
 
-dept.department\_name,
+dept.department_name,
 
-dept.dept\_abbreviation,
+dept.dept_abbreviation,
 
 dept.specialty,
 
-dept.rev\_loc\_id,
+dept.rev_loc_id,
 
-loc.loc\_name,
+loc.loc_name,
 
-adt.effective\_time as time\_in,
+adt.effective_time as time_in,
 
-adtout.effective\_time as time\_out,
+adtout.effective_time as time_out,
 
-adt.next\_out\_event\_id as out\_event\_id,
+adt.next_out_event_id as out_event_id,
 
-enc2.hsp\_adm\_event\_id as adm\_event\_id,
+enc2.hsp_adm_event_id as adm_event_id,
 
-enc2.hsp\_dis\_event\_id as dis\_event\_id,
+enc2.hsp_dis_event_id as dis_event_id,
 
-enc.inpatient\_data\_id,
+enc.inpatient_data_id,
 
-adt.PAT\_LVL\_OF\_CARE\_C,
+adt.PAT_LVL_OF_CARE_C,
 
-adt.ACCOMMODATION\_C
+adt.ACCOMMODATION_C
 
-from clarity\_adt adt
+from clarity_adt adt
 
-join xdr\_PRINV\_coh\_final pat on adt.pat\_id = pat.pat\_id
+join xdr_PRINV_coh_final pat on adt.pat_id = pat.pat_id
 
-join pat\_enc enc on adt.pat\_enc\_csn\_id = enc.pat\_enc\_csn\_id
+join pat_enc enc on adt.pat_enc_csn_id = enc.pat_enc_csn_id
 
-join pat\_enc\_hsp\_2 enc2 on adt.pat\_enc\_csn\_id = enc2.pat\_enc\_csn\_id
+join pat_enc_hsp_2 enc2 on adt.pat_enc_csn_id = enc2.pat_enc_csn_id
 
-left join clarity\_adt adtout on adt.next\_out\_event\_id = adtout.event\_id
+left join clarity_adt adtout on adt.next_out_event_id = adtout.event_id
 
-left join clarity\_dep dept on adt.department\_id = dept.department\_id
+left join clarity_dep dept on adt.department_id = dept.department_id
 
-left join clarity\_loc loc on dept.rev\_loc\_id = loc.loc\_id
+left join clarity_loc loc on dept.rev_loc_id = loc.loc_id
 
-where adt.event\_type\_c in (1,3)
+where adt.event_type_c in (1,3)
 
-and adt.event\_subtype\_c != 2
+and adt.event_subtype_c != 2
 
-and enc2.hsp\_adm\_event\_id is not null;
+and enc2.hsp_adm_event_id is not null;
 
-xdr\_covid\_icu\_times
+xdr_covid_icu_times
 
-\---
+---
 
-\--------------------------------------
+--------------------------------------
 
-\-- this procedure runs through the ADT table and calculate
+-- this procedure runs through the ADT table and calculate
 
-\-- the start and end of each ICU that happened during each encounter
+-- the start and end of each ICU that happened during each encounter
 
-\-- if the patient went in and out of the ICU multiple times, then the
+-- if the patient went in and out of the ICU multiple times, then the
 
-\-- record will show multiple entries for that encounter, with each episode
+-- record will show multiple entries for that encounter, with each episode
 
-\----------------------------------------
+----------------------------------------
 
-\-- create this table to store the output
+-- create this table to store the output
 
-create table xdr\_prinv\_icu\_times
+create table xdr_prinv_icu_times
 
-( "PAT\_ID" VARCHAR2(18 BYTE) COLLATE "USING\_NLS\_COMP",
+( "PAT_ID" VARCHAR2(18 BYTE) COLLATE "USING_NLS_COMP",
 
 "CSN" NUMBER(18,0) NOT NULL ENABLE,
 
-"ICU\_START" DATE,
+"ICU_START" DATE,
 
-"ICU\_END" DATE
+"ICU_END" DATE
 
 );
 
 I think that this code should run
 
-\--procedure covid\_icu as
+--procedure covid_icu as
 
-v\_procname varchar2(120) := 'covid\_charlson';
+v_procname varchar2(120) := 'covid_charlson';
 
 begin
 
-i2b2.do\_the\_truncate('i2b2.xdr\_covid\_icu\_times');
+i2b2.do_the_truncate('i2b2.xdr_covid_icu_times');
 
 DECLARE
 
-cursor c\_icu is
+cursor c_icu is
 
-select adt.pat\_id
+select adt.pat_id
 
-,adt.pat\_enc\_csn\_id
+,adt.pat_enc_csn_id
 
-,adt.time\_in as icu\_in
+,adt.time_in as icu_in
 
-,adt.time\_out as icu\_out
+,adt.time_out as icu_out
 
-from xdr\_prinv\_adt adt
+from xdr_prinv_adt adt
 
-left join ZC\_LVL\_OF\_CARE zloc on adt.PAT\_LVL\_OF\_CARE\_C = zloc.LEVEL\_OF\_CARE\_C
+left join ZC_LVL_OF_CARE zloc on adt.PAT_LVL_OF_CARE_C = zloc.LEVEL_OF_CARE_C
 
-left join ZC\_ACCOMMODATION za on adt.ACCOMMODATION\_C = za.ACCOMMODATION\_C
+left join ZC_ACCOMMODATION za on adt.ACCOMMODATION_C = za.ACCOMMODATION_C
 
-where department\_name like '%ICU%'
+where department_name like '%ICU%'
 
-OR ( adt.PAT\_LVL\_OF\_CARE\_C IS NOT NULL AND adt.PAT\_LVL\_OF\_CARE\_C = '6') -- ICU
+OR ( adt.PAT_LVL_OF_CARE_C IS NOT NULL AND adt.PAT_LVL_OF_CARE_C = '6') -- ICU
 
-OR adt.ACCOMMODATION\_C IN (25,28,46)
+OR adt.ACCOMMODATION_C IN (25,28,46)
 
-order by adm.pat\_id, adm.csn, adt.time\_in;
+order by adm.pat_id, adm.csn, adt.time_in;
 
-t\_rec c\_icu%rowtype;
+t_rec c_icu%rowtype;
 
-hold\_enc number := 0;
+hold_enc number := 0;
 
-hold\_pat varchar2(20);
+hold_pat varchar2(20);
 
-hold\_start\_time date;
+hold_start_time date;
 
-hold\_end\_time date;
+hold_end_time date;
 
 BEGIN
 
-OPEN c\_icu;
+OPEN c_icu;
 
 LOOP
 
-FETCH c\_icu into t\_rec;
+FETCH c_icu into t_rec;
 
-EXIT WHEN c\_icu%notfound;
+EXIT WHEN c_icu%notfound;
 
-IF hold\_enc = 0 THEN -- first pass
+IF hold_enc = 0 THEN -- first pass
 
-hold\_enc := t\_rec.csn;
+hold_enc := t_rec.csn;
 
-hold\_pat := t\_rec.pat\_id;
+hold_pat := t_rec.pat_id;
 
-hold\_start\_time := t\_rec.icu\_in;
+hold_start_time := t_rec.icu_in;
 
-hold\_end\_time := t\_rec.icu\_out;
+hold_end_time := t_rec.icu_out;
 
-ELSIF hold\_enc = t\_rec.csn THEN -- same encounter
+ELSIF hold_enc = t_rec.csn THEN -- same encounter
 
-IF t\_rec.icu\_in = hold\_end\_time THEN --- if icu in = the last out time move the new out time to hold
+IF t_rec.icu_in = hold_end_time THEN --- if icu in = the last out time move the new out time to hold
 
-hold\_end\_time := t\_rec.icu\_out;
+hold_end_time := t_rec.icu_out;
 
 else -- icu in != icu hold write a record
 
-insert into xdr\_prinv\_icu\_times(pat\_id, csn, icu\_start, icu\_end)
+insert into xdr_prinv_icu_times(pat_id, csn, icu_start, icu_end)
 
-VALUES (hold\_pat, hold\_enc, hold\_start\_time, hold\_end\_time);
+VALUES (hold_pat, hold_enc, hold_start_time, hold_end_time);
 
-hold\_start\_time := t\_rec.icu\_in;
+hold_start_time := t_rec.icu_in;
 
-hold\_end\_time := t\_rec.icu\_out;
+hold_end_time := t_rec.icu_out;
 
 END IF;
 
-\-- hold\_enc != new enc, we have a new telemetry action -- write the old one
+-- hold_enc != new enc, we have a new telemetry action -- write the old one
 
 ELSE
 
-insert into xdr\_prinv\_icu\_times(pat\_id, csn, icu\_start, icu\_end)
+insert into xdr_prinv_icu_times(pat_id, csn, icu_start, icu_end)
 
-VALUES (hold\_pat, hold\_enc, hold\_start\_time, hold\_end\_time);
+VALUES (hold_pat, hold_enc, hold_start_time, hold_end_time);
 
-hold\_enc := t\_rec.csn;
+hold_enc := t_rec.csn;
 
-hold\_pat := t\_rec.pat\_id;
+hold_pat := t_rec.pat_id;
 
-hold\_start\_time := t\_rec.icu\_in;
+hold_start_time := t_rec.icu_in;
 
-hold\_end\_time := t\_rec.icu\_out;
+hold_end_time := t_rec.icu_out;
 
 END IF;
 
 END LOOP;
 
-\-- process last record and calculate
+-- process last record and calculate
 
-insert into xdr\_prinv\_icu\_times(pat\_id, csn, icu\_start, icu\_end)
+insert into xdr_prinv_icu_times(pat_id, csn, icu_start, icu_end)
 
-VALUES (hold\_pat, hold\_enc, hold\_start\_time, hold\_end\_time);
+VALUES (hold_pat, hold_enc, hold_start_time, hold_end_time);
 
-CLOSE c\_icu;
+CLOSE c_icu;
 
 END;
 
 commit;
 
-\-- end covid\_icu;
+-- end covid_icu;
 ```
 ## Glasgow Comma Score (GCS)
 
@@ -3721,27 +3721,27 @@ by [Cenan Pirani](https://uclabip.atlassian.net/wiki/people/5f5922bcff2fe2006fb7
 
 ### How to pull first value in a query based on order rank
 
-In the example below of LABS we are looking for the most recent labs available per patient. Since labs can be spread out over many dates DENSE RANK allows you to GROUP by patient and component, and then select the first value if the ‘order\_time’ is sorted descending per grouped ‘pat\_id’.
+In the example below of LABS we are looking for the most recent labs available per patient. Since labs can be spread out over many dates DENSE RANK allows you to GROUP by patient and component, and then select the first value if the ‘order_time’ is sorted descending per grouped ‘pat_id’.
 
 Example:
 
-select pat\_id
+select pat_id
 
-,component\_name
+,component_name
 
-,max(ord\_value) keep (dense\_rank first order by order\_time desc) as lab\_value
+,max(ord_value) keep (dense_rank first order by order_time desc) as lab_value
 
-,max(reference\_unit) keep (dense\_rank first order by order\_time desc) as lab\_value\_unit
+,max(reference_unit) keep (dense_rank first order by order_time desc) as lab_value_unit
 
-from xdr\_100001\_lab
+from xdr_100001_lab
 
-group by pat\_id
+group by pat_id
 
-,component\_name
+,component_name
 
-order by pat\_id
+order by pat_id
 
-,component\_name
+,component_name
 
 ;
 ```
@@ -3751,263 +3751,263 @@ order by pat\_id
 
 Code to process accession numbers for pathology. This will deidentify accession numbers as well as identify result texts that contain the literals “block” or “cassette”.
 ```sql
-\----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
 
-\-- After creating pathology (entity\_cd=PATH) and pathology\_results (entity\_cd=PATHR) files, complete the following:
+-- After creating pathology (entity_cd=PATH) and pathology_results (entity_cd=PATHR) files, complete the following:
 
-\----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Create a new pathology file to encrypt pathology accession number
+-- Create a new pathology file to encrypt pathology accession number
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Create a table with deidentified accession numbers
+-- Create a table with deidentified accession numbers
 
-drop table xdr\_123456\_path\_accnum purge;
+drop table xdr_123456_path_accnum purge;
 
-create table xdr\_123456\_path\_accnum as
+create table xdr_123456_path_accnum as
 
 select distinct demoi.mrn
 
-,min(i2b2.f\_get\_deid\_new(6,path.accession\_number,113164)) over (partition by demoi.study\_id, path.accession\_number) ip\_accession\_number
+,min(i2b2.f_get_deid_new(6,path.accession_number,113164)) over (partition by demoi.study_id, path.accession_number) ip_accession_number
 
-,path.\*
+,path.*
 
-from xdr\_123456\_path path
+from xdr_123456_path path
 
-join xdr\_123456\_demoi demoi on path.study\_id = demoi.study\_id
+join xdr_123456_demoi demoi on path.study_id = demoi.study_id
 
 ;
 
-\-- Ensure this table's counts are identical to the original
+-- Ensure this table's counts are identical to the original
 
-select count(\*) from xdr\_123456\_path\_accnum;
+select count(*) from xdr_123456_path_accnum;
 
-select count(\*) from xdr\_123456\_path;
+select count(*) from xdr_123456_path;
 
-\-- Ensure the following counts are identical to verify uniqueness
+-- Ensure the following counts are identical to verify uniqueness
 
-select count(distinct accession\_number), count(distinct ip\_accession\_number) from xdr\_123456\_path\_accnum;
+select count(distinct accession_number), count(distinct ip_accession_number) from xdr_123456_path_accnum;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Add a column to the pathology results to identify if a result text line
+-- Add a column to the pathology results to identify if a result text line
 
-\-- contains "block" or "cassette" and update
+-- contains "block" or "cassette" and update
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-alter table xdr\_123456\_pathr add block\_cassette\_in\_txt varchar(1);
+alter table xdr_123456_pathr add block_cassette_in_txt varchar(1);
 
-update xdr\_123456\_pathr
+update xdr_123456_pathr
 
-set block\_cassette\_in\_txt = 'Y'
+set block_cassette_in_txt = 'Y'
 
-where regexp\_like(result\_txt, 'cassette|block', 'i')
+where regexp_like(result_txt, 'cassette|block', 'i')
 
 ;
 
 commit;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Respool pathology files
+-- Respool pathology files
 
-\-- Example of respool:
+-- Example of respool:
 
-\-- Refer to E:\\Projects\\108564\\Execute\_Custom.bat and PullMain\_Custom.sql
+-- Refer to E:\\Projects\\108564\\Execute_Custom.bat and PullMain_Custom.sql
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\--spool e:\\projects\\123456\\Data\\Pathology.txt
+--spool e:\\projects\\123456\\Data\\Pathology.txt
 
-select 'ip\_patient\_id,ip\_enc\_id,ip\_order\_proc\_id,ip\_accession\_number,order\_time,result\_time,procedure\_description,specimen\_source,specimen\_type,specimen\_taken\_time' export from dual union all
+select 'ip_patient_id,ip_enc_id,ip_order_proc_id,ip_accession_number,order_time,result_time,procedure_description,specimen_source,specimen_type,specimen_taken_time' export from dual union all
 
-select '"' || study\_id || '"' || ',' || '"' || study\_csn || '"' || ',' || '"' || study\_order\_proc\_id || '"' || ',' || '"' || ip\_accession\_number || '"' || ',' || '"' || order\_time
+select '"' || study_id || '"' || ',' || '"' || study_csn || '"' || ',' || '"' || study_order_proc_id || '"' || ',' || '"' || ip_accession_number || '"' || ',' || '"' || order_time
 
-|| '"' || ',' || '"' || result\_time || '"' || ',' || '"' || procedure\_description || '"' || ',' || '"' || specimen\_source || '"' || ',' || '"' || specimen\_type
+|| '"' || ',' || '"' || result_time || '"' || ',' || '"' || procedure_description || '"' || ',' || '"' || specimen_source || '"' || ',' || '"' || specimen_type
 
-|| '"' || ',' || '"' || specimen\_taken\_time || '"' export
+|| '"' || ',' || '"' || specimen_taken_time || '"' export
 
-from (select distinct study\_id, study\_csn, study\_order\_proc\_id, ip\_accession\_number, order\_time, result\_time, procedure\_description, specimen\_source, specimen\_type
+from (select distinct study_id, study_csn, study_order_proc_id, ip_accession_number, order_time, result_time, procedure_description, specimen_source, specimen_type
 
-, specimen\_taken\_time
+, specimen_taken_time
 
-from xdr\_123456\_path\_accnum
+from xdr_123456_path_accnum
 
-order by study\_id, study\_order\_proc\_id
-
-);
-
-\--spool off
-
-\--spool e:\\projects\\123456\\Data\\Pathology\_Results.txt
-
-select 'ip\_patient\_id,ip\_order\_proc\_id,component\_id,component\_name,sort\_key,block\_cassette\_in\_txt,result\_txt' export from dual union all
-
-select '"' || study\_id || '"' || ',' || '"' || study\_order\_proc\_id || '"' || ',' || '"' || component\_id || '"' || ',' || '"' || component\_name
-
-|| '"' || ',' || '"' || sort\_key || '"' || ',' || '"' || block\_cassette\_in\_txt || '"' || ',' || '"' || result\_txt || '"' export
-
-from (select distinct study\_id, study\_order\_proc\_id, component\_id, component\_name, sort\_key, block\_cassette\_in\_txt, result\_txt
-
-from xdr\_123456\_pathr
-
-order by study\_id, study\_order\_proc\_id, component\_id, sort\_key
+order by study_id, study_order_proc_id
 
 );
 
-\--spool off
+--spool off
 
-\--------------------------------------------------------------------------------
+--spool e:\\projects\\123456\\Data\\Pathology_Results.txt
 
-\-- Do not output this to Data subfolder because this is sent to Clara Magyar, not the PI
+select 'ip_patient_id,ip_order_proc_id,component_id,component_name,sort_key,block_cassette_in_txt,result_txt' export from dual union all
 
-\--------------------------------------------------------------------------------
+select '"' || study_id || '"' || ',' || '"' || study_order_proc_id || '"' || ',' || '"' || component_id || '"' || ',' || '"' || component_name
 
-\--spool e:\\projects\\123456\\Pathology\_Cases.txt
+|| '"' || ',' || '"' || sort_key || '"' || ',' || '"' || block_cassette_in_txt || '"' || ',' || '"' || result_txt || '"' export
 
-select 'ip\_patient\_id,mrn,case\_number,ip\_case\_number' export from dual union all
+from (select distinct study_id, study_order_proc_id, component_id, component_name, sort_key, block_cassette_in_txt, result_txt
 
-select '"' || study\_id || '"' || ',' || '"' || mrn || '"' || ',' || '"' || accession\_number || '"' || ',' || '"' || ip\_accession\_number || '"' export
+from xdr_123456_pathr
 
-from (select distinct study\_id, mrn, accession\_number, ip\_accession\_number
-
-from xdr\_123456\_path\_accnum
-
-where accession\_number is not null
-
-order by mrn, accession\_number
+order by study_id, study_order_proc_id, component_id, sort_key
 
 );
 
-\--spool off
+--spool off
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Rerun Data Dictionary (See E:\\Projects\\123456\\Execute\_Custom.bat)
+-- Do not output this to Data subfolder because this is sent to Clara Magyar, not the PI
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+--spool e:\\projects\\123456\\Pathology_Cases.txt
+
+select 'ip_patient_id,mrn,case_number,ip_case_number' export from dual union all
+
+select '"' || study_id || '"' || ',' || '"' || mrn || '"' || ',' || '"' || accession_number || '"' || ',' || '"' || ip_accession_number || '"' export
+
+from (select distinct study_id, mrn, accession_number, ip_accession_number
+
+from xdr_123456_path_accnum
+
+where accession_number is not null
+
+order by mrn, accession_number
+
+);
+
+--spool off
+
+--------------------------------------------------------------------------------
+
+-- Rerun Data Dictionary (See E:\\Projects\\123456\\Execute_Custom.bat)
+
+--------------------------------------------------------------------------------
 
 # Imaging HonestBroker Accession Numbers
 
 (by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 11/5/2021)
 
-Code to process accession numbers for imaging. This will deidentify accession numbers as well as provide modality and list\_order\_number (sequential number starting with 1).
+Code to process accession numbers for imaging. This will deidentify accession numbers as well as provide modality and list_order_number (sequential number starting with 1).
 
-\----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
 
-\-- After creating imaging (entity\_cd=IMG) files, complete the following:
+-- After creating imaging (entity_cd=IMG) files, complete the following:
 
-\----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Create a new imaging file to encrypt imaging accession number
+-- Create a new imaging file to encrypt imaging accession number
 
-\-- and obtain other requested variables
+-- and obtain other requested variables
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Create a table with deidentified accession numbers
+-- Create a table with deidentified accession numbers
 
-drop table xdr\_123456\_img\_accnum purge;
+drop table xdr_123456_img_accnum purge;
 
-create table xdr\_123456\_img\_accnum as
+create table xdr_123456_img_accnum as
 
-select distinct rownum list\_order\_number
+select distinct rownum list_order_number
 
-,demoi.pat\_mrn\_id mrn
+,demoi.pat_mrn_id mrn
 
-,i2b2.f\_get\_deid\_new(5,img.accession\_number,123456) ip\_accession\_number
+,i2b2.f_get_deid_new(5,img.accession_number,123456) ip_accession_number
 
-,substr(img.procedure\_name,1,instr(procedure\_name,' ') - 1) modality --get modality up to first space
+,substr(img.procedure_name,1,instr(procedure_name,' ') - 1) modality --get modality up to first space
 
-,img.\*
+,img.*
 
-from xdr\_123456\_img img
+from xdr_123456_img img
 
-join xdr\_123456\_coh\_patonly cpo on img.study\_id = cpo.study\_id
+join xdr_123456_coh_patonly cpo on img.study_id = cpo.study_id
 
-join i2b2.lz\_clarity\_patient demoi on cpo.pat\_id = demoi.pat\_id
+join i2b2.lz_clarity_patient demoi on cpo.pat_id = demoi.pat_id
 
 ;
 
-\-- Ensure this table's counts are identical to the original
+-- Ensure this table's counts are identical to the original
 
-select count(\*) from xdr\_123456\_img\_accnum;
+select count(*) from xdr_123456_img_accnum;
 
-select count(\*) from xdr\_123456\_img;
+select count(*) from xdr_123456_img;
 
-\-- Ensure the following counts are identical to verify uniqueness
+-- Ensure the following counts are identical to verify uniqueness
 
-select count(distinct accession\_number), count(distinct ip\_accession\_number) from xdr\_123456\_img\_accnum;
+select count(distinct accession_number), count(distinct ip_accession_number) from xdr_123456_img_accnum;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Respool imaging files
+-- Respool imaging files
 
-\-- Example of respool:
+-- Example of respool:
 
-\-- Refer to E:\\Projects\\108784\\Execute\_Custom.bat and PullMain\_Custom.sql
+-- Refer to E:\\Projects\\108784\\Execute_Custom.bat and PullMain_Custom.sql
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\--spool e:\\projects\\123456\\Data\\Imaging.txt
+--spool e:\\projects\\123456\\Data\\Imaging.txt
 
-select 'ip\_patient\_id,ip\_enc\_id,ip\_order\_proc\_id,procedure\_id,procedure\_name,ip\_accession\_number,modality' export from dual union all
+select 'ip_patient_id,ip_enc_id,ip_order_proc_id,procedure_id,procedure_name,ip_accession_number,modality' export from dual union all
 
-select '"' || study\_id || '"' || ',' || '"' || study\_csn || '"' || ',' || '"' || study\_order\_proc\_id
+select '"' || study_id || '"' || ',' || '"' || study_csn || '"' || ',' || '"' || study_order_proc_id
 
-|| '"' || ',' || '"' || procedure\_id || '"' || ',' || '"' || procedure\_name
+|| '"' || ',' || '"' || procedure_id || '"' || ',' || '"' || procedure_name
 
-|| '"' || ',' || '"' || ip\_accession\_number || '"' || ',' || '"' || modality || '"' export
+|| '"' || ',' || '"' || ip_accession_number || '"' || ',' || '"' || modality || '"' export
 
-from (select distinct study\_id, study\_csn, study\_order\_proc\_id, procedure\_id
+from (select distinct study_id, study_csn, study_order_proc_id, procedure_id
 
-, procedure\_name, ip\_accession\_number, modality
+, procedure_name, ip_accession_number, modality
 
-from xdr\_123456\_img\_accnum
+from xdr_123456_img_accnum
 
-order by study\_id, study\_order\_proc\_id);
+order by study_id, study_order_proc_id);
 
-\--spool off
+--spool off
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Do not output this to Data subfolder because this is sent to DICOM, not the PI
+-- Do not output this to Data subfolder because this is sent to DICOM, not the PI
 
-\-- Spool e:\\projects\\123456\\Imaging\_UleadFolderName.txt (e.g. Imaging\_Jamshidi\_21\_10-001869.txt)
+-- Spool e:\\projects\\123456\\Imaging_UleadFolderName.txt (e.g. Imaging_Jamshidi_21_10-001869.txt)
 
-\-- Copy to Box folder Imaging\_Accession\_Numbers
+-- Copy to Box folder Imaging_Accession_Numbers
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\--spool E:\\Projects\\123456\\Sent\_Backup\\Imaging\_UleadFolderName.txt
+--spool E:\\Projects\\123456\\Sent_Backup\\Imaging_UleadFolderName.txt
 
-select 'list\_order\_number,mrn,ip\_patient\_id,accession\_number,ip\_accession\_number,modality' export from dual union all
+select 'list_order_number,mrn,ip_patient_id,accession_number,ip_accession_number,modality' export from dual union all
 
-select '"' || list\_order\_number || '"' || ',' || '"' || mrn || '"' || ',' || '"' || study\_id
+select '"' || list_order_number || '"' || ',' || '"' || mrn || '"' || ',' || '"' || study_id
 
-|| '"' || ',' || '"' || accession\_number || '"' || ',' || '"' || ip\_accession\_number
+|| '"' || ',' || '"' || accession_number || '"' || ',' || '"' || ip_accession_number
 
 || '"' || ',' || '"' || modality
 
 || '"' export
 
-from (select distinct \*
+from (select distinct *
 
-from xdr\_123456\_img\_accnum
+from xdr_123456_img_accnum
 
-where accession\_number is not null
+where accession_number is not null
 
-and ((LENGTH(TRIM(TRANSLATE(accession\_number, '+-.0123456789',' '))) is null --numeric accession\_number
+and ((LENGTH(TRIM(TRANSLATE(accession_number, '+-.0123456789',' '))) is null --numeric accession_number
 
-and accession\_number like '4%'
+and accession_number like '4%'
 
-and length(accession\_number) = 8
+and length(accession_number) = 8
 
 )
 
@@ -4017,103 +4017,103 @@ modality = 'ECG'
 
 )
 
-order by list\_order\_number
+order by list_order_number
 
 );
 
-\--spool off
+--spool off
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Rerun Data Dictionary (See E:\\Projects\\108784\\Execute\_Custom.bat)
+-- Rerun Data Dictionary (See E:\\Projects\\108784\\Execute_Custom.bat)
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 # Changing IDs and MRNs
 
 (by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 11/5/2021)
 
-Code to process changing IDs and MRNs. Please refer to ctsi\_research.f\_get\_curr\_pt. Input variables are pi\_type and pi\_pat and Output variable is the status and new value. Please see below.
+Code to process changing IDs and MRNs. Please refer to ctsi_research.f_get_curr_pt. Input variables are pi_type and pi_pat and Output variable is the status and new value. Please see below.
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Please refer to ctsi\_research.f\_get\_curr\_pt(sample of Input/output
+-- Please refer to ctsi_research.f_get_curr_pt(sample of Input/output
 
-\-- parameters below and note necessary requirements in comments)
+-- parameters below and note necessary requirements in comments)
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-create or replace function f\_get\_curr\_pt
+create or replace function f_get_curr_pt
 
-(pi\_type in integer --1=pat\_id, 2=mrn
+(pi_type in integer --1=pat_id, 2=mrn
 
-,pi\_pat in varchar2 --pat\_id/mrn to be validated
+,pi_pat in varchar2 --pat_id/mrn to be validated
 
 )
 
 return varchar2 --returns status + new value (if applicable)
 
-\--status: 'C'=CURRENT, 'N'=NEW PT, 'X'=EXCLUDE, ,'O'=OPTED OUT OF RESEARCH, 'F'=NOT FOUND, 'E'=ERROR
+--status: 'C'=CURRENT, 'N'=NEW PT, 'X'=EXCLUDE, ,'O'=OPTED OUT OF RESEARCH, 'F'=NOT FOUND, 'E'=ERROR
 
-\--note that 'X'=EXCLUDE could mean "restricted/test/dummy"
+--note that 'X'=EXCLUDE could mean "restricted/test/dummy"
 
-\--note that 'E'=ERROR will also return the sql error message ilo new value
+--note that 'E'=ERROR will also return the sql error message ilo new value
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get new id examples
+-- Get new id examples
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-select f\_get\_curr\_pt(1,'Z000001') from dual;
+select f_get_curr_pt(1,'Z000001') from dual;
 
-select f\_get\_curr\_pt(1,pat\_id) from i2b2.lz\_clarity\_patient where rownum = 1;
+select f_get_curr_pt(1,pat_id) from i2b2.lz_clarity_patient where rownum = 1;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get new id for a file
+-- Get new id for a file
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-select distinct x.\*
+select distinct x.*
 
-,i2b2.f\_death\_clarity\_all(coalesce(trim(substr(x.new\_pat\_id\_info,2)),x.clarity\_pat\_id)) f\_death\_info
+,i2b2.f_death_clarity_all(coalesce(trim(substr(x.new_pat_id_info,2)),x.clarity_pat_id)) f_death_info
 
-,substr(x.new\_pat\_id\_info,1,1) new\_pat\_id\_stat
+,substr(x.new_pat_id_info,1,1) new_pat_id_stat
 
-,coalesce(x.research\_opt\_out\_pre, p3.research\_opt\_out) research\_opt\_out
+,coalesce(x.research_opt_out_pre, p3.research_opt_out) research_opt_out
 
-,coalesce(trim(substr(x.new\_pat\_id\_info,2)),x.clarity\_pat\_id) new\_pat\_id
+,coalesce(trim(substr(x.new_pat_id_info,2)),x.clarity_pat_id) new_pat_id
 
-from (select distinct coh.\*
+from (select distinct coh.*
 
-,p.pat\_id lz\_pat\_id
+,p.pat_id lz_pat_id
 
-,p2.pat\_id clarity\_pat\_id
+,p2.pat_id clarity_pat_id
 
-,case when p2.pat\_id is not null then ' ' || p2.pat\_id
+,case when p2.pat_id is not null then ' ' || p2.pat_id
 
-else f\_get\_curr\_pt(1,coh.pat\_id)
+else f_get_curr_pt(1,coh.pat_id)
 
-end new\_pat\_id\_info
+end new_pat_id_info
 
-,p.research\_opt\_out research\_opt\_out\_pre
+,p.research_opt_out research_opt_out_pre
 
-from xdr\_123456\_cohpatfin coh
+from xdr_123456_cohpatfin coh
 
-left join i2b2.lz\_clarity\_patient p on coh.pat\_id = p.pat\_id
+left join i2b2.lz_clarity_patient p on coh.pat_id = p.pat_id
 
-left join clarity.patient p2 on coh.pat\_id = p2.pat\_id
+left join clarity.patient p2 on coh.pat_id = p2.pat_id
 
-left join i2b2.bip\_project\_disclosure bpd on coh.pat\_id = bpd.pat\_id
+left join i2b2.bip_project_disclosure bpd on coh.pat_id = bpd.pat_id
 
-and bpd.project\_id = 109826
+and bpd.project_id = 109826
 
-where bpd.pat\_id is null
+where bpd.pat_id is null
 
 ) x
 
-left join i2b2.lz\_clarity\_patient p3 on coalesce(trim(substr(x.new\_pat\_id\_info,2)),x.clarity\_pat\_id) = p3.pat\_id
+left join i2b2.lz_clarity_patient p3 on coalesce(trim(substr(x.new_pat_id_info,2)),x.clarity_pat_id) = p3.pat_id
 
 ;
 
@@ -4123,67 +4123,67 @@ left join i2b2.lz\_clarity\_patient p3 on coalesce(trim(substr(x.new\_pat\_id\_i
 
 Code to create controls for a case cohort.
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Please refer to ctsi\_research.p\_create\_control (sample of Input/output
+-- Please refer to ctsi_research.p_create_control (sample of Input/output
 
-\-- parameters below and note necessary requirements in comments)
+-- parameters below and note necessary requirements in comments)
 
-\--
+--
 
-\-- Alternate method to p\_create\_controls above:
+-- Alternate method to p_create_controls above:
 
-\-- C:\\server\_apps\\eHonestBroker\\Create\_Controls.py
+-- C:\\server_apps\\eHonestBroker\\Create_Controls.py
 
-\-- pi\_project\_id = 123456
+-- pi_project_id = 123456
 
-\-- pi\_max\_number\_matches = n, where n=integer of how many controls are requested per case
+-- pi_max_number_matches = n, where n=integer of how many controls are requested per case
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-create or replace PROCEDURE P\_CREATE\_CONTROL
+create or replace PROCEDURE P_CREATE_CONTROL
 
-(pi\_project\_id IN i2b2.bip\_project.project\_id%TYPE --Must have a cohort-to-control file that exists in ctsi\_research schema, which includes coh\_pat\_id, ctl\_pat\_id, and rank
+(pi_project_id IN i2b2.bip_project.project_id%TYPE --Must have a cohort-to-control file that exists in ctsi_research schema, which includes coh_pat_id, ctl_pat_id, and rank
 
-\--named xdr\_123456\_ctlpre, where 123456 is the project\_id
+--named xdr_123456_ctlpre, where 123456 is the project_id
 
-\--rank must be precoded in the order that PI requests, if any.
+--rank must be precoded in the order that PI requests, if any.
 
-\--i.e. closest cosine\_similarity first
+--i.e. closest cosine_similarity first
 
-\-- see I:\\\_BIP\\Consults\\zz Completed\\Hser - Zhu (refresh)\\Hser\_Script\_Control.sql (Elixhauser)
+-- see I:\\_BIP\\Consults\\zz Completed\\Hser - Zhu (refresh)\\Hser_Script_Control.sql (Elixhauser)
 
-\-- or I:\\\_BIP\\Consults\\Bui\_CRRT\\Bui\_CRRT\_Script.sql (Charlson) for examples
+-- or I:\\_BIP\\Consults\\Bui_CRRT\\Bui_CRRT_Script.sql (Charlson) for examples
 
-,pi\_max\_number\_matches IN INTEGER
+,pi_max_number_matches IN INTEGER
 
 ) IS
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Step 1: Match case to control (must contain variables to match (e.g. age, sex)
+-- Step 1: Match case to control (must contain variables to match (e.g. age, sex)
 
-\-- Input: a. Case table
+-- Input: a. Case table
 
-\-- b. Preliminary control table
+-- b. Preliminary control table
 
-\-- Output: xdr\_123456\_ctlpre
+-- Output: xdr_123456_ctlpre
 
-\-- Note that rank is only necessary when there is a priority in matching. If
+-- Note that rank is only necessary when there is a priority in matching. If
 
-\-- there is no priority, this can be set to a sequential number per patient.
+-- there is no priority, this can be set to a sequential number per patient.
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_ctlpre purge;
+drop table xdr_123456_ctlpre purge;
 
-create table xdr\_123456\_ctlpre as
+create table xdr_123456_ctlpre as
 
-select distinct cohcase.pat\_id coh\_pat\_id
+select distinct cohcase.pat_id coh_pat_id
 
-,cohctl.pat\_id ctl\_pat\_id
+,cohctl.pat_id ctl_pat_id
 
-,cohcase.match\_age age
+,cohcase.match_age age
 
 ,cohcase.sex sex
 
@@ -4191,13 +4191,13 @@ select distinct cohcase.pat\_id coh\_pat\_id
 
 ,cohcase.ethnicity ethnicity
 
-,cohctl.number\_of\_pl\_icds
+,cohctl.number_of_pl_icds
 
-,rank() over (partition by cohcase.pat\_id order by cohcase.pat\_id, cohctl.number\_of\_pl\_icds, cohctl.pat\_id) rank
+,rank() over (partition by cohcase.pat_id order by cohcase.pat_id, cohctl.number_of_pl_icds, cohctl.pat_id) rank
 
-from xdr\_123456\_coh\_patonly\_age cohcase -- This is the file that contains the case information
+from xdr_123456_coh_patonly_age cohcase -- This is the file that contains the case information
 
-join xdr\_123456\_ctlprefin cohctl on cohcase.match\_age = cohctl.match\_age -- This is the file that contains the preliminary control information
+join xdr_123456_ctlprefin cohctl on cohcase.match_age = cohctl.match_age -- This is the file that contains the preliminary control information
 
 and cohcase.sex = cohctl.sex
 
@@ -4207,195 +4207,195 @@ and cohcase.ethnicity = cohctl.ethnicity
 
 ;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Step 2: Get final case to control cohort
+-- Step 2: Get final case to control cohort
 
-\-- Input: xdr\_123456\_ctlpre from Step 1
+-- Input: xdr_123456_ctlpre from Step 1
 
-\-- Output: xdr\_123456\_case2ctl
+-- Output: xdr_123456_case2ctl
 
-\-- NOTE: In the event that PI wants further matching using cosine
+-- NOTE: In the event that PI wants further matching using cosine
 
-\-- similarity, please jump to "Rank by cosine similarity"
+-- similarity, please jump to "Rank by cosine similarity"
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- parameters: project\_id, #controls to case match
+-- parameters: project_id, #controls to case match
 
-exec p\_create\_control(123456,2);
+exec p_create_control(123456,2);
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_case2ctl; --17829 9085 17829
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_case2ctl; --17829 9085 17829
 
-select \* from xdr\_123456\_case2ctl order by coh\_pat\_id, ctl\_pat\_id;
+select * from xdr_123456_case2ctl order by coh_pat_id, ctl_pat_id;
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/*****************************************************************************************
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+******************************************************************************************
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+******************************************************************************************
 
 Rank by cosine similarity (example only - ignore specific project counts and comments)
 
-E.g. Closest cosine\_similarity first - for further examples, see:
+E.g. Closest cosine_similarity first - for further examples, see:
 
-I:\\\_BIP\\Consults\\zz Completed\\Hser - Zhu (refresh)\\Hser\_Script\_Control.sql (Elixhauser)
+I:\\_BIP\\Consults\\zz Completed\\Hser - Zhu (refresh)\\Hser_Script_Control.sql (Elixhauser)
 
-\- 1 case to multiple (e.g. 2) controls
+- 1 case to multiple (e.g. 2) controls
 
-I:\\\_BIP\\Consults\\Bui\_CRRT\\Bui\_CRRT\_Script.sql (Charlson)
+I:\\_BIP\\Consults\\Bui_CRRT\\Bui_CRRT_Script.sql (Charlson)
 
-\- 1 case to 1 control
+- 1 case to 1 control
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+******************************************************************************************
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+******************************************************************************************
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+*****************************************************************************************/
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get current demographics on case cohort
+-- Get current demographics on case cohort
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_cohpat2 purge;
+drop table xdr_123456_cohpat2 purge;
 
-create table xdr\_123456\_cohpat2 as
+create table xdr_123456_cohpat2 as
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
 ,p.sex
 
-,p.mapped\_race\_name race
+,p.mapped_race_name race
 
-,p.ethnic\_group ethnicity
-
-,case
-
-when x2.death\_date\_derived = to\_date('01/01/0001','mm/dd/yyyy') then null
-
-when x2.death\_date\_derived <> to\_date('01/01/0001','mm/dd/yyyy') then trunc(months\_between(x2.death\_date\_derived, x2.birth\_date)/12)
-
-else trunc(months\_between(sysdate, x2.birth\_date)/12)
-
-end current\_or\_death\_age
+,p.ethnic_group ethnicity
 
 ,case
 
-when x2.death\_date\_derived is not null then 'Known Deceased'
+when x2.death_date_derived = to_date('01/01/0001','mm/dd/yyyy') then null
+
+when x2.death_date_derived <> to_date('01/01/0001','mm/dd/yyyy') then trunc(months_between(x2.death_date_derived, x2.birth_date)/12)
+
+else trunc(months_between(sysdate, x2.birth_date)/12)
+
+end current_or_death_age
+
+,case
+
+when x2.death_date_derived is not null then 'Known Deceased'
 
 else 'Not Known Deceased'
 
-end vital\_status
+end vital_status
 
 ,case
 
-when x2.death\_date\_derived is not null then x2.death\_date\_derived
+when x2.death_date_derived is not null then x2.death_date_derived
 
 else null
 
-end death\_datetime
+end death_datetime
 
-,p2.pat\_name
+,p2.pat_name
 
-,p.restricted\_yn
+,p.restricted_yn
 
-,p.pat\_mrn\_id mrn
+,p.pat_mrn_id mrn
 
-,p.birth\_date
+,p.birth_date
 
-,p.research\_opt\_out
+,p.research_opt_out
 
-from xdr\_123456\_cohpat coh
+from xdr_123456_cohpat coh
 
-join i2b2.lz\_clarity\_patient p on coh.pat\_id = p.pat\_id
+join i2b2.lz_clarity_patient p on coh.pat_id = p.pat_id
 
-join clarity.patient p2 on coh.pat\_id = p2.pat\_id
+join clarity.patient p2 on coh.pat_id = p2.pat_id
 
-join (select x1.\*
+join (select x1.*
 
 ,case
 
-when (dead\_pat = 1 or dead\_enc = 1 or dead\_death = 1) and death\_date\_min = to\_date('12/31/9999','mm/dd/yyyy') then to\_date('01/01/0001','mm/dd/yyyy')
+when (dead_pat = 1 or dead_enc = 1 or dead_death = 1) and death_date_min = to_date('12/31/9999','mm/dd/yyyy') then to_date('01/01/0001','mm/dd/yyyy')
 
-when (dead\_pat = 1 or dead\_enc = 1 or dead\_death = 1) and death\_date\_min <> to\_date('12/31/9999','mm/dd/yyyy') then death\_date\_min
+when (dead_pat = 1 or dead_enc = 1 or dead_death = 1) and death_date_min <> to_date('12/31/9999','mm/dd/yyyy') then death_date_min
 
 else null
 
-end death\_date\_derived
+end death_date_derived
 
-from (select distinct x.\*
+from (select distinct x.*
 
-,least(nvl(death\_date\_pat,to\_date('12/31/9999','mm/dd/yyyy'))
+,least(nvl(death_date_pat,to_date('12/31/9999','mm/dd/yyyy'))
 
-,nvl(death\_date\_enc,to\_date('12/31/9999','mm/dd/yyyy'))
+,nvl(death_date_enc,to_date('12/31/9999','mm/dd/yyyy'))
 
-,nvl(death\_date\_death,to\_date('12/31/9999','mm/dd/yyyy'))
+,nvl(death_date_death,to_date('12/31/9999','mm/dd/yyyy'))
 
-) death\_date\_min
+) death_date_min
 
-from (select coh.pat\_id
+from (select coh.pat_id
 
-,coh.pat\_mrn\_id
+,coh.pat_mrn_id
 
-,coh.ip\_patient\_id
+,coh.ip_patient_id
 
-,coh.birth\_date
+,coh.birth_date
 
-,pat.pat\_status\_c
+,pat.pat_status_c
 
-,ps.name as patient\_status
+,ps.name as patient_status
 
-,case when pat.pat\_status\_c = 2 or pat.death\_date is not null then 1 else 0 end dead\_pat
+,case when pat.pat_status_c = 2 or pat.death_date is not null then 1 else 0 end dead_pat
 
-,case when enc.pat\_id is not null then 1 else 0 end dead\_enc
+,case when enc.pat_id is not null then 1 else 0 end dead_enc
 
-,case when death.pat\_id is not null then 1 else 0 end dead\_death
+,case when death.pat_id is not null then 1 else 0 end dead_death
 
-,case when nvl(pat.death\_date,to\_date('01/01/0001','mm/dd/yyyy')) >= pat.birth\_date then pat.death\_date else null end death\_date\_pat
+,case when nvl(pat.death_date,to_date('01/01/0001','mm/dd/yyyy')) >= pat.birth_date then pat.death_date else null end death_date_pat
 
-,max(enc.hosp\_disch\_time) over (partition by enc.pat\_id) death\_date\_enc
+,max(enc.hosp_disch_time) over (partition by enc.pat_id) death_date_enc
 
-,case when nvl(death.death\_date,to\_date('01/01/0001','mm/dd/yyyy')) >= pat.birth\_date then death.death\_date else null end death\_date\_death
+,case when nvl(death.death_date,to_date('01/01/0001','mm/dd/yyyy')) >= pat.birth_date then death.death_date else null end death_date_death
 
-from xdr\_123456\_cohpat coh
+from xdr_123456_cohpat coh
 
-join clarity.patient pat on coh.pat\_id = pat.pat\_id
+join clarity.patient pat on coh.pat_id = pat.pat_id
 
-left join clarity.pat\_enc\_hsp enc on pat.pat\_id = enc.pat\_id and (enc.disch\_disp\_c in ('20', '40', '41', '42', '71') or enc.ed\_disposition\_c = '8')
+left join clarity.pat_enc_hsp enc on pat.pat_id = enc.pat_id and (enc.disch_disp_c in ('20', '40', '41', '42', '71') or enc.ed_disposition_c = '8')
 
-left join i2b2.lz\_death death on pat.pat\_id = death.pat\_id
+left join i2b2.lz_death death on pat.pat_id = death.pat_id
 
-left join clarity.zc\_patient\_status ps on pat.pat\_status\_c = ps.patient\_status\_c
+left join clarity.zc_patient_status ps on pat.pat_status_c = ps.patient_status_c
 
 ) x
 
 ) x1
 
-) x2 on coh.pat\_id = x2.pat\_id
+) x2 on coh.pat_id = x2.pat_id
 
 ;
 
-alter table xdr\_123456\_cohpat2 add constraint xdr\_123456\_cohpat2\_pk primary key (pat\_id);
+alter table xdr_123456_cohpat2 add constraint xdr_123456_cohpat2_pk primary key (pat_id);
 
-select count(\*), count(distinct pat\_id) from xdr\_123456\_cohpat2; --2462 2462
+select count(*), count(distinct pat_id) from xdr_123456_cohpat2; --2462 2462
 
-select count(\*), count(distinct pat\_id) from xdr\_123456\_cohpat; --2464 2464
+select count(*), count(distinct pat_id) from xdr_123456_cohpat; --2464 2464
 
-select \* from xdr\_123456\_cohpat2;
+select * from xdr_123456_cohpat2;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get Charlson comorbidities for case cohort - Final case cohort
+-- Get Charlson comorbidities for case cohort - Final case cohort
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_cohpat3 purge;
+drop table xdr_123456_cohpat3 purge;
 
-create table xdr\_123456\_cohpat3 as
+create table xdr_123456_cohpat3 as
 
-select distinct charl.\*
+select distinct charl.*
 
 ,coh.ethnicity
 
@@ -4403,153 +4403,153 @@ select distinct charl.\*
 
 ,coh.sex
 
-,coh.vital\_status
+,coh.vital_status
 
-,coh.current\_or\_death\_age
+,coh.current_or_death_age
 
-from xdr\_123456\_cohpat2 coh
+from xdr_123456_cohpat2 coh
 
-join i2b2.lz\_clarity\_charlson\_score charl on coh.pat\_id = charl.pat\_id
+join i2b2.lz_clarity_charlson_score charl on coh.pat_id = charl.pat_id
 
 ;
 
-select count(\*), count(distinct pat\_id) from xdr\_123456\_cohpat3; --2392 2392
+select count(*), count(distinct pat_id) from xdr_123456_cohpat3; --2392 2392
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get initial controls
+-- Get initial controls
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_ctlpat1 purge;
+drop table xdr_123456_ctlpat1 purge;
 
-create table xdr\_123456\_ctlpat1 as
+create table xdr_123456_ctlpat1 as
 
-select distinct p.pat\_id
+select distinct p.pat_id
 
 ,p.sex
 
-,p.mapped\_race\_name race
+,p.mapped_race_name race
 
-,p.ethnic\_group ethnicity
-
-,case
-
-when x2.death\_date\_derived = to\_date('01/01/0001','mm/dd/yyyy') then null
-
-when x2.death\_date\_derived <> to\_date('01/01/0001','mm/dd/yyyy') then trunc(months\_between(x2.death\_date\_derived, x2.birth\_date)/12)
-
-else trunc(months\_between(sysdate, x2.birth\_date)/12)
-
-end current\_or\_death\_age
+,p.ethnic_group ethnicity
 
 ,case
 
-when x2.death\_date\_derived is not null then 'Known Deceased'
+when x2.death_date_derived = to_date('01/01/0001','mm/dd/yyyy') then null
+
+when x2.death_date_derived <> to_date('01/01/0001','mm/dd/yyyy') then trunc(months_between(x2.death_date_derived, x2.birth_date)/12)
+
+else trunc(months_between(sysdate, x2.birth_date)/12)
+
+end current_or_death_age
+
+,case
+
+when x2.death_date_derived is not null then 'Known Deceased'
 
 else 'Not Known Deceased'
 
-end vital\_status
+end vital_status
 
 ,case
 
-when x2.death\_date\_derived is not null then x2.death\_date\_derived
+when x2.death_date_derived is not null then x2.death_date_derived
 
 else null
 
-end death\_datetime
+end death_datetime
 
-,p2.pat\_name
+,p2.pat_name
 
-,p.restricted\_yn
+,p.restricted_yn
 
-,p.pat\_mrn\_id mrn
+,p.pat_mrn_id mrn
 
-,p.birth\_date
+,p.birth_date
 
-,p.research\_opt\_out
+,p.research_opt_out
 
-from i2b2.lz\_clarity\_patient p
+from i2b2.lz_clarity_patient p
 
-join clarity.patient p2 on p.pat\_id = p2.pat\_id
+join clarity.patient p2 on p.pat_id = p2.pat_id
 
-join (select x1.\*
+join (select x1.*
 
 ,case
 
-when (dead\_pat = 1 or dead\_enc = 1 or dead\_death = 1) and death\_date\_min = to\_date('12/31/9999','mm/dd/yyyy') then to\_date('01/01/0001','mm/dd/yyyy')
+when (dead_pat = 1 or dead_enc = 1 or dead_death = 1) and death_date_min = to_date('12/31/9999','mm/dd/yyyy') then to_date('01/01/0001','mm/dd/yyyy')
 
-when (dead\_pat = 1 or dead\_enc = 1 or dead\_death = 1) and death\_date\_min <> to\_date('12/31/9999','mm/dd/yyyy') then death\_date\_min
+when (dead_pat = 1 or dead_enc = 1 or dead_death = 1) and death_date_min <> to_date('12/31/9999','mm/dd/yyyy') then death_date_min
 
 else null
 
-end death\_date\_derived
+end death_date_derived
 
-from (select distinct x.\*
+from (select distinct x.*
 
-,least(nvl(death\_date\_pat,to\_date('12/31/9999','mm/dd/yyyy'))
+,least(nvl(death_date_pat,to_date('12/31/9999','mm/dd/yyyy'))
 
-,nvl(death\_date\_enc,to\_date('12/31/9999','mm/dd/yyyy'))
+,nvl(death_date_enc,to_date('12/31/9999','mm/dd/yyyy'))
 
-,nvl(death\_date\_death,to\_date('12/31/9999','mm/dd/yyyy'))
+,nvl(death_date_death,to_date('12/31/9999','mm/dd/yyyy'))
 
-) death\_date\_min
+) death_date_min
 
-from (select pat.pat\_id
+from (select pat.pat_id
 
-,pat.pat\_mrn\_id
+,pat.pat_mrn_id
 
-,pat.birth\_date
+,pat.birth_date
 
-,pat.pat\_status\_c
+,pat.pat_status_c
 
-,ps.name as patient\_status
+,ps.name as patient_status
 
-,case when pat.pat\_status\_c = 2 or pat.death\_date is not null then 1 else 0 end dead\_pat
+,case when pat.pat_status_c = 2 or pat.death_date is not null then 1 else 0 end dead_pat
 
-,case when enc.pat\_id is not null then 1 else 0 end dead\_enc
+,case when enc.pat_id is not null then 1 else 0 end dead_enc
 
-,case when death.pat\_id is not null then 1 else 0 end dead\_death
+,case when death.pat_id is not null then 1 else 0 end dead_death
 
-,case when nvl(pat.death\_date,to\_date('01/01/0001','mm/dd/yyyy')) >= pat.birth\_date then pat.death\_date else null end death\_date\_pat
+,case when nvl(pat.death_date,to_date('01/01/0001','mm/dd/yyyy')) >= pat.birth_date then pat.death_date else null end death_date_pat
 
-,max(enc.hosp\_disch\_time) over (partition by enc.pat\_id) death\_date\_enc
+,max(enc.hosp_disch_time) over (partition by enc.pat_id) death_date_enc
 
-,case when nvl(death.death\_date,to\_date('01/01/0001','mm/dd/yyyy')) >= pat.birth\_date then death.death\_date else null end death\_date\_death
+,case when nvl(death.death_date,to_date('01/01/0001','mm/dd/yyyy')) >= pat.birth_date then death.death_date else null end death_date_death
 
 from clarity.patient pat
 
-left join clarity.pat\_enc\_hsp enc on pat.pat\_id = enc.pat\_id and (enc.disch\_disp\_c in ('20', '40', '41', '42', '71') or enc.ed\_disposition\_c = '8')
+left join clarity.pat_enc_hsp enc on pat.pat_id = enc.pat_id and (enc.disch_disp_c in ('20', '40', '41', '42', '71') or enc.ed_disposition_c = '8')
 
-left join i2b2.lz\_death death on pat.pat\_id = death.pat\_id
+left join i2b2.lz_death death on pat.pat_id = death.pat_id
 
-left join clarity.zc\_patient\_status ps on pat.pat\_status\_c = ps.patient\_status\_c
+left join clarity.zc_patient_status ps on pat.pat_status_c = ps.patient_status_c
 
 ) x
 
 ) x1
 
-) x2 on p.pat\_id = x2.pat\_id
+) x2 on p.pat_id = x2.pat_id
 
 ;
 
-alter table xdr\_123456\_ctlpat1 add constraint xdr\_123456\_ctlpat1\_pk primary key (pat\_id);
+alter table xdr_123456_ctlpat1 add constraint xdr_123456_ctlpat1_pk primary key (pat_id);
 
-select count(\*), count(distinct pat\_id) from xdr\_123456\_ctlpat1; --6052064 6052064
+select count(*), count(distinct pat_id) from xdr_123456_ctlpat1; --6052064 6052064
 
-select \* from xdr\_123456\_ctlpat1;
+select * from xdr_123456_ctlpat1;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get Charlson comorbidities for controls
+-- Get Charlson comorbidities for controls
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_ctlpat2 purge;
+drop table xdr_123456_ctlpat2 purge;
 
-create table xdr\_123456\_ctlpat2 as
+create table xdr_123456_ctlpat2 as
 
-select distinct charl.\*
+select distinct charl.*
 
 ,coh.ethnicity
 
@@ -4557,37 +4557,37 @@ select distinct charl.\*
 
 ,coh.sex
 
-,coh.vital\_status
+,coh.vital_status
 
-,coh.current\_or\_death\_age
+,coh.current_or_death_age
 
-from xdr\_123456\_ctlpat1 coh
+from xdr_123456_ctlpat1 coh
 
-join i2b2.lz\_clarity\_charlson\_score charl on coh.pat\_id = charl.pat\_id
+join i2b2.lz_clarity_charlson_score charl on coh.pat_id = charl.pat_id
 
-left join xdr\_123456\_cohpat cs on coh.pat\_id = cs.pat\_id --use original 2464-pt cohort to ensure none are used in controls
+left join xdr_123456_cohpat cs on coh.pat_id = cs.pat_id --use original 2464-pt cohort to ensure none are used in controls
 
-where cs.pat\_id is null
+where cs.pat_id is null
 
 ;
 
-select count(\*), count(distinct pat\_id) from xdr\_123456\_ctlpat2; --696541 696541
+select count(*), count(distinct pat_id) from xdr_123456_ctlpat2; --696541 696541
 
-select \* from xdr\_123456\_ctlpat2;
+select * from xdr_123456_ctlpat2;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Match case to control prior to cosine similarity comparison
+-- Match case to control prior to cosine similarity comparison
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_cs2ctlpre purge;
+drop table xdr_123456_cs2ctlpre purge;
 
-create table xdr\_123456\_cs2ctlpre as
+create table xdr_123456_cs2ctlpre as
 
-select distinct cohcase.pat\_id coh\_pat\_id
+select distinct cohcase.pat_id coh_pat_id
 
-,cohctl.pat\_id ctl\_pat\_id
+,cohctl.pat_id ctl_pat_id
 
 ,cohcase.sex
 
@@ -4595,135 +4595,135 @@ select distinct cohcase.pat\_id coh\_pat\_id
 
 ,cohcase.ethnicity
 
-,cohcase.current\_or\_death\_age age
+,cohcase.current_or_death_age age
 
-,cohcase.char\_total\_score
+,cohcase.char_total_score
 
-from xdr\_123456\_cohpat3 cohcase
+from xdr_123456_cohpat3 cohcase
 
-join xdr\_123456\_ctlpat2 cohctl on cohcase.sex = cohctl.sex
+join xdr_123456_ctlpat2 cohctl on cohcase.sex = cohctl.sex
 
 and cohcase.race = cohctl.race
 
 and cohcase.ethnicity = cohctl.ethnicity
 
-and cohcase.current\_or\_death\_age = cohctl.current\_or\_death\_age
+and cohcase.current_or_death_age = cohctl.current_or_death_age
 
 ;
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_cs2ctlpre; --2295324 2372 426830
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_cs2ctlpre; --2295324 2372 426830
 
-select \* from xdr\_123456\_cs2ctlpre;
+select * from xdr_123456_cs2ctlpre;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Rename the columns so I don't have to change each x\* reference in the standard cosine\_similarity code
+-- Rename the columns so I don't have to change each x* reference in the standard cosine_similarity code
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-alter table xdr\_123456\_cohpat3 rename column char\_myocardial\_infarction to x1;
+alter table xdr_123456_cohpat3 rename column char_myocardial_infarction to x1;
 
-alter table xdr\_123456\_cohpat3 rename column char\_chf to x2;
+alter table xdr_123456_cohpat3 rename column char_chf to x2;
 
-alter table xdr\_123456\_cohpat3 rename column char\_perivasc to x3;
+alter table xdr_123456_cohpat3 rename column char_perivasc to x3;
 
-alter table xdr\_123456\_cohpat3 rename column char\_cerebrovascular\_disease to x4;
+alter table xdr_123456_cohpat3 rename column char_cerebrovascular_disease to x4;
 
-alter table xdr\_123456\_cohpat3 rename column char\_dementia to x5;
+alter table xdr_123456_cohpat3 rename column char_dementia to x5;
 
-alter table xdr\_123456\_cohpat3 rename column char\_chrnlung to x6;
+alter table xdr_123456_cohpat3 rename column char_chrnlung to x6;
 
-alter table xdr\_123456\_cohpat3 rename column char\_conn\_tiss\_rheum\_disease to x7;
+alter table xdr_123456_cohpat3 rename column char_conn_tiss_rheum_disease to x7;
 
-alter table xdr\_123456\_cohpat3 rename column char\_ulcer to x8;
+alter table xdr_123456_cohpat3 rename column char_ulcer to x8;
 
-alter table xdr\_123456\_cohpat3 rename column char\_mild\_liver\_disease to x9;
+alter table xdr_123456_cohpat3 rename column char_mild_liver_disease to x9;
 
-alter table xdr\_123456\_cohpat3 rename column char\_dm to x10;
+alter table xdr_123456_cohpat3 rename column char_dm to x10;
 
-alter table xdr\_123456\_cohpat3 rename column char\_dmcx to x11;
+alter table xdr_123456_cohpat3 rename column char_dmcx to x11;
 
-alter table xdr\_123456\_cohpat3 rename column char\_paraplegia\_hemiplegia to x12;
+alter table xdr_123456_cohpat3 rename column char_paraplegia_hemiplegia to x12;
 
-alter table xdr\_123456\_cohpat3 rename column char\_renal\_disease to x13;
+alter table xdr_123456_cohpat3 rename column char_renal_disease to x13;
 
-alter table xdr\_123456\_cohpat3 rename column char\_cancer to x14;
+alter table xdr_123456_cohpat3 rename column char_cancer to x14;
 
-alter table xdr\_123456\_cohpat3 rename column char\_mod\_or\_sev\_liver\_disease to x15;
+alter table xdr_123456_cohpat3 rename column char_mod_or_sev_liver_disease to x15;
 
-alter table xdr\_123456\_cohpat3 rename column char\_metastatic\_carcinoma to x16;
+alter table xdr_123456_cohpat3 rename column char_metastatic_carcinoma to x16;
 
-alter table xdr\_123456\_cohpat3 rename column char\_aids\_hiv to x17;
+alter table xdr_123456_cohpat3 rename column char_aids_hiv to x17;
 
-\--
+--
 
-alter table xdr\_123456\_ctlpat2 rename column char\_myocardial\_infarction to x1;
+alter table xdr_123456_ctlpat2 rename column char_myocardial_infarction to x1;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_chf to x2;
+alter table xdr_123456_ctlpat2 rename column char_chf to x2;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_perivasc to x3;
+alter table xdr_123456_ctlpat2 rename column char_perivasc to x3;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_cerebrovascular\_disease to x4;
+alter table xdr_123456_ctlpat2 rename column char_cerebrovascular_disease to x4;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_dementia to x5;
+alter table xdr_123456_ctlpat2 rename column char_dementia to x5;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_chrnlung to x6;
+alter table xdr_123456_ctlpat2 rename column char_chrnlung to x6;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_conn\_tiss\_rheum\_disease to x7;
+alter table xdr_123456_ctlpat2 rename column char_conn_tiss_rheum_disease to x7;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_ulcer to x8;
+alter table xdr_123456_ctlpat2 rename column char_ulcer to x8;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_mild\_liver\_disease to x9;
+alter table xdr_123456_ctlpat2 rename column char_mild_liver_disease to x9;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_dm to x10;
+alter table xdr_123456_ctlpat2 rename column char_dm to x10;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_dmcx to x11;
+alter table xdr_123456_ctlpat2 rename column char_dmcx to x11;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_paraplegia\_hemiplegia to x12;
+alter table xdr_123456_ctlpat2 rename column char_paraplegia_hemiplegia to x12;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_renal\_disease to x13;
+alter table xdr_123456_ctlpat2 rename column char_renal_disease to x13;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_cancer to x14;
+alter table xdr_123456_ctlpat2 rename column char_cancer to x14;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_mod\_or\_sev\_liver\_disease to x15;
+alter table xdr_123456_ctlpat2 rename column char_mod_or_sev_liver_disease to x15;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_metastatic\_carcinoma to x16;
+alter table xdr_123456_ctlpat2 rename column char_metastatic_carcinoma to x16;
 
-alter table xdr\_123456\_ctlpat2 rename column char\_aids\_hiv to x17;
+alter table xdr_123456_ctlpat2 rename column char_aids_hiv to x17;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get cosine\_similarity (measure of similarity between case and control)
+-- Get cosine_similarity (measure of similarity between case and control)
 
-\-- cosine\_similarity = 0: no match whatsoever
+-- cosine_similarity = 0: no match whatsoever
 
-\-- cosine\_similarity < 1: possible match; the higher, the more similar
+-- cosine_similarity < 1: possible match; the higher, the more similar
 
-\-- cosine\_similarity = 1: exact match
+-- cosine_similarity = 1: exact match
 
-\-- cosine\_similarity > 1: should never happen but check to confirm
+-- cosine_similarity > 1: should never happen but check to confirm
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_ctlpat\_cs2 purge;
+drop table xdr_123456_ctlpat_cs2 purge;
 
-create table xdr\_123456\_ctlpat\_cs2 as
+create table xdr_123456_ctlpat_cs2 as
 
-select x.\*
+select x.*
 
-,cs\_num / (sqrt(cs\_den\_coh) \* sqrt(cs\_den\_ctl)) as cosine\_similarity
+,cs_num / (sqrt(cs_den_coh) * sqrt(cs_den_ctl)) as cosine_similarity
 
-from (select cc.\*
+from (select cc.*
 
-,(coh.x1\*ctl.x1)+(coh.x2\*ctl.x2)+(coh.x3\*ctl.x3)+(coh.x4\*ctl.x4)+(coh.x5\*ctl.x5)
+,(coh.x1*ctl.x1)+(coh.x2*ctl.x2)+(coh.x3*ctl.x3)+(coh.x4*ctl.x4)+(coh.x5*ctl.x5)
 
-+(coh.x6\*ctl.x6)+(coh.x7\*ctl.x7)+(coh.x8\*ctl.x8)+(coh.x9\*ctl.x9)+(coh.x10\*ctl.x10)
++(coh.x6*ctl.x6)+(coh.x7*ctl.x7)+(coh.x8*ctl.x8)+(coh.x9*ctl.x9)+(coh.x10*ctl.x10)
 
-+(coh.x11\*ctl.x11)+(coh.x12\*ctl.x12)+(coh.x13\*ctl.x13)+(coh.x14\*ctl.x14)+(coh.x15\*ctl.x15)
++(coh.x11*ctl.x11)+(coh.x12*ctl.x12)+(coh.x13*ctl.x13)+(coh.x14*ctl.x14)+(coh.x15*ctl.x15)
 
-+(coh.x16\*ctl.x16)+(coh.x17\*ctl.x17)
++(coh.x16*ctl.x16)+(coh.x17*ctl.x17)
 
-as cs\_num
+as cs_num
 
 ,(power(coh.x1,2))+(power(coh.x2,2))+(power(coh.x3,2))+(power(coh.x4,2))+(power(coh.x5,2))
 
@@ -4733,7 +4733,7 @@ as cs\_num
 
 +(power(coh.x16,2))+(power(coh.x17,2))
 
-as cs\_den\_coh
+as cs_den_coh
 
 ,(power(ctl.x1,2))+(power(ctl.x2,2))+(power(ctl.x3,2))+(power(ctl.x4,2))+(power(ctl.x5,2))
 
@@ -4743,49 +4743,49 @@ as cs\_den\_coh
 
 +(power(ctl.x16,2))+(power(ctl.x17,2))
 
-as cs\_den\_ctl
+as cs_den_ctl
 
-from xdr\_123456\_cs2ctlpre cc
+from xdr_123456_cs2ctlpre cc
 
-join xdr\_123456\_cohpat3 coh on cc.coh\_pat\_id = coh.pat\_id --case pts
+join xdr_123456_cohpat3 coh on cc.coh_pat_id = coh.pat_id --case pts
 
-join xdr\_123456\_ctlpat2 ctl on cc.ctl\_pat\_id = ctl.pat\_id --ctl pts
+join xdr_123456_ctlpat2 ctl on cc.ctl_pat_id = ctl.pat_id --ctl pts
 
 ) x
 
-where cs\_den\_coh > 0 and cs\_den\_ctl > 0
+where cs_den_coh > 0 and cs_den_ctl > 0
 
 ;
 
-alter table xdr\_123456\_ctlpat\_cs2 add constraint xdr\_123456\_ctlpat\_cs2\_pk primary key (coh\_pat\_id, ctl\_pat\_id);
+alter table xdr_123456_ctlpat_cs2 add constraint xdr_123456_ctlpat_cs2_pk primary key (coh_pat_id, ctl_pat_id);
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_ctlpat\_cs2; --2295324 2372 426830
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_ctlpat_cs2; --2295324 2372 426830
 
-select \* from xdr\_123456\_ctlpat\_cs2;
+select * from xdr_123456_ctlpat_cs2;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Verify cosine\_similarity
+-- Verify cosine_similarity
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-select \* from xdr\_123456\_ctlpat\_cs2;
+select * from xdr_123456_ctlpat_cs2;
 
-select cs, count(\*)
+select cs, count(*)
 
 from (select case
 
-when cosine\_similarity = 0 then '=0' --no match whatsoever
+when cosine_similarity = 0 then '=0' --no match whatsoever
 
-when cosine\_similarity < 1 then '<1' --possible match; the higher, the more similar
+when cosine_similarity < 1 then '<1' --possible match; the higher, the more similar
 
-when cosine\_similarity = 1 then '=1' --exact match
+when cosine_similarity = 1 then '=1' --exact match
 
-when cosine\_similarity > 1 then '>1' --should never happen but checking to confirm
+when cosine_similarity > 1 then '>1' --should never happen but checking to confirm
 
 end cs
 
-from xdr\_123456\_ctlpat\_cs2
+from xdr_123456_ctlpat_cs2
 
 )
 
@@ -4793,337 +4793,337 @@ group by cs
 
 ;
 
-\--=0 1042910
+--=0 1042910
 
-\--=1 3330
+--=1 3330
 
-\--<1 1249084
+--<1 1249084
 
-select \* from xdr\_123456\_ctlpat\_cs2 where cosine\_similarity = 0;
+select * from xdr_123456_ctlpat_cs2 where cosine_similarity = 0;
 
-select \* from xdr\_123456\_ctlpat\_cs2 where cosine\_similarity = 1;
+select * from xdr_123456_ctlpat_cs2 where cosine_similarity = 1;
 
-select \* from xdr\_123456\_ctlpat\_cs2 where cosine\_similarity > 0 and cosine\_similarity < 1;
+select * from xdr_123456_ctlpat_cs2 where cosine_similarity > 0 and cosine_similarity < 1;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Prepare final controls
+-- Prepare final controls
 
-\-- At this time, determine how many controls you need per case.
+-- At this time, determine how many controls you need per case.
 
-\-- If 1 case to 1 control, jump to "Prepare final controls for 1 case to 1 control"
+-- If 1 case to 1 control, jump to "Prepare final controls for 1 case to 1 control"
 
-\-- If 1 case to multiple controls, jump to "Prepare final controls for 1 case to many controls"
+-- If 1 case to multiple controls, jump to "Prepare final controls for 1 case to many controls"
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/*****************************************************************************************
 
 Prepare final controls for 1 case to 1 control
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+*****************************************************************************************/
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Prepare input to creating control procedure
+-- Prepare input to creating control procedure
 
-\-- Start with ranking within each case cohort patient
+-- Start with ranking within each case cohort patient
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_ctlpre1 purge; --must include coh\_pat\_id, ctl\_pat\_id, and rank
+drop table xdr_123456_ctlpre1 purge; --must include coh_pat_id, ctl_pat_id, and rank
 
-create table xdr\_123456\_ctlpre1 as
+create table xdr_123456_ctlpre1 as
 
-select x.\*
+select x.*
 
-,rank() over (partition by coh\_pat\_id order by coh\_pat\_id, rank\_ctl, rank\_coh) rank
+,rank() over (partition by coh_pat_id order by coh_pat_id, rank_ctl, rank_coh) rank
 
-from (select distinct coh\_pat\_id
+from (select distinct coh_pat_id
 
-,rank() over (partition by coh\_pat\_id order by coh\_pat\_id, cosine\_similarity desc, char\_total\_score desc, ctl\_pat\_id) rank\_coh
+,rank() over (partition by coh_pat_id order by coh_pat_id, cosine_similarity desc, char_total_score desc, ctl_pat_id) rank_coh
 
-,rank() over (partition by ctl\_pat\_id order by ctl\_pat\_id, cosine\_similarity desc, char\_total\_score desc, coh\_pat\_id) rank\_ctl
+,rank() over (partition by ctl_pat_id order by ctl_pat_id, cosine_similarity desc, char_total_score desc, coh_pat_id) rank_ctl
 
-,cosine\_similarity
+,cosine_similarity
 
-,char\_total\_score
+,char_total_score
 
-,ctl\_pat\_id
+,ctl_pat_id
 
-from xdr\_123456\_ctlpat\_cs2
+from xdr_123456_ctlpat_cs2
 
-where cosine\_similarity > 0
+where cosine_similarity > 0
 
 ) x
 
 ;
 
-alter table xdr\_123456\_ctlpre1 add constraint xdr\_123456\_ctlpre1\_pk primary key (coh\_pat\_id, rank, ctl\_pat\_id);
+alter table xdr_123456_ctlpre1 add constraint xdr_123456_ctlpre1_pk primary key (coh_pat_id, rank, ctl_pat_id);
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_ctlpre1; --1252414 2364 334474
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_ctlpre1; --1252414 2364 334474
 
-select \* from xdr\_123456\_ctlpre1;
+select * from xdr_123456_ctlpre1;
 
-select count(\*) --4328=good=all coh and ctl pts are unique
+select count(*) --4328=good=all coh and ctl pts are unique
 
-from (select coh\_pat\_id from xdr\_123456\_ctlpre1 where rank\_coh = 1 and rank\_ctl = 1 and rank = 1
+from (select coh_pat_id from xdr_123456_ctlpre1 where rank_coh = 1 and rank_ctl = 1 and rank = 1
 
-union select ctl\_pat\_id from xdr\_123456\_ctlpre1 where rank\_coh = 1 and rank\_ctl = 1 and rank = 1
+union select ctl_pat_id from xdr_123456_ctlpre1 where rank_coh = 1 and rank_ctl = 1 and rank = 1
 
 )
 
 ;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Now save the prioritized ones
+-- Now save the prioritized ones
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_ctlpre2 purge; --must include coh\_pat\_id, ctl\_pat\_id, and rank
+drop table xdr_123456_ctlpre2 purge; --must include coh_pat_id, ctl_pat_id, and rank
 
-create table xdr\_123456\_ctlpre2 as
+create table xdr_123456_ctlpre2 as
 
-select x.\*
+select x.*
 
-from xdr\_123456\_ctlpre1 x
+from xdr_123456_ctlpre1 x
 
-where rank\_coh = 1 and rank\_ctl = 1 and rank = 1
+where rank_coh = 1 and rank_ctl = 1 and rank = 1
 
-order by ctl\_pat\_id, cosine\_similarity desc
-
-;
-
-alter table xdr\_123456\_ctlpre2 add constraint xdr\_123456\_ctlpre2\_pk primary key (coh\_pat\_id, rank, ctl\_pat\_id);
-
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_ctlpre2; --2164 2164 2164
-
-select \* from xdr\_123456\_ctlpre2;
-
-\--------------------------------------------------------------------------------
-
-\-- Now get the leftovers for the control matching procedure
-
-\-- The prioritized ones are excluded because they are already the top
-
-\-- matches per case
-
-\--------------------------------------------------------------------------------
-
-drop table xdr\_123456\_ctlpre purge;
-
-create table xdr\_123456\_ctlpre as
-
-select x.\*
-
-from xdr\_123456\_ctlpre1 x
-
-left join xdr\_123456\_ctlpre2 sav on x.coh\_pat\_id = sav.coh\_pat\_id
-
-or x.ctl\_pat\_id = sav.ctl\_pat\_id
-
-where sav.coh\_pat\_id is null
+order by ctl_pat_id, cosine_similarity desc
 
 ;
 
-alter table xdr\_123456\_ctlpre add constraint xdr\_123456\_ctlpre\_pk primary key (coh\_pat\_id, rank, ctl\_pat\_id);
+alter table xdr_123456_ctlpre2 add constraint xdr_123456_ctlpre2_pk primary key (coh_pat_id, rank, ctl_pat_id);
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_ctlpre; --96256 200 68044
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_ctlpre2; --2164 2164 2164
 
-select \* from xdr\_123456\_ctlpre;
+select * from xdr_123456_ctlpre2;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Jump to "Run procedure to get unique controls per case"
+-- Now get the leftovers for the control matching procedure
 
-\--------------------------------------------------------------------------------
+-- The prioritized ones are excluded because they are already the top
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+-- matches per case
+
+--------------------------------------------------------------------------------
+
+drop table xdr_123456_ctlpre purge;
+
+create table xdr_123456_ctlpre as
+
+select x.*
+
+from xdr_123456_ctlpre1 x
+
+left join xdr_123456_ctlpre2 sav on x.coh_pat_id = sav.coh_pat_id
+
+or x.ctl_pat_id = sav.ctl_pat_id
+
+where sav.coh_pat_id is null
+
+;
+
+alter table xdr_123456_ctlpre add constraint xdr_123456_ctlpre_pk primary key (coh_pat_id, rank, ctl_pat_id);
+
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_ctlpre; --96256 200 68044
+
+select * from xdr_123456_ctlpre;
+
+--------------------------------------------------------------------------------
+
+-- Jump to "Run procedure to get unique controls per case"
+
+--------------------------------------------------------------------------------
+
+/*****************************************************************************************
 
 Prepare final controls for 1 case to many controls
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+*****************************************************************************************/
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Prepare input to creating control procedure
+-- Prepare input to creating control procedure
 
-\-- Start with ranking within each case cohort patient
+-- Start with ranking within each case cohort patient
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_ctlpre1 purge; --must include coh\_pat\_id, ctl\_pat\_id, and rank
+drop table xdr_123456_ctlpre1 purge; --must include coh_pat_id, ctl_pat_id, and rank
 
-create table xdr\_123456\_ctlpre1 as
+create table xdr_123456_ctlpre1 as
 
-select distinct coh\_pat\_id
+select distinct coh_pat_id
 
-,rank() over (partition by coh\_pat\_id order by coh\_pat\_id, cosine\_similarity desc, ctl\_pat\_id) rank
+,rank() over (partition by coh_pat_id order by coh_pat_id, cosine_similarity desc, ctl_pat_id) rank
 
-,cosine\_similarity
+,cosine_similarity
 
-,ctl\_pat\_id
+,ctl_pat_id
 
-from xdr\_123456\_ctlpat\_cs2
+from xdr_123456_ctlpat_cs2
 
 ;
 
-alter table xdr\_123456\_ctlpre1 add constraint xdr\_123456\_ctlpre1\_pk primary key (coh\_pat\_id, rank, ctl\_pat\_id);
+alter table xdr_123456_ctlpre1 add constraint xdr_123456_ctlpre1_pk primary key (coh_pat_id, rank, ctl_pat_id);
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_ctlpre1; --164575792 9559 622321
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_ctlpre1; --164575792 9559 622321
 
-select \* from xdr\_123456\_ctlpre1;
+select * from xdr_123456_ctlpre1;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get top n controls per case to alleviate the data inputted into the procedure
+-- Get top n controls per case to alleviate the data inputted into the procedure
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_ctlpre purge; --must include coh\_pat\_id, ctl\_pat\_id, and rank
+drop table xdr_123456_ctlpre purge; --must include coh_pat_id, ctl_pat_id, and rank
 
-create table xdr\_123456\_ctlpre as
+create table xdr_123456_ctlpre as
 
-select ctl.\*
+select ctl.*
 
-from xdr\_123456\_ctlpre1 ctl
+from xdr_123456_ctlpre1 ctl
 
 where ctl.rank <= 5000 --change this at your discretion, increase and rerun if not enough controls reached
 
 ;
 
-alter table xdr\_123456\_ctlpre add constraint xdr\_123456\_ctlpre\_pk primary key (coh\_pat\_id, rank, ctl\_pat\_id);
+alter table xdr_123456_ctlpre add constraint xdr_123456_ctlpre_pk primary key (coh_pat_id, rank, ctl_pat_id);
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_ctlpre; --45352259 9559 613073
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_ctlpre; --45352259 9559 613073
 
-select \* from xdr\_123456\_ctlpre;
+select * from xdr_123456_ctlpre;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Jump to "Run procedure to get unique controls per case"
+-- Jump to "Run procedure to get unique controls per case"
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-/\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+/*****************************************************************************************
 
-\-- Run procedure to get unique controls per case
+-- Run procedure to get unique controls per case
 
-\-- (pi\_project\_id in i2b2.bip\_project.project\_id%type --Must have a cohort-to-control file that exists in ctsi\_research schema, which includes coh\_pat\_id, ctl\_pat\_id, and rank
+-- (pi_project_id in i2b2.bip_project.project_id%type --Must have a cohort-to-control file that exists in ctsi_research schema, which includes coh_pat_id, ctl_pat_id, and rank
 
-\-- --named xdr\_pppppp\_ctlpre, where pppppp is the project\_id
+-- --named xdr_pppppp_ctlpre, where pppppp is the project_id
 
-\-- --rank must be precoded in the order that PI requests, if any.
+-- --rank must be precoded in the order that PI requests, if any.
 
-\-- -- see I:\\\_BIP\\Consults\\zz Completed\\Hser - Zhu (refresh)\\Hser\_Script\_Control.sql (Elixhauser)
+-- -- see I:\\_BIP\\Consults\\zz Completed\\Hser - Zhu (refresh)\\Hser_Script_Control.sql (Elixhauser)
 
-\-- -- or I:\\\_BIP\\Consults\\Bui\_CRRT\\Bui\_CRRT\_Script.sql (Charlson) for examples
+-- -- or I:\\_BIP\\Consults\\Bui_CRRT\\Bui_CRRT_Script.sql (Charlson) for examples
 
-\-- ,pi\_max\_number\_matches in integer
+-- ,pi_max_number_matches in integer
 
-\-- )
+-- )
 
-\-- Alternate method to p\_create\_controls above:
+-- Alternate method to p_create_controls above:
 
-\-- C:\\server\_apps\\eHonestBroker\\Create\_Controls.py
+-- C:\\server_apps\\eHonestBroker\\Create_Controls.py
 
-\-- pi\_project\_id = 123456
+-- pi_project_id = 123456
 
-\-- pi\_max\_number\_matches = n, where n=integer of how many controls are requested per case
+-- pi_max_number_matches = n, where n=integer of how many controls are requested per case
 
-\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+*****************************************************************************************/
 
-exec p\_create\_control(123456,n); --where n=integer of how many controls are requested per case
+exec p_create_control(123456,n); --where n=integer of how many controls are requested per case
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Verify procedure results
+-- Verify procedure results
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_case2ctl; --200 200 200
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_case2ctl; --200 200 200
 
-select \* from xdr\_123456\_case2ctl;
+select * from xdr_123456_case2ctl;
 
-select rank, count(\*) from xdr\_123456\_case2ctl group by rank order by rank;
+select rank, count(*) from xdr_123456_case2ctl group by rank order by rank;
 
-\--1 178
+--1 178
 
-\--2 20
+--2 20
 
-\--3 2
+--3 2
 
-select min(cosine\_similarity) from xdr\_123456\_case2ctl; --0.0.3333333333333333333333333333333333333344
+select min(cosine_similarity) from xdr_123456_case2ctl; --0.0.3333333333333333333333333333333333333344
 
-select min(cosine\_similarity) from xdr\_123456\_case2ctl where rank = 1; --0.0.4472135954999579392818347337462552470882
+select min(cosine_similarity) from xdr_123456_case2ctl where rank = 1; --0.0.4472135954999579392818347337462552470882
 
-select min(cosine\_similarity) from xdr\_123456\_case2ctl where rank = 2; --0.0.3333333333333333333333333333333333333344
+select min(cosine_similarity) from xdr_123456_case2ctl where rank = 2; --0.0.3333333333333333333333333333333333333344
 
-select min(cosine\_similarity) from xdr\_123456\_case2ctl where rank = 3; --0.0.816496580927726032732428024901963797324
+select min(cosine_similarity) from xdr_123456_case2ctl where rank = 3; --0.0.816496580927726032732428024901963797324
 
-select \* --no rows found=good=all unique
+select * --no rows found=good=all unique
 
-from xdr\_123456\_case2ctl coh
+from xdr_123456_case2ctl coh
 
-left join xdr\_123456\_case2ctl ctl on coh.coh\_pat\_id = ctl.ctl\_pat\_id
+left join xdr_123456_case2ctl ctl on coh.coh_pat_id = ctl.ctl_pat_id
 
-left join xdr\_123456\_case2ctl cs on coh.ctl\_pat\_id = cs.coh\_pat\_id
+left join xdr_123456_case2ctl cs on coh.ctl_pat_id = cs.coh_pat_id
 
-where ctl.ctl\_pat\_id is not null
+where ctl.ctl_pat_id is not null
 
-or cs.coh\_pat\_id is not null
+or cs.coh_pat_id is not null
 
 ;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get final controls
+-- Get final controls
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_123456\_cohctlpat purge;
+drop table xdr_123456_cohctlpat purge;
 
-create table xdr\_123456\_cohctlpat as
+create table xdr_123456_cohctlpat as
 
-select distinct z.\*
+select distinct z.*
 
-,p.pat\_mrn\_id coh\_mrn
+,p.pat_mrn_id coh_mrn
 
-,p2.pat\_mrn\_id ctl\_mrn
+,p2.pat_mrn_id ctl_mrn
 
 from
 
-\-- (select x.\* from xdr\_123456\_ctlpre2 x --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
+-- (select x.* from xdr_123456_ctlpre2 x --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
 
-\-- union --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
+-- union --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
 
-\-- select x.\* from --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
+-- select x.* from --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
 
-xdr\_123456\_case2ctl
+xdr_123456_case2ctl
 
-\-- x --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
+-- x --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
 
-\-- ) --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
+-- ) --uncomment if case:control ratio is 1:1, you need this to reinstate the exact matches you saved earlier
 
 z
 
-join i2b2.lz\_clarity\_patient p on z.coh\_pat\_id = p.pat\_id
+join i2b2.lz_clarity_patient p on z.coh_pat_id = p.pat_id
 
-join i2b2.lz\_clarity\_patient p2 on z.ctl\_pat\_id = p2.pat\_id
+join i2b2.lz_clarity_patient p2 on z.ctl_pat_id = p2.pat_id
 
 ;
 
-select count(\*), count(distinct coh\_pat\_id), count(distinct ctl\_pat\_id) from xdr\_123456\_cohctlpat; --2364 2364 2364
+select count(*), count(distinct coh_pat_id), count(distinct ctl_pat_id) from xdr_123456_cohctlpat; --2364 2364 2364
 
-select \* from xdr\_123456\_cohctlpat;
+select * from xdr_123456_cohctlpat;
 
-\-- Verify unique cases and controls
+-- Verify unique cases and controls
 
-select count(\*) --4728=good=all coh and ctl pts are unique
+select count(*) --4728=good=all coh and ctl pts are unique
 
-from (select coh\_pat\_id from xdr\_123456\_cohctlpat
+from (select coh_pat_id from xdr_123456_cohctlpat
 
-union select ctl\_pat\_id from xdr\_123456\_cohctlpat
+union select ctl_pat_id from xdr_123456_cohctlpat
 
 )
 
@@ -5137,43 +5137,43 @@ union select ctl\_pat\_id from xdr\_123456\_cohctlpat
 
 – this data can be added to the vaccination data retrieved through the ‘procedures’
 
-drop table xdr\_PRINV\_immunizations purge;
+drop table xdr_PRINV_immunizations purge;
 
-create table xdr\_PRINV\_immunizations as
+create table xdr_PRINV_immunizations as
 
-select i1.\*
+select i1.*
 
 ,i2.name    immunization
 
-,istat.name immunization\_status
+,istat.name immunization_status
 
-,penc.pat\_enc\_csn\_id
+,penc.pat_enc_csn_id
 
-,penc.visit\_prov\_id
+,penc.visit_prov_id
 
-,penc.department\_id
+,penc.department_id
 
-,cpt.cpt\_code
+,cpt.cpt_code
 
-from xdr\_PRINV\_pat     pat
+from xdr_PRINV_pat     pat
 
-join immune            i1 on pat.pat\_id=i1.pat\_id
+join immune            i1 on pat.pat_id=i1.pat_id
 
-join clarity\_immunzatn i2 on i1.immunzatn\_id=i2.immunzatn\_id
+join clarity_immunzatn i2 on i1.immunzatn_id=i2.immunzatn_id
 
-join zc\_immnztn\_status istat on istat.immnztn\_status\_c = i1.immnztn\_status\_c
+join zc_immnztn_status istat on istat.immnztn_status_c = i1.immnztn_status_c
 
-join pat\_enc penc on i1.imm\_csn = penc.pat\_enc\_csn\_id
+join pat_enc penc on i1.imm_csn = penc.pat_enc_csn_id
 
-left join i2b2.lz\_clarity\_cpt\_code cpt on cpt.pat\_enc\_csn\_id=penc.pat\_enc\_csn\_id
+left join i2b2.lz_clarity_cpt_code cpt on cpt.pat_enc_csn_id=penc.pat_enc_csn_id
 
-where trunc(immune\_date) <insert date param logic>
+where trunc(immune_date) <insert date param logic>
 
-and regexp\_like(i2.name,'+(hpv|tdap|meningococcal|flu|Gardasil|mcv4)+','i') – name of vaccines
+and regexp_like(i2.name,'+(hpv|tdap|meningococcal|flu|Gardasil|mcv4)+','i') – name of vaccines
 
 and istat.name = 'Given'
 
-and regexp\_like(penc.department\_id,'12345|67890');
+and regexp_like(penc.department_id,'12345|67890');
 
 commit;      
 
@@ -5183,27 +5183,27 @@ commit;      
 
 – the following code flags ICU care based on encoutner name, level of care, or accommodation.
 
-\-------------------------------------------
+-------------------------------------------
 
-\-- Identify Intensive Care Unit stays/care
+-- Identify Intensive Care Unit stays/care
 
-\-------------------------------------------
+-------------------------------------------
 
-SELECT adt.\*
+SELECT adt.*
 
-from clarity\_adt adt
+from clarity_adt adt
 
-left join ZC\_LVL\_OF\_CARE zloc on adt.PAT\_LVL\_OF\_CARE\_C = zloc.LEVEL\_OF\_CARE\_C
+left join ZC_LVL_OF_CARE zloc on adt.PAT_LVL_OF_CARE_C = zloc.LEVEL_OF_CARE_C
 
-left join ZC\_ACCOMMODATION za on adt.ACCOMMODATION\_C = za.ACCOMMODATION\_C
+left join ZC_ACCOMMODATION za on adt.ACCOMMODATION_C = za.ACCOMMODATION_C
 
-left join clarity\_dep dept on adt.department\_id = dept.department\_id
+left join clarity_dep dept on adt.department_id = dept.department_id
 
-where department\_name like '%ICU%'
+where department_name like '%ICU%'
 
-OR ( adt.PAT\_LVL\_OF\_CARE\_C IS NOT NULL AND adt.PAT\_LVL\_OF\_CARE\_C = '6') -- ICU
+OR ( adt.PAT_LVL_OF_CARE_C IS NOT NULL AND adt.PAT_LVL_OF_CARE_C = '6') -- ICU
 
-OR adt.ACCOMMODATION\_C IN (25 --ICU
+OR adt.ACCOMMODATION_C IN (25 --ICU
 
 28 --ICU Trauma
 
@@ -5215,105 +5215,105 @@ OR adt.ACCOMMODATION\_C IN (25 --ICU
 
 (by ​[Fernando Sanz-Vidorreta](https://uclabip.atlassian.net/wiki/people/557058:05226a48-f9fe-405f-8bf2-736ba4603c19?ref=confluence) on 7/30/2022)
 
-This link includes the list of [SmartData Elements in EPIC](https://galaxy.epic.com/Search/GetFile?url=1!68!100!1005313&rank=5&queryid=96416879&docid=61648) and the actual file is under I:\\Bell\_BIP\\xDR\\Lists and Codes\\New Standard SmartData Elements.xlsx.
+This link includes the list of [SmartData Elements in EPIC](https://galaxy.epic.com/Search/GetFile?url=1!68!100!1005313&rank=5&queryid=96416879&docid=61648) and the actual file is under I:\\Bell_BIP\\xDR\\Lists and Codes\\New Standard SmartData Elements.xlsx.
 
 The caveat is that this list is the generic one from EPIC which means that customized smartdata elements created at UCLA would not be included here.
 
 The following code is just a very first draft to pull elements but further enhancements might be needed to optimize the data pull.
 
-\-------------------------------------------
+-------------------------------------------
 
-\-- Extract SmartData Elements information
+-- Extract SmartData Elements information
 
-\-------------------------------------------
+-------------------------------------------
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-,sed.ELEMENT\_ID
+,sed.ELEMENT_ID
 
-\-- once we have the table referenced above loaded into our schema, we can simply left join to it and get the name of the element
+-- once we have the table referenced above loaded into our schema, we can simply left join to it and get the name of the element
 
-\-- based on the element ID, the example below was hardcoded becase our team was involved in the creation of the form
+-- based on the element ID, the example below was hardcoded becase our team was involved in the creation of the form
 
-\-- and were told the element IDs behind each question
+-- and were told the element IDs behind each question
 
-\-- ,case
+-- ,case
 
-\-- when sed.ELEMENT\_ID = 'EPIC#31000090752' then 'AD < 3 YEARS OLD IN CHART'
+-- when sed.ELEMENT_ID = 'EPIC#31000090752' then 'AD < 3 YEARS OLD IN CHART'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#330' then 'POLST < 3 YEARS OLD IN CHART'
+-- when sed.ELEMENT_ID = 'UCLATEAM#330' then 'POLST < 3 YEARS OLD IN CHART'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#331' then 'AD < 3 YEARS OLD AT HOME COMPLETED'
+-- when sed.ELEMENT_ID = 'UCLATEAM#331' then 'AD < 3 YEARS OLD AT HOME COMPLETED'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#332' then 'AD > 3 YEARS OLD ON FILE STILL VALID'
+-- when sed.ELEMENT_ID = 'UCLATEAM#332' then 'AD > 3 YEARS OLD ON FILE STILL VALID'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#333' then 'WILLING TO USE PREPARE FOR YOUR CARE WEBSITE'
+-- when sed.ELEMENT_ID = 'UCLATEAM#333' then 'WILLING TO USE PREPARE FOR YOUR CARE WEBSITE'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#336' then 'INTRODUCING AD COMPLETION WITH PATIENT'
+-- when sed.ELEMENT_ID = 'UCLATEAM#336' then 'INTRODUCING AD COMPLETION WITH PATIENT'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#338' then 'IS PATIENT WILLING TO USE PREPARE FOR YOUR CARE WEBSITE'
+-- when sed.ELEMENT_ID = 'UCLATEAM#338' then 'IS PATIENT WILLING TO USE PREPARE FOR YOUR CARE WEBSITE'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#339' then 'ACP OUTREACH TIMESTAMP'
+-- when sed.ELEMENT_ID = 'UCLATEAM#339' then 'ACP OUTREACH TIMESTAMP'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#341' then 'PATIENT WILL COMPLETE AD AND SUBMIT VIA:'
+-- when sed.ELEMENT_ID = 'UCLATEAM#341' then 'PATIENT WILL COMPLETE AD AND SUBMIT VIA:'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#342' then 'PATIENT WILL COMPLETE AD AND SUBMIT VIA OTHER COMMENT:'
+-- when sed.ELEMENT_ID = 'UCLATEAM#342' then 'PATIENT WILL COMPLETE AD AND SUBMIT VIA OTHER COMMENT:'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#344' then 'AD < 3 YEARS OLD AT HOME COMPLETED OTHER COMMENT'
+-- when sed.ELEMENT_ID = 'UCLATEAM#344' then 'AD < 3 YEARS OLD AT HOME COMPLETED OTHER COMMENT'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#345' then 'PATIENT NOT READY TO PROCEED WITH AD. CCC TO FOLLOW UP ON:'
+-- when sed.ELEMENT_ID = 'UCLATEAM#345' then 'PATIENT NOT READY TO PROCEED WITH AD. CCC TO FOLLOW UP ON:'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#346' then 'POLST'
+-- when sed.ELEMENT_ID = 'UCLATEAM#346' then 'POLST'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#347' then 'PATIENT REFUSE'
+-- when sed.ELEMENT_ID = 'UCLATEAM#347' then 'PATIENT REFUSE'
 
-\-- when sed.ELEMENT\_ID = 'UCLATEAM#348' then 'OUTREACH COMMENTS'
+-- when sed.ELEMENT_ID = 'UCLATEAM#348' then 'OUTREACH COMMENTS'
 
-\-- else 'OTHER'
+-- else 'OTHER'
 
-\-- end smart\_element\_name
+-- end smart_element_name
 
-,sed.CUR\_SOURCE\_LQF\_ID
+,sed.CUR_SOURCE_LQF_ID
 
-,sed.CUR\_VALUE\_DATETIME
+,sed.CUR_VALUE_DATETIME
 
-,sed.UPDATE\_DATE
+,sed.UPDATE_DATE
 
-,sed.REC\_ARCHIVED\_YN
+,sed.REC_ARCHIVED_YN
 
-,sed.CUR\_VAL\_UTC\_DTTM
+,sed.CUR_VAL_UTC_DTTM
 
-,sed.HLV\_ID
+,sed.HLV_ID
 
 ,sev.line
 
-,sev.smrtdta\_elem\_value
+,sev.smrtdta_elem_value
 
-,CUR\_SOURCE\_LQF\_ID
+,CUR_SOURCE_LQF_ID
 
-\-- ,sysdate as creation\_date
+-- ,sysdate as creation_date
 
-\-- if you need to pull te user who filled out the form
+-- if you need to pull te user who filled out the form
 
-\-- ,sed.CUR\_VALUE\_USER\_ID as user\_id
+-- ,sed.CUR_VALUE_USER_ID as user_id
 
-\-- ,emp.name as user\_name
+-- ,emp.name as user_name
 
-from i2b2.lz\_clarity\_patient coh
+from i2b2.lz_clarity_patient coh
 
-join clarity.smrtdta\_elem\_data sed on coh.pat\_id = sed.PAT\_LINK\_ID
+join clarity.smrtdta_elem_data sed on coh.pat_id = sed.PAT_LINK_ID
 
-join clarity.SMRTDTA\_ELEM\_VALUE sev on sed.hlv\_id = sev.hlv\_id
+join clarity.SMRTDTA_ELEM_VALUE sev on sed.hlv_id = sev.hlv_id
 
-\--left join clarity.clarity\_emp emp on sed.CUR\_VALUE\_USER\_ID = emp.USER\_ID
+--left join clarity.clarity_emp emp on sed.CUR_VALUE_USER_ID = emp.USER_ID
 
 where
 
-\-- if we know the form ID
+-- if we know the form ID
 
-\--sed.CUR\_SOURCE\_LQF\_ID = 992' --ACP outreach
+--sed.CUR_SOURCE_LQF_ID = 992' --ACP outreach
 
-sed.ELEMENT\_ID = 'EPIC#31000090752'
+sed.ELEMENT_ID = 'EPIC#31000090752'
 
 # Birth Control / Contraception / Sexually Active
 
@@ -5321,45 +5321,45 @@ sed.ELEMENT\_ID = 'EPIC#31000090752'
 
 – the following gets birth control/contraception and sexually active data for patients
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-,xsa.name sexually\_active
+,xsa.name sexually_active
 
-,s.contact\_date
+,s.contact_date
 
-,max(s.contact\_date) over (partition by coh.pat\_id) latest\_contact\_date
+,max(s.contact_date) over (partition by coh.pat_id) latest_contact_date
 
-,s.condom\_yn
+,s.condom_yn
 
-,s.pill\_yn
+,s.pill_yn
 
-,s.diaphragm\_yn
+,s.diaphragm_yn
 
-,s.iud\_yn
+,s.iud_yn
 
-,s.surgical\_yn
+,s.surgical_yn
 
-,s.spermicide\_yn
+,s.spermicide_yn
 
-,s.implant\_yn
+,s.implant_yn
 
-,s.rhythm\_yn
+,s.rhythm_yn
 
-,s.injection\_yn
+,s.injection_yn
 
-,s.sponge\_yn
+,s.sponge_yn
 
-,s.inserts\_yn
+,s.inserts_yn
 
-,s.abstinence\_yn
+,s.abstinence_yn
 
-from xdr\_123456\_cohpat coh
+from xdr_123456_cohpat coh
 
-join social\_hx s on coh.pat\_id = s.pat\_id
+join social_hx s on coh.pat_id = s.pat_id
 
-left join zc\_sexually\_active xsa on s.sexually\_active\_c = xsa.sexually\_active\_c
+left join zc_sexually_active xsa on s.sexually_active_c = xsa.sexually_active_c
 
-\-- where xsa.name = 'Yes'
+-- where xsa.name = 'Yes'
 
 ;
 
@@ -5375,17 +5375,17 @@ IRB can supersede these guidelines since every case is evaluated separately but 
 
 (by [Cenan Pirani](https://uclabip.atlassian.net/wiki/people/5f5922bcff2fe2006fb700d8?ref=confluence) on 10/20/2022)
 
-### Get provider emails using the ‘prov\_id’:
+### Get provider emails using the ‘prov_id’:
 
-select distinct emp.prov\_id
+select distinct emp.prov_id
 
-,lower(substr(vu.ad\_username,4)) || '@mednet.ucla.edu' as prov\_email
+,lower(substr(vu.ad_username,4)) || '@mednet.ucla.edu' as prov_email
 
-from cohort\_enc enc
+from cohort_enc enc
 
-join clarity\_emp emp on enc.visit\_prov\_id = emp.prov\_id
+join clarity_emp emp on enc.visit_prov_id = emp.prov_id
 
-join v\_cube\_d\_user vu on emp.user\_id = vu.user\_id
+join v_cube_d_user vu on emp.user_id = vu.user_id
 
 ;
 
@@ -5398,8 +5398,8 @@ join v\_cube\_d\_user vu on emp.user\_id = vu.user\_id
 Steps:
 
 1.  Download ICD-10 file from [cms.gov](http://cms.gov) and search for icd-10.
-2.  Run python program below to create a new file (ICD-10 CM codes in this file typically do not contain the period). Note that this is required for ICD-10 CM diagnosis codes, and not ICD-10 PCS procedure codes. ICD-10 PCS procedure codes can simply be downloaded from [cms.gov](http://cms.gov) and imported into the icd10\* table as one column (COLUMN1) to be loaded into the I2B2.LZ\_DX\_PX\_LOOKUP table.
-3.  Run sql script below to insert codes that do not exist in I2B2.LZ\_DX\_PX\_LOOKUP table.
+2.  Run python program below to create a new file (ICD-10 CM codes in this file typically do not contain the period). Note that this is required for ICD-10 CM diagnosis codes, and not ICD-10 PCS procedure codes. ICD-10 PCS procedure codes can simply be downloaded from [cms.gov](http://cms.gov) and imported into the icd10* table as one column (COLUMN1) to be loaded into the I2B2.LZ_DX_PX_LOOKUP table.
+3.  Run sql script below to insert codes that do not exist in I2B2.LZ_DX_PX_LOOKUP table.
 
 """
 
@@ -5409,11 +5409,11 @@ Steps:
 
 import os
 
-filepath = ("I:\\\\\_Theona\\\\icd10\_dx\_updates\\\\2023\_Updates\\\\2023 Code Descriptions in Tabular Order\\\\")
+filepath = ("I:\\\\_Theona\\\\icd10_dx_updates\\\\2023_Updates\\\\2023 Code Descriptions in Tabular Order\\\\")
 
-filein = str(filepath + 'icd10cm\_codes\_2023.txt')
+filein = str(filepath + 'icd10cm_codes_2023.txt')
 
-fileout = str(filepath + 'icd10cm\_codes\_2023.txt\_new.csv')
+fileout = str(filepath + 'icd10cm_codes_2023.txt_new.csv')
 
 \# Delete the formatted file first, if one exists
 
@@ -5427,7 +5427,7 @@ writeFile = open(fileout, 'w', encoding='utf8')
 
 i=0
 
-writeFile.write('"icd\_code","icd\_description"\\n')
+writeFile.write('"icd_code","icd_description"\\n')
 
 with open(filein, errors='ignore') as readFile:
 
@@ -5455,7 +5455,7 @@ except:
 
 print('An error occurred at line ' + i)
 
-\# After this program is run, import to i2b2.icd10\_yyyy, where yyyy is the icd-10 import year.
+\# After this program is run, import to i2b2.icd10_yyyy, where yyyy is the icd-10 import year.
 
 readFile.close()
 
@@ -5463,45 +5463,45 @@ writeFile.close()
 
 print('ending...')
 
-\-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
 
-\-- Housekeeping
+-- Housekeeping
 
-\-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
 
-\-- Import from cms.gov (CM or PCS ICD-10 codes)
+-- Import from cms.gov (CM or PCS ICD-10 codes)
 
-drop table icd10\_2023 purge;
+drop table icd10_2023 purge;
 
-select count(\*) from i2b2.icd10\_2023; --73639
+select count(*) from i2b2.icd10_2023; --73639
 
-select \* from i2b2.icd10\_2023;
+select * from i2b2.icd10_2023;
 
-select \* from i2b2.lz\_dx\_px\_lookup;
+select * from i2b2.lz_dx_px_lookup;
 
-\-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
 
-\-- ICD-10 CM diagnosis code refresh
+-- ICD-10 CM diagnosis code refresh
 
-\-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
 
-insert into i2b2.lz\_dx\_px\_lookup (code, code\_type, icd\_type, icd\_desc)
+insert into i2b2.lz_dx_px_lookup (code, code_type, icd_type, icd_desc)
 
-select trim(icd\_code) code
+select trim(icd_code) code
 
-,'DX' code\_type
+,'DX' code_type
 
-,10 icd\_type
+,10 icd_type
 
-,trim(icd\_description) icd\_desc
+,trim(icd_description) icd_desc
 
-from i2b2.icd10\_2023 x
+from i2b2.icd10_2023 x
 
-left join i2b2.lz\_dx\_px\_lookup dl on trim(x.icd\_code) = dl.code
+left join i2b2.lz_dx_px_lookup dl on trim(x.icd_code) = dl.code
 
-and dl.code\_type = 'DX'
+and dl.code_type = 'DX'
 
-and dl.icd\_type = 10
+and dl.icd_type = 10
 
 where dl.code is null
 
@@ -5509,29 +5509,29 @@ where dl.code is null
 
 commit; --1,343 rows inserted.
 
-\-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
 
-\-- ICD-10 PCS procedure code refresh
+-- ICD-10 PCS procedure code refresh
 
-\-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
 
-insert into i2b2.lz\_dx\_px\_lookup (code, code\_type, icd\_type, icd\_desc)
+insert into i2b2.lz_dx_px_lookup (code, code_type, icd_type, icd_desc)
 
 select substr(column1,1,7) code
 
-,'PX' code\_type
+,'PX' code_type
 
-,10 icd\_type
+,10 icd_type
 
-,trim(substr(column1,8)) icd\_desc
+,trim(substr(column1,8)) icd_desc
 
-from i2b2.icd10\_2023 x
+from i2b2.icd10_2023 x
 
-left join i2b2.lz\_dx\_px\_lookup dl on substr(x.column1,1,7) = dl.code
+left join i2b2.lz_dx_px_lookup dl on substr(x.column1,1,7) = dl.code
 
-and dl.code\_type = 'PX'
+and dl.code_type = 'PX'
 
-and dl.icd\_type = 10
+and dl.icd_type = 10
 
 where dl.code is null
 
@@ -5539,17 +5539,17 @@ where dl.code is null
 
 commit; --7,772 rows inserted.
 
-\-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
 
-\-- Verification and cleanup
+-- Verification and cleanup
 
-\-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
 
-drop table icd10\_2023 purge;
+drop table icd10_2023 purge;
 
-select code\_type, count(\*) from i2b2.lz\_dx\_px\_lookup where icd\_type = 10 group by code\_type order by code\_type;
+select code_type, count(*) from i2b2.lz_dx_px_lookup where icd_type = 10 group by code_type order by code_type;
 
-select \* from i2b2.lz\_dx\_px\_lookup where icd\_desc is null; --no rows found=good
+select * from i2b2.lz_dx_px_lookup where icd_desc is null; --no rows found=good
 
 # Escape special characters in large texts
 
@@ -5557,11 +5557,11 @@ select \* from i2b2.lz\_dx\_px\_lookup where icd\_desc is null; --no rows found=
 
 Steps:
 
-1.  Create text tables (e.g. notes, pathology results, imaging narratives/impressions) named xdr\_123456\_entity\_cd, where 123456 is the project\_id and entity\_cd is the element (e.g. NOTE, PATHR, IMGN/IMGI, respectively).
-2.  Run python program below to create a new text files. Change project id and entity codes accordingly. This program is also located in I:\_BIP\\xDR\\Python\\escape\_text\_from\_oracle\_to\_redcapcsv.py
+1.  Create text tables (e.g. notes, pathology results, imaging narratives/impressions) named xdr_123456_entity_cd, where 123456 is the project_id and entity_cd is the element (e.g. NOTE, PATHR, IMGN/IMGI, respectively).
+2.  Run python program below to create a new text files. Change project id and entity codes accordingly. This program is also located in I:_BIP\\xDR\\Python\\escape_text_from_oracle_to_redcapcsv.py
 3.  Provide new files to DOMSTATS or load directly to REDCap, whichever is appropriate for your project.
 
-\# -\*- coding: utf-8 -\*-
+\# -*- coding: utf-8 -*-
 
 """
 
@@ -5575,7 +5575,7 @@ Created on Wed Apr 7 05:58:27 2021
 
 import os
 
-import cx\_Oracle as Ora
+import cx_Oracle as Ora
 
 \# import csv
 
@@ -5583,27 +5583,27 @@ filepath = ("E:\\\\Projects\\\\123456\\\\Data\\\\")
 
 print('starting...')
 
-batch\_size = 100000
+batch_size = 100000
 
 \# Format date
 
-CLdb = Ora.connect('ctsi\_research/S5archR3\_CTsi@clarityq')
+CLdb = Ora.connect('ctsi_research/S5archR3_CTsi@clarityq')
 
 cur = CLdb.cursor()
 
-sql = 'alter session set nls\_date\_format = \\'MM/DD/YYYY HH24:MI\\'';
+sql = 'alter session set nls_date_format = \\'MM/DD/YYYY HH24:MI\\'';
 
 cur.execute(sql)
 
 \# -----------------------------------------------------------------------------
 
-\# Provider\_Notes
+\# Provider_Notes
 
 \# -----------------------------------------------------------------------------
 
-print('starting Provider\_Notes...')
+print('starting Provider_Notes...')
 
-fileout = str(filepath + 'Provider\_Notes\_REDCap\_Final.txt')
+fileout = str(filepath + 'Provider_Notes_REDCap_Final.txt')
 
 \# Delete output file if it exists
 
@@ -5615,39 +5615,39 @@ writeFile = open(fileout, 'w', encoding='utf8', errors="ignore")
 
 \# Write header
 
-v\_col = 'ip\_patient\_id,ip\_enc\_id,ip\_note\_id,note\_type,create\_datetime,create\_by,line\_number,note\_text,contact\_date'
+v_col = 'ip_patient_id,ip_enc_id,ip_note_id,note_type,create_datetime,create_by,line_number,note_text,contact_date'
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 \# Get and Write rows
 
-sql = 'select \\'"\\' || study\_id ' \\
+sql = 'select \\'"\\' || study_id ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || study\_csn ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || study_csn ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || study\_note\_id ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || study_note_id ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || note\_type ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || note_type ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || create\_datetime ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || create_datetime ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || create\_by ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || create_by ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || line\_number ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || line_number ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || note\_text ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || note_text ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || contact\_date ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || contact_date ' \\
 
 '|| \\'"\\' export ' \\
 
-'from (select distinct study\_id, study\_csn, study\_note\_id, note\_type, create\_datetime' \\
+'from (select distinct study_id, study_csn, study_note_id, note_type, create_datetime' \\
 
-', create\_by, line\_number, note\_text, contact\_date ' \\
+', create_by, line_number, note_text, contact_date ' \\
 
-'from xdr\_123456\_note ' \\
+'from xdr_123456_note ' \\
 
-'order by study\_id, study\_note\_id, line\_number)';
+'order by study_id, study_note_id, line_number)';
 
 \# print(sql)
 
@@ -5661,7 +5661,7 @@ cur.execute(sql)
 
 while True:
 
-rows = cur.fetchmany(batch\_size)
+rows = cur.fetchmany(batch_size)
 
 if not rows:
 
@@ -5669,25 +5669,25 @@ break
 
 for row in rows:
 
-v\_col = row\[0\]
+v_col = row\[0\]
 
-v\_col = v\_col.replace('"', '', 1) # reset first "
+v_col = v_col.replace('"', '', 1) # reset first "
 
-v\_col = v\_col\[:-1\] # remove last "
+v_col = v_col\[:-1\] # remove last "
 
-v\_col = v\_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
+v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
 
-v\_col = v\_col.replace('\\\\', '\\\\\\\\') # escape backslashes
+v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
 
-v\_col = v\_col.replace('\\"', '""') # escape double-quotes
+v_col = v_col.replace('\\"', '""') # escape double-quotes
 
-v\_col = v\_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
+v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
 
-v\_col = '"' + v\_col # reinstate first "
+v_col = '"' + v_col # reinstate first "
 
-v\_col = v\_col + '"' # reinstate last "
+v_col = v_col + '"' # reinstate last "
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 i += 1
 
@@ -5697,17 +5697,17 @@ print(error)
 
 writeFile.close()
 
-print('ending Provider\_Notes...')
+print('ending Provider_Notes...')
 
 \# -----------------------------------------------------------------------------
 
-\# Pathology\_Results
+\# Pathology_Results
 
 \# -----------------------------------------------------------------------------
 
-print('starting Pathology\_Results...')
+print('starting Pathology_Results...')
 
-fileout = str(filepath + 'Pathology\_Results\_REDCap\_Final3.txt')
+fileout = str(filepath + 'Pathology_Results_REDCap_Final3.txt')
 
 \# Delete output file if it exists
 
@@ -5719,33 +5719,33 @@ writeFile = open(fileout, 'w', errors="ignore")
 
 \# Write header
 
-v\_col = 'ip\_patient\_id,ip\_order\_proc\_id,component\_id,component\_name,sort\_key,result\_txt'
+v_col = 'ip_patient_id,ip_order_proc_id,component_id,component_name,sort_key,result_txt'
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 \# Get and Write rows
 
-sql = 'select \\'"\\' || study\_id ' \\
+sql = 'select \\'"\\' || study_id ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || study\_order\_proc\_id ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || study_order_proc_id ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || component\_id ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || component_id ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || component\_name ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || component_name ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || sort\_key ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || sort_key ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || result\_txt ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || result_txt ' \\
 
 '|| \\'"\\' export ' \\
 
-'from (select distinct study\_id, study\_order\_proc\_id, component\_id, component\_name' \\
+'from (select distinct study_id, study_order_proc_id, component_id, component_name' \\
 
-', sort\_key, result\_txt ' \\
+', sort_key, result_txt ' \\
 
-'from xdr\_123456\_pathr ' \\
+'from xdr_123456_pathr ' \\
 
-'order by study\_id, study\_order\_proc\_id, component\_id, sort\_key)';
+'order by study_id, study_order_proc_id, component_id, sort_key)';
 
 \# print(sql)
 
@@ -5759,7 +5759,7 @@ cur.execute(sql)
 
 while True:
 
-rows = cur.fetchmany(batch\_size)
+rows = cur.fetchmany(batch_size)
 
 if not rows:
 
@@ -5767,25 +5767,25 @@ break
 
 for row in rows:
 
-v\_col = row\[0\]
+v_col = row\[0\]
 
-v\_col = v\_col.replace('"', '', 1) # reset first "
+v_col = v_col.replace('"', '', 1) # reset first "
 
-v\_col = v\_col\[:-1\] # remove last "
+v_col = v_col\[:-1\] # remove last "
 
-v\_col = v\_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
+v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
 
-v\_col = v\_col.replace('\\\\', '\\\\\\\\') # escape backslashes
+v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
 
-v\_col = v\_col.replace('\\"', '""') # escape double-quotes
+v_col = v_col.replace('\\"', '""') # escape double-quotes
 
-v\_col = v\_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
+v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
 
-v\_col = '"' + v\_col # reinstate first "
+v_col = '"' + v_col # reinstate first "
 
-v\_col = v\_col + '"' # reinstate last "
+v_col = v_col + '"' # reinstate last "
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 i += 1
 
@@ -5795,17 +5795,17 @@ print(error)
 
 writeFile.close()
 
-print('ending Pathology\_Results...')
+print('ending Pathology_Results...')
 
 \# -----------------------------------------------------------------------------
 
-\# Imaging\_Impressions
+\# Imaging_Impressions
 
 \# -----------------------------------------------------------------------------
 
-print('starting Imaging\_Impressions...')
+print('starting Imaging_Impressions...')
 
-fileout = str(filepath + 'Imaging\_Impressions\_REDCap\_Final.txt')
+fileout = str(filepath + 'Imaging_Impressions_REDCap_Final.txt')
 
 \# Delete output file if it exists
 
@@ -5817,15 +5817,15 @@ writeFile = open(fileout, 'w', errors="ignore")
 
 \# Write header
 
-v\_col = 'ip\_patient\_id,ip\_order\_proc\_id,line,impression'
+v_col = 'ip_patient_id,ip_order_proc_id,line,impression'
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 \# Get and Write rows
 
-sql = 'select \\'"\\' || study\_id ' \\
+sql = 'select \\'"\\' || study_id ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || study\_order\_proc\_id ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || study_order_proc_id ' \\
 
 '|| \\'"\\' || \\'|\\' || \\'"\\' || line ' \\
 
@@ -5833,11 +5833,11 @@ sql = 'select \\'"\\' || study\_id ' \\
 
 '|| \\'"\\' export ' \\
 
-'from (select distinct study\_id, study\_order\_proc\_id, line, impression ' \\
+'from (select distinct study_id, study_order_proc_id, line, impression ' \\
 
-'from xdr\_123456\_imgi ' \\
+'from xdr_123456_imgi ' \\
 
-'order by study\_id, study\_order\_proc\_id, line)';
+'order by study_id, study_order_proc_id, line)';
 
 \# print(sql)
 
@@ -5851,7 +5851,7 @@ cur.execute(sql)
 
 while True:
 
-rows = cur.fetchmany(batch\_size)
+rows = cur.fetchmany(batch_size)
 
 if not rows:
 
@@ -5859,25 +5859,25 @@ break
 
 for row in rows:
 
-v\_col = row\[0\]
+v_col = row\[0\]
 
-v\_col = v\_col.replace('"', '', 1) # reset first "
+v_col = v_col.replace('"', '', 1) # reset first "
 
-v\_col = v\_col\[:-1\] # remove last "
+v_col = v_col\[:-1\] # remove last "
 
-v\_col = v\_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
+v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
 
-v\_col = v\_col.replace('\\\\', '\\\\\\\\') # escape backslashes
+v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
 
-v\_col = v\_col.replace('\\"', '""') # escape double-quotes
+v_col = v_col.replace('\\"', '""') # escape double-quotes
 
-v\_col = v\_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
+v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
 
-v\_col = '"' + v\_col # reinstate first "
+v_col = '"' + v_col # reinstate first "
 
-v\_col = v\_col + '"' # reinstate last "
+v_col = v_col + '"' # reinstate last "
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 i += 1
 
@@ -5887,17 +5887,17 @@ print(error)
 
 writeFile.close()
 
-print('ending Imaging\_Impressions...')
+print('ending Imaging_Impressions...')
 
 \# -----------------------------------------------------------------------------
 
-\# Imaging\_Narratives
+\# Imaging_Narratives
 
 \# -----------------------------------------------------------------------------
 
 print('starting Imaging Narratives...')
 
-fileout = str(filepath + 'Imaging\_Narratives\_REDCap\_Final.txt')
+fileout = str(filepath + 'Imaging_Narratives_REDCap_Final.txt')
 
 \# Delete output file if it exists
 
@@ -5909,15 +5909,15 @@ writeFile = open(fileout, 'w', errors="ignore")
 
 \# Write header
 
-v\_col = 'ip\_patient\_id,ip\_order\_proc\_id,line,narrative'
+v_col = 'ip_patient_id,ip_order_proc_id,line,narrative'
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 \# Get and Write rows
 
-sql = 'select \\'"\\' || study\_id ' \\
+sql = 'select \\'"\\' || study_id ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || study\_order\_proc\_id ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || study_order_proc_id ' \\
 
 '|| \\'"\\' || \\'|\\' || \\'"\\' || line ' \\
 
@@ -5925,11 +5925,11 @@ sql = 'select \\'"\\' || study\_id ' \\
 
 '|| \\'"\\' export ' \\
 
-'from (select distinct study\_id, study\_order\_proc\_id, line, narrative ' \\
+'from (select distinct study_id, study_order_proc_id, line, narrative ' \\
 
-'from xdr\_123456\_imgn ' \\
+'from xdr_123456_imgn ' \\
 
-'order by study\_id, study\_order\_proc\_id, line)';
+'order by study_id, study_order_proc_id, line)';
 
 \# print(sql)
 
@@ -5943,7 +5943,7 @@ cur.execute(sql)
 
 while True:
 
-rows = cur.fetchmany(batch\_size)
+rows = cur.fetchmany(batch_size)
 
 if not rows:
 
@@ -5951,25 +5951,25 @@ break
 
 for row in rows:
 
-v\_col = row\[0\]
+v_col = row\[0\]
 
-v\_col = v\_col.replace('"', '', 1) # reset first "
+v_col = v_col.replace('"', '', 1) # reset first "
 
-v\_col = v\_col\[:-1\] # remove last "
+v_col = v_col\[:-1\] # remove last "
 
-v\_col = v\_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
+v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
 
-v\_col = v\_col.replace('\\\\', '\\\\\\\\') # escape backslashes
+v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
 
-v\_col = v\_col.replace('\\"', '""') # escape double-quotes
+v_col = v_col.replace('\\"', '""') # escape double-quotes
 
-v\_col = v\_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
+v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
 
-v\_col = '"' + v\_col # reinstate first "
+v_col = '"' + v_col # reinstate first "
 
-v\_col = v\_col + '"' # reinstate last "
+v_col = v_col + '"' # reinstate last "
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 i += 1
 
@@ -5979,7 +5979,7 @@ print(error)
 
 writeFile.close()
 
-print('ending Imaging\_Narratives...')
+print('ending Imaging_Narratives...')
 
 print('ending...')
 
@@ -5989,36 +5989,36 @@ print('ending...')
 
 Steps:
 
-1.  Create table named xdr\_123456\_entity\_cd, where 123456 is the project\_id and entity\_cd is the element (e.g. NOTE, PATHR, IMGN/IMGI, respectively). Need to create RN column for rownum (example below).
-2.  Run python program below to create a multiple files. Change project id and entity codes accordingly. This program is also located in I:\_BIP\\xDR\\Python\\split\_oracle\_tables\_to\_mult\_files\_4redcap.py. Note that this program also takes care of escaping special characters in large text files.
+1.  Create table named xdr_123456_entity_cd, where 123456 is the project_id and entity_cd is the element (e.g. NOTE, PATHR, IMGN/IMGI, respectively). Need to create RN column for rownum (example below).
+2.  Run python program below to create a multiple files. Change project id and entity codes accordingly. This program is also located in I:_BIP\\xDR\\Python\\split_oracle_tables_to_mult_files_4redcap.py. Note that this program also takes care of escaping special characters in large text files.
 
-drop table xdr\_123456\_imgn\_rc purge;
+drop table xdr_123456_imgn_rc purge;
 
-create table xdr\_123456\_imgn\_rc as
+create table xdr_123456_imgn_rc as
 
 select rownum rn
 
-,x.\*
+,x.*
 
-from (select distinct coh.study\_id\_rc "study\_id"
+from (select distinct coh.study_id_rc "study_id"
 
-,'imaging\_narratives' "redcap\_repeat\_instrument"
+,'imaging_narratives' "redcap_repeat_instrument"
 
-,row\_number() over (partition by x.study\_id order by x.study\_id, x.study\_order\_proc\_id, x.line) as "redcap\_repeat\_instance"
+,row_number() over (partition by x.study_id order by x.study_id, x.study_order_proc_id, x.line) as "redcap_repeat_instance"
 
-,x.study\_order\_proc\_id "ip\_order\_proc\_id\_narrative"
+,x.study_order_proc_id "ip_order_proc_id_narrative"
 
-,x.line "narrative\_line"
+,x.line "narrative_line"
 
 ,x.narrative "narrative"
 
-,0 "imaging\_narratives\_complete"
+,0 "imaging_narratives_complete"
 
-from xdr\_123456\_DEMO\_rc coh
+from xdr_123456_DEMO_rc coh
 
-join xdr\_123456\_IMGN x on coh.study\_id = x.study\_id
+join xdr_123456_IMGN x on coh.study_id = x.study_id
 
-order by coh.study\_id\_rc, x.study\_order\_proc\_id, "redcap\_repeat\_instance"
+order by coh.study_id_rc, x.study_order_proc_id, "redcap_repeat_instance"
 
 ) x
 
@@ -6026,7 +6026,7 @@ order by coh.study\_id\_rc, x.study\_order\_proc\_id, "redcap\_repeat\_instance"
 
 import os
 
-import cx\_Oracle as Ora
+import cx_Oracle as Ora
 
 print('starting...')
 
@@ -6034,51 +6034,51 @@ print('starting...')
 
 \# Start customizations!!!
 
-\# Pre-requisite: Create xdr\_123456\_entity\_cd\_rc,
+\# Pre-requisite: Create xdr_123456_entity_cd_rc,
 
-\# where 123456=project\_id
+\# where 123456=project_id
 
-\# and entity\_cd = entity\_cd (e.g. IMGN=imaging narratives)
+\# and entity_cd = entity_cd (e.g. IMGN=imaging narratives)
 
 #------------------------------------------------------------------------------
 
-filepath = ("I:\\\\\_BIP\\\\Consults\\\\")
+filepath = ("I:\\\\_BIP\\\\Consults\\\\")
 
-batch\_size = 100000
+batch_size = 100000
 
-v\_limit = 14000
+v_limit = 14000
 
-v\_projid = '123456'
+v_projid = '123456'
 
-v\_entcd = 'IMGN'
+v_entcd = 'IMGN'
 
-v\_file = 'Imaging\_Narratives\_'
+v_file = 'Imaging_Narratives_'
 
-v\_hdr = 'study\_id,redcap\_repeat\_instrument,redcap\_repeat\_instance,ip\_order\_proc\_id\_narrative,narrative\_line,narrative,imaging\_narratives\_complete'
+v_hdr = 'study_id,redcap_repeat_instrument,redcap_repeat_instance,ip_order_proc_id_narrative,narrative_line,narrative,imaging_narratives_complete'
 
-sql = 'select rn, \\'"\\' || "study\_id" ' \\
+sql = 'select rn, \\'"\\' || "study_id" ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || "redcap\_repeat\_instrument" ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || "redcap_repeat_instrument" ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || "redcap\_repeat\_instance" ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || "redcap_repeat_instance" ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || "ip\_order\_proc\_id\_narrative" ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || "ip_order_proc_id_narrative" ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || "narrative\_line" ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || "narrative_line" ' \\
 
 '|| \\'"\\' || \\'|\\' || \\'"\\' || "narrative" ' \\
 
-'|| \\'"\\' || \\'|\\' || \\'"\\' || "imaging\_narratives\_complete" ' \\
+'|| \\'"\\' || \\'|\\' || \\'"\\' || "imaging_narratives_complete" ' \\
 
 '|| \\'"\\' export ' \\
 
-'from (select distinct rn,"study\_id","redcap\_repeat\_instrument","redcap\_repeat\_instance"' \\
+'from (select distinct rn,"study_id","redcap_repeat_instrument","redcap_repeat_instance"' \\
 
-',"ip\_order\_proc\_id\_narrative","narrative\_line","narrative","imaging\_narratives\_complete"' \\
+',"ip_order_proc_id_narrative","narrative_line","narrative","imaging_narratives_complete"' \\
 
-'from xdr\_' + v\_projid + '\_' + v\_entcd + '\_rc ' \\
+'from xdr_' + v_projid + '_' + v_entcd + '_rc ' \\
 
-'order by "study\_id", "redcap\_repeat\_instance")';
+'order by "study_id", "redcap_repeat_instance")';
 
 #print(sql)
 
@@ -6090,33 +6090,33 @@ sql = 'select rn, \\'"\\' || "study\_id" ' \\
 
 \# Format date
 
-CLdb = Ora.connect('ctsi\_research/S5archR3\_CTsi@clarityq')
+CLdb = Ora.connect('ctsi_research/S5archR3_CTsi@clarityq')
 
 cur = CLdb.cursor()
 
-presql = 'alter session set nls\_date\_format = \\'MM/DD/YYYY HH24:MI\\'';
+presql = 'alter session set nls_date_format = \\'MM/DD/YYYY HH24:MI\\'';
 
 cur.execute(presql)
 
-presql = 'select max(rn) into :a from xdr\_' + v\_projid + '\_' + v\_entcd + '\_rc';
+presql = 'select max(rn) into :a from xdr_' + v_projid + '_' + v_entcd + '_rc';
 
 cur.execute(presql)
 
-v\_rows = cur.fetchone()
+v_rows = cur.fetchone()
 
-v\_max\_rows = v\_rows\[0\]
+v_max_rows = v_rows\[0\]
 
-print(str('v\_max\_rows=' + str(v\_max\_rows)))
+print(str('v_max_rows=' + str(v_max_rows)))
 
-v\_ctr\_min = 1
+v_ctr_min = 1
 
-v\_ctr\_max = v\_limit
+v_ctr_max = v_limit
 
-v\_ctr\_file = 1
+v_ctr_file = 1
 
-print(str('v\_ctr\_min=' + str(v\_ctr\_min) + ', v\_ctr\_max=' + str(v\_ctr\_max)))
+print(str('v_ctr_min=' + str(v_ctr_min) + ', v_ctr_max=' + str(v_ctr_max)))
 
-fileout = str(filepath + v\_file + str(v\_ctr\_file) + '.csv')
+fileout = str(filepath + v_file + str(v_ctr_file) + '.csv')
 
 if os.path.exists(fileout):
 
@@ -6124,7 +6124,7 @@ os.remove(fileout)
 
 writeFile = open(fileout, 'w', encoding='utf8', errors="ignore")
 
-writeFile.write(v\_hdr + '\\n')
+writeFile.write(v_hdr + '\\n')
 
 try:
 
@@ -6134,7 +6134,7 @@ cur.execute(sql)
 
 while True:
 
-rows = cur.fetchmany(batch\_size)
+rows = cur.fetchmany(batch_size)
 
 if not rows:
 
@@ -6142,35 +6142,35 @@ break
 
 for row in rows:
 
-v\_col = row\[1\]
+v_col = row\[1\]
 
-v\_col = v\_col.replace('"', '', 1) # reset first "
+v_col = v_col.replace('"', '', 1) # reset first "
 
-v\_col = v\_col\[:-1\] # remove last "
+v_col = v_col\[:-1\] # remove last "
 
-v\_col = v\_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
+v_col = v_col.replace('"|"', '|||xxxyyz') # remove double-quotes and change delimiter
 
-v\_col = v\_col.replace('\\\\', '\\\\\\\\') # escape backslashes
+v_col = v_col.replace('\\\\', '\\\\\\\\') # escape backslashes
 
-v\_col = v\_col.replace('\\"', '""') # escape double-quotes
+v_col = v_col.replace('\\"', '""') # escape double-quotes
 
-v\_col = v\_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
+v_col = v_col.replace('|||xxxyyz', '","') # reset all delimiters back to commas
 
-v\_col = '"' + v\_col # reinstate first "
+v_col = '"' + v_col # reinstate first "
 
-v\_col = v\_col + '"' # reinstate last "
+v_col = v_col + '"' # reinstate last "
 
-if (v\_ctr\_min <= row\[0\] <= v\_ctr\_max):
+if (v_ctr_min <= row\[0\] <= v_ctr_max):
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
 else:
 
 writeFile.close()
 
-v\_ctr\_file = v\_ctr\_file + 1
+v_ctr_file = v_ctr_file + 1
 
-fileout = str(filepath + v\_file + str(v\_ctr\_file) + '.csv')
+fileout = str(filepath + v_file + str(v_ctr_file) + '.csv')
 
 if os.path.exists(fileout):
 
@@ -6178,15 +6178,15 @@ os.remove(fileout)
 
 writeFile = open(fileout, 'w', encoding='utf8', errors="ignore")
 
-writeFile.write(v\_hdr + '\\n')
+writeFile.write(v_hdr + '\\n')
 
-writeFile.write(v\_col + '\\n')
+writeFile.write(v_col + '\\n')
 
-v\_ctr\_min = v\_ctr\_max + 1
+v_ctr_min = v_ctr_max + 1
 
-v\_ctr\_max = v\_ctr\_max + v\_limit
+v_ctr_max = v_ctr_max + v_limit
 
-print(str('v\_ctr\_min=' + str(v\_ctr\_min) + ', v\_ctr\_max=' + str(v\_ctr\_max)))
+print(str('v_ctr_min=' + str(v_ctr_min) + ', v_ctr_max=' + str(v_ctr_max)))
 
 except CLdb.Error as error:
 
@@ -6200,29 +6200,29 @@ print('ending...')
 
 (by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 2/6/2023)
 
-– the following gets a patient set from an I2B2 query. Change :i2b2\_query\_name to your i2b2 query.
+– the following gets a patient set from an I2B2 query. Change :i2b2_query_name to your i2b2 query.
 
-SELECT DISTINCT pat.PATIENT\_NUM
+SELECT DISTINCT pat.PATIENT_NUM
 
-                    FROM QT\_QUERY\_MASTER qm
+                    FROM QT_QUERY_MASTER qm
 
-                    JOIN QT\_QUERY\_INSTANCE qi
+                    JOIN QT_QUERY_INSTANCE qi
 
-                        ON qm.QUERY\_MASTER\_ID = qi.QUERY\_MASTER\_ID
+                        ON qm.QUERY_MASTER_ID = qi.QUERY_MASTER_ID
 
-                    JOIN QT\_QUERY\_RESULT\_INSTANCE       qr
+                    JOIN QT_QUERY_RESULT_INSTANCE       qr
 
-                        ON qi.QUERY\_INSTANCE\_ID = qr.QUERY\_INSTANCE\_ID
+                        ON qi.QUERY_INSTANCE_ID = qr.QUERY_INSTANCE_ID
 
-                    left JOIN QT\_PATIENT\_SET\_COLLECTION pat
+                    left JOIN QT_PATIENT_SET_COLLECTION pat
 
-                        ON qr.RESULT\_INSTANCE\_ID = pat.RESULT\_INSTANCE\_ID
+                        ON qr.RESULT_INSTANCE_ID = pat.RESULT_INSTANCE_ID
 
                     WHERE
 
-                        qr.RESULT\_TYPE\_ID = 1
+                        qr.RESULT_TYPE_ID = 1
 
-                        AND qm.name = :i2b2\_query\_name
+                        AND qm.name = :i2b2_query_name
 
 ;
 
@@ -6232,23 +6232,23 @@ SELECT DISTINCT pat.PATIENT\_NUM
 
 – the following gets a patient set from an Care Connect based on a user’s Patient List.
 
-select pl.list\_id
+select pl.list_id
 
-,pli.list\_description
+,pli.list_description
 
-,count(distinct pl.pat\_id)
+,count(distinct pl.pat_id)
 
-from pat\_list pl
+from pat_list pl
 
-join pat\_list\_info pli on pl.list\_id = pli.list\_id
+join pat_list_info pli on pl.list_id = pli.list_id
 
-where pli.list\_creator\_id = 'uid' --replace uid with investigator user\_id, then ask which is the requested patient list
+where pli.list_creator_id = 'uid' --replace uid with investigator user_id, then ask which is the requested patient list
 
-group by pl.list\_id
+group by pl.list_id
 
-,pli.list\_description
+,pli.list_description
 
-order by pli.list\_description
+order by pli.list_description
 
 ;
 
@@ -6258,73 +6258,73 @@ order by pli.list\_description
 
 – the following gets information regarding PROMIS questionnaires
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get questionnaires (example-change accordingly per your requirements)
+-- Get questionnaires (example-change accordingly per your requirements)
 
-\-- • CareConnect Questionnaire Name and ID - EDMONTON SYMPTOM ASSESSMENT SYSTEM \[14010000014\]
+-- • CareConnect Questionnaire Name and ID - EDMONTON SYMPTOM ASSESSMENT SYSTEM \[14010000014\]
 
-\-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Physical Function \[1400001701\]
+-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Physical Function \[1400001701\]
 
-\-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Anxiety \[1400001703\]
+-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Anxiety \[1400001703\]
 
-\-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Fatigue \[1400001705\]
+-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Fatigue \[1400001705\]
 
-\-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Sleep Disturbance \[1400001706\]
+-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Sleep Disturbance \[1400001706\]
 
-\-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Pain Interference \[1400001708\]
+-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Pain Interference \[1400001708\]
 
-\-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Pain Intensity \[1400001709\]
+-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Pain Intensity \[1400001709\]
 
-\-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Global Health \[1400001710\]
+-- • CareConnect Questionnaire Name and ID - PROMIS Adult Short Form v 1.0 Global Health \[1400001710\]
 
-\-- • CareConnect Questionnaire MYC UCLA Head and Neck OTV Survey \[140000051\]
+-- • CareConnect Questionnaire MYC UCLA Head and Neck OTV Survey \[140000051\]
 
-\-- • CareConnect Questionnaire MYC UCLA Head and Neck PRO-CTCAE \[140000007\]
+-- • CareConnect Questionnaire MYC UCLA Head and Neck PRO-CTCAE \[140000007\]
 
-\-- • CareConnect Questionnaire MYC UCLA Head and Neck Survey-CON/FU \[140000010\]
+-- • CareConnect Questionnaire MYC UCLA Head and Neck Survey-CON/FU \[140000010\]
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-select distinct pefa.pat\_id
+select distinct pefa.pat_id
 
-,pefa.pat\_enc\_csn\_id
+,pefa.pat_enc_csn_id
 
-,pefa.qf\_lqf\_id as form\_id
+,pefa.qf_lqf_id as form_id
 
-,pefa.qf\_hqa\_id as answer\_id
+,pefa.qf_hqa_id as answer_id
 
-,qf.form\_name
+,qf.form_name
 
-,qf.pat\_frndly\_name
+,qf.pat_frndly_name
 
-,cqa.quest\_id
+,cqa.quest_id
 
 ,clqo.question
 
-,cqa.line as ans\_line
+,cqa.line as ans_line
 
-,quest\_answer
+,quest_answer
 
-,question\_instant as answer\_time
+,question_instant as answer_time
 
-from pat\_enc\_form\_ans pefa
+from pat_enc_form_ans pefa
 
-join cl\_qform qf on pefa.qf\_lqf\_id = qf.form\_id
+join cl_qform qf on pefa.qf_lqf_id = qf.form_id
 
-join cl\_qanswer\_qa cqa on pefa.qf\_hqa\_id = cqa.answer\_id
+join cl_qanswer_qa cqa on pefa.qf_hqa_id = cqa.answer_id
 
-join cl\_qquest cqq on cqa.quest\_id = cqq.quest\_id -- question name
+join cl_qquest cqq on cqa.quest_id = cqq.quest_id -- question name
 
-join cl\_qquest\_ovtm clqo on cqa.quest\_id = clqo.quest\_id -- question
+join cl_qquest_ovtm clqo on cqa.quest_id = clqo.quest_id -- question
 
-where regexp\_like(qf.form\_name,'+(PROMIS)+','i')
+where regexp_like(qf.form_name,'+(PROMIS)+','i')
 
-or regexp\_like(qf.pat\_frndly\_name,'+(PROMIS)+','i')
+or regexp_like(qf.pat_frndly_name,'+(PROMIS)+','i')
 
-or regexp\_like(clqo.question,'+(PROMIS)+','i')
+or regexp_like(clqo.question,'+(PROMIS)+','i')
 
-or pefa.qf\_lqf\_id in (14010000014
+or pefa.qf_lqf_id in (14010000014
 
 ,1400001701
 
@@ -6348,125 +6348,125 @@ or pefa.qf\_lqf\_id in (14010000014
 
 )
 
-order by pefa.pat\_id, pefa.pat\_enc\_csn\_id, pefa.qf\_lqf\_id, cqa.line
+order by pefa.pat_id, pefa.pat_enc_csn_id, pefa.qf_lqf_id, cqa.line
 
 ;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Get smartforms
+-- Get smartforms
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-select distinct vo.pat\_id
+select distinct vo.pat_id
 
-,vo.qnr\_id as form\_id
+,vo.qnr_id as form_id
 
-,qf.form\_name
+,qf.form_name
 
-,qf.pat\_frndly\_name
+,qf.pat_frndly_name
 
-,cqa.quest\_id
+,cqa.quest_id
 
 ,clqo.question
 
-,vo.qnr\_ans\_id as answer\_id
+,vo.qnr_ans_id as answer_id
 
-,cqa.line as ans\_line
+,cqa.line as ans_line
 
-,cqa.quest\_answer
+,cqa.quest_answer
 
-,cqa.question\_instant as answer\_time
+,cqa.question_instant as answer_time
 
-,vo.srs\_id series\_id
+,vo.srs_id series_id
 
-,si.series\_name
+,si.series_name
 
-from v\_pat\_reported\_outcomes vo
+from v_pat_reported_outcomes vo
 
-join cl\_qanswer\_qa cqa on vo.ques\_id = cqa.quest\_id
+join cl_qanswer_qa cqa on vo.ques_id = cqa.quest_id
 
-and vo.qnr\_ans\_id = cqa.answer\_id
+and vo.qnr_ans_id = cqa.answer_id
 
-and vo.ques\_ans\_line = cqa.line
+and vo.ques_ans_line = cqa.line
 
-join cl\_qform qf on vo.qnr\_id = qf.form\_id
+join cl_qform qf on vo.qnr_id = qf.form_id
 
-join cl\_qquest cqq on vo.ques\_id = cqq.quest\_id -- question name
+join cl_qquest cqq on vo.ques_id = cqq.quest_id -- question name
 
-join cl\_qquest\_ovtm clqo on vo.ques\_id = clqo.quest\_id -- question
+join cl_qquest_ovtm clqo on vo.ques_id = clqo.quest_id -- question
 
-join srs\_info si on vo.srs\_id = si.series\_id
+join srs_info si on vo.srs_id = si.series_id
 
-where regexp\_like(si.series\_name,'+(PROMIS)+','i')
+where regexp_like(si.series_name,'+(PROMIS)+','i')
 
-or regexp\_like(qf.form\_name,'+(PROMIS)+','i')
+or regexp_like(qf.form_name,'+(PROMIS)+','i')
 
-or regexp\_like(qf.pat\_frndly\_name,'+(PROMIS)+','i')
+or regexp_like(qf.pat_frndly_name,'+(PROMIS)+','i')
 
-or regexp\_like(clqo.question,'+(PROMIS)+','i')
+or regexp_like(clqo.question,'+(PROMIS)+','i')
 
 ;
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Other potential findings
+-- Other potential findings
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-select distinct pefa.pat\_enc\_csn\_id
+select distinct pefa.pat_enc_csn_id
 
-,pefa.pat\_id
+,pefa.pat_id
 
-,pefa.contact\_date
+,pefa.contact_date
 
-,pefa.qf\_lqf\_id
+,pefa.qf_lqf_id
 
-,pefa.qf\_hqa\_id
+,pefa.qf_hqa_id
 
-,pefa.qf\_status\_c
+,pefa.qf_status_c
 
-,qf.form\_name
+,qf.form_name
 
-,cqa.answer\_id
+,cqa.answer_id
 
 ,cqa.line
 
-,cqa.quest\_id
+,cqa.quest_id
 
-,cqa.quest\_dat
+,cqa.quest_dat
 
-,cqa.quest\_answer
+,cqa.quest_answer
 
-,cqa.question\_instant
+,cqa.question_instant
 
-,cqa.float\_answer
+,cqa.float_answer
 
-,cqa.numeric\_answer
+,cqa.numeric_answer
 
-,cqa.varchar\_answer
+,cqa.varchar_answer
 
-,cqq.quest\_name
+,cqq.quest_name
 
 ,clqo.question
 
-,pefa.qf\_cosign\_emp\_id
+,pefa.qf_cosign_emp_id
 
-,case when coh.pat\_id is null then 1 else 0 end pat\_in\_lz\_tbl\_yn
+,case when coh.pat_id is null then 1 else 0 end pat_in_lz_tbl_yn
 
-from pat\_enc\_form\_ans pefa
+from pat_enc_form_ans pefa
 
-left join i2b2.lz\_clarity\_patient coh on pefa.pat\_id = coh.pat\_id
+left join i2b2.lz_clarity_patient coh on pefa.pat_id = coh.pat_id
 
-left join cl\_qform qf on pefa.qf\_lqf\_id = qf.form\_id
+left join cl_qform qf on pefa.qf_lqf_id = qf.form_id
 
-left join cl\_qanswer\_qa cqa on pefa.qf\_hqa\_id = cqa.answer\_id
+left join cl_qanswer_qa cqa on pefa.qf_hqa_id = cqa.answer_id
 
-left join cl\_qquest cqq on cqa.quest\_id = cqq.quest\_id -- question name
+left join cl_qquest cqq on cqa.quest_id = cqq.quest_id -- question name
 
-left join cl\_qquest\_ovtm clqo on cqa.quest\_id = clqo.quest\_id -- question
+left join cl_qquest_ovtm clqo on cqa.quest_id = clqo.quest_id -- question
 
-where pefa.qf\_lqf\_id in (14010000014 --change according to your requirements
+where pefa.qf_lqf_id in (14010000014 --change according to your requirements
 
 ,1400001701
 
@@ -6489,88 +6489,88 @@ Steps:
 
 Export results. Remove first column prior to importing.
 
-1.  Import results to ctsi\_research.xdr\_xxbill\_all, where xx are your initials. TT is used as the example below.
+1.  Import results to ctsi_research.xdr_xxbill_all, where xx are your initials. TT is used as the example below.
     1.  Ensure data size is large enough to accept all values (e.g. issue=varchar(2000), worklog=varchar(4000)).
     2.  Rename DATE to dt.
 2.  Run the following script.
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-\-- Steps:
+-- Steps:
 
-\-- 1. Run Jira TT\_Billing\_All report for all - DELETE first COLUMN
+-- 1. Run Jira TT_Billing_All report for all - DELETE first COLUMN
 
-\-- 2. Import #1 results to xdr\_ttbill\_all
+-- 2. Import #1 results to xdr_ttbill_all
 
-\--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
-drop table xdr\_ttbill\_all purge;
+drop table xdr_ttbill_all purge;
 
-select \* from xdr\_ttbill\_all order by key desc;
+select * from xdr_ttbill_all order by key desc;
 
-\--
+--
 
-drop table xdr\_ttbill\_fin purge;
+drop table xdr_ttbill_fin purge;
 
-create table xdr\_ttbill\_fin as
+create table xdr_ttbill_fin as
 
 select distinct 'q' tp
 
-,key jira\_key
+,key jira_key
 
-,issue jira\_title
+,issue jira_title
 
 ,sum(logged) over (partition by key) logged
 
-from xdr\_ttbill\_all c
+from xdr_ttbill_all c
 
 where nvl(key,'TOTAL') like 'XDR%'
 
 and worklog is not null
 
-and do\_not\_bill\_these\_hours = 'false'
+and do_not_bill_these_hours = 'false'
 
-and to\_date(substr(dt,1,9),'dd/mon/yy') between to\_date('04/01/2023','mm/dd/yyyy') and sysdate --change to reflect current billable quarter
+and to_date(substr(dt,1,9),'dd/mon/yy') between to_date('04/01/2023','mm/dd/yyyy') and sysdate --change to reflect current billable quarter
 
 union
 
 select distinct 'a' tp
 
-,key jira\_key
+,key jira_key
 
-,issue jira\_title
+,issue jira_title
 
 ,sum(logged) over (partition by key) logged
 
-from xdr\_ttbill\_all c
+from xdr_ttbill_all c
 
 where nvl(key,'TOTAL') like 'XDR%'
 
 and worklog is not null
 
-and do\_not\_bill\_these\_hours = 'false'
+and do_not_bill_these_hours = 'false'
 
-order by jira\_key
+order by jira_key
 
 ;
 
-select distinct c.jira\_key
+select distinct c.jira_key
 
-,c.jira\_title
+,c.jira_title
 
-,c.logged currqtr\_logged
+,c.logged currqtr_logged
 
-,a.logged all\_logged
+,a.logged all_logged
 
-from xdr\_ttbill\_fin c
+from xdr_ttbill_fin c
 
-join xdr\_ttbill\_fin a on c.jira\_key = a.jira\_key and a.tp = 'a'
+join xdr_ttbill_fin a on c.jira_key = a.jira_key and a.tp = 'a'
 
 where c.tp = 'q'
 
 and a.logged > 20
 
-order by c.jira\_key
+order by c.jira_key
 
 ;
 
@@ -6578,15 +6578,15 @@ order by c.jira\_key
 
 (by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 6/27/2023)
 
-– The following gets determines metastatic cancer (Use I:\\\_BIP\\xDR\\Cancer registry integration\\Documentation\_asof\_12222022\\Code\_Library.sql for preliminary tables)
+– The following gets determines metastatic cancer (Use I:\\_BIP\\xDR\\Cancer registry integration\\Documentation_asof_12222022\\Code_Library.sql for preliminary tables)
 
-\-- Check for mets
+-- Check for mets
 
-\--Pre-2018 (#Temp123456CSTG1)
+--Pre-2018 (#Temp123456CSTG1)
 
-select \*
+select *
 
-from cancerregistrardm.rpt.cr\_codelookupdim zcmdlu
+from cancerregistrardm.rpt.cr_codelookupdim zcmdlu
 
 where zcmdlu.fieldname in ('CS Mets at Dx-Bone','CS Mets at Dx-Brain','CS Mets at Dx-Liver','CS Mets at Dx-Lung') --If value = '1', it's METS
 
@@ -6596,23 +6596,23 @@ order by fieldname, lookupcode
 
 select distinct
 
-CS\_MetsAtDiagnosis --Where can I find meaningful values for these? --ASSUMING '10' and '70' as METS
+CS_MetsAtDiagnosis --Where can I find meaningful values for these? --ASSUMING '10' and '70' as METS
 
-,CS\_MetsEval --Where can I find meaningful values for these? --ASSUMING ='1' as METS
+,CS_MetsEval --Where can I find meaningful values for these? --ASSUMING ='1' as METS
 
 from #Temp123456CSTG1
 
-where CS\_MetsAtDiagnosis is not null
+where CS_MetsAtDiagnosis is not null
 
-and CS\_MetsEval is not null
+and CS_MetsEval is not null
 
-\--order by ip\_patient\_id
+--order by ip_patient_id
 
 ;
 
-\--Post-2018 (#Temp123456CSTG2)
+--Post-2018 (#Temp123456CSTG2)
 
-select \* from cancerregistrardm.rpt.cr\_codelookupdim zcmdlu
+select * from cancerregistrardm.rpt.cr_codelookupdim zcmdlu
 
 where zcmdlu.fieldname in ('Mets at DX, Bone','Mets at DX, Brain','Mets at DX, Liver','Mets at DX, Lung','Mets at DX, Other'
 
@@ -6622,17 +6622,17 @@ order by fieldname, lookupcode
 
 ;
 
-\--METS assumptions:
+--METS assumptions:
 
-\--mets at dx = '1'
+--mets at dx = '1'
 
-\--eod mets between '10' and '70'
+--eod mets between '10' and '70'
 
-\--eod primary tumor between '050' and '750'
+--eod primary tumor between '050' and '750'
 
-\--eod regional nodes between '050' and '750'
+--eod regional nodes between '050' and '750'
 
-\--summary stage 2018 between '1' and '8' --'8'=BENIGN OR BORDERLINE BRAIN???
+--summary stage 2018 between '1' and '8' --'8'=BENIGN OR BORDERLINE BRAIN???
 
 # Discharge Location
 
@@ -6640,63 +6640,63 @@ order by fieldname, lookupcode
 
 – The following determines to what general location a patient was discharged.
 
-drop table xdr\_123456\_cohex\_disch purge;
+drop table xdr_123456_cohex_disch purge;
 
-create table xdr\_123456\_cohex\_disch as
+create table xdr_123456_cohex_disch as
 
-select distinct b.pat\_id
+select distinct b.pat_id
 
-,b.pat\_enc\_csn\_id
+,b.pat_enc_csn_id
 
-,B.DISCH\_DISP\_C
+,B.DISCH_DISP_C
 
-,disp.name as DISCH\_DISP\_C\_name
+,disp.name as DISCH_DISP_C_name
 
-,B.DISCH\_DEST\_C
+,B.DISCH_DEST_C
 
-,dest.name as DISCH\_DEST\_C\_name
+,dest.name as DISCH_DEST_C_name
 
-,b.ed\_disposition\_c
+,b.ed_disposition_c
 
-,edd.name ed\_disposition
+,edd.name ed_disposition
 
-,zps.name as adt\_pat\_status
+,zps.name as adt_pat_status
 
-,b.admit\_conf\_stat\_c
+,b.admit_conf_stat_c
 
-,zcs.name as conf\_stat
+,zcs.name as conf_stat
 
-FROM xdr\_123456\_cohpat a
+FROM xdr_123456_cohpat a
 
-join PAT\_ENC\_HSP B on a.pat\_id = b.pat\_id
+join PAT_ENC_HSP B on a.pat_id = b.pat_id
 
-LEFT OUTER JOIN ZC\_PAT\_CLASS H ON B.ADT\_PAT\_CLASS\_C = H.ADT\_PAT\_CLASS\_C
+LEFT OUTER JOIN ZC_PAT_CLASS H ON B.ADT_PAT_CLASS_C = H.ADT_PAT_CLASS_C
 
-left outer join ZC\_DISCH\_DISP disp on disp.DISCH\_DISP\_C = B.DISCH\_DISP\_C
+left outer join ZC_DISCH_DISP disp on disp.DISCH_DISP_C = B.DISCH_DISP_C
 
-left outer join ZC\_DISCH\_DEST dest on dest.DISCH\_DEST\_C = B.DISCH\_DEST\_C
+left outer join ZC_DISCH_DEST dest on dest.DISCH_DEST_C = B.DISCH_DEST_C
 
-LEFT JOIN zc\_ed\_disposition edd ON b.ed\_disposition\_c = edd.ed\_disposition\_c
+LEFT JOIN zc_ed_disposition edd ON b.ed_disposition_c = edd.ed_disposition_c
 
-left join ZC\_PAT\_STATUS zps on b.ADT\_PATIENT\_STAT\_C = zps.ADT\_PATIENT\_STAT\_C
+left join ZC_PAT_STATUS zps on b.ADT_PATIENT_STAT_C = zps.ADT_PATIENT_STAT_C
 
-left join ZC\_conf\_stat zcs on b.admit\_conf\_stat\_c = zcs.admit\_conf\_stat\_c
+left join ZC_conf_stat zcs on b.admit_conf_stat_c = zcs.admit_conf_stat_c
 
-\--below where clause is customizable per requirements...
+--below where clause is customizable per requirements...
 
-\--where regexp\_like(nvl(disp.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
+--where regexp_like(nvl(disp.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
 
-\-- or regexp\_like(nvl(dest.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
+-- or regexp_like(nvl(dest.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
 
-\-- or regexp\_like(nvl(edd.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
+-- or regexp_like(nvl(edd.name,'xxx'),'+(hospice|jail|prison|psych|ama|against med|another facility)+','i')
 
 ;
 
-create index xdr\_123456\_cohex\_disch\_patidx on xdr\_123456\_cohex\_disch (pat\_id);
+create index xdr_123456_cohex_disch_patidx on xdr_123456_cohex_disch (pat_id);
 
-select count(\*), count(distinct pat\_id) from xdr\_123456\_cohex\_disch;
+select count(*), count(distinct pat_id) from xdr_123456_cohex_disch;
 
-select \* from xdr\_123456\_cohex\_disch order by pat\_id;
+select * from xdr_123456_cohex_disch order by pat_id;
 
 # Sex Assigned at Birth
 
@@ -6704,15 +6704,15 @@ by [Cenan Pirani](https://uclabip.atlassian.net/wiki/people/5f5922bcff2fe2006fb7
 
 *   The following gets the sex assigned at birth for a cohort
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-    ,s.name sex\_assigned\_at\_birth
+    ,s.name sex_assigned_at_birth
 
-from xdr\_prinv\_coh coh
+from xdr_prinv_coh coh
 
-join patient\_4 p on coh.pat\_id = p.pat\_id
+join patient_4 p on coh.pat_id = p.pat_id
 
-left join zc\_sex\_asgn\_at\_birth s on p.sex\_asgn\_at\_birth\_c = s.sex\_asgn\_at\_birth\_c
+left join zc_sex_asgn_at_birth s on p.sex_asgn_at_birth_c = s.sex_asgn_at_birth_c
 
 ;
 
@@ -6720,7 +6720,7 @@ left join zc\_sex\_asgn\_at\_birth s on p.sex\_asgn\_at\_birth\_c = s.sex\_asgn\
 
 by [Cenan Pirani](https://uclabip.atlassian.net/wiki/people/5f5922bcff2fe2006fb700d8?ref=confluence) on 8/29/2024
 
-The database and table to access all historical address information (tracking address changes of patients) can be found in ConfomedDims.dim\_RI.PatientDimHistory
+The database and table to access all historical address information (tracking address changes of patients) can be found in ConfomedDims.dim_RI.PatientDimHistory
 
 Below is an example:
 
@@ -6732,45 +6732,45 @@ by [Cenan Pirani](https://uclabip.atlassian.net/wiki/people/5f5922bcff2fe2006fb7
 
 Below is the SQL code to retrieve PDF scanned documents for a cohort:
 
-drop table xdr\_prinv\_docs purge;
+drop table xdr_prinv_docs purge;
 
-create table xdr\_prinv\_docs as
+create table xdr_prinv_docs as
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-,bb.doc\_info\_id
+,bb.doc_info_id
 
-,bb.doc\_recv\_time
+,bb.doc_recv_time
 
-,bb.SCAN\_FILE
+,bb.SCAN_FILE
 
-,bb.DOC\_DESCR
+,bb.DOC_DESCR
 
-,bb.DOC\_INFO\_TYPE\_C
+,bb.DOC_INFO_TYPE_C
 
-,bt.name as doc\_type
+,bt.name as doc_type
 
-\--,BT.DOC\_GROUP
+--,BT.DOC_GROUP
 
-from xdr\_prinv\_coh coh
+from xdr_prinv_coh coh
 
-join DOC\_INFORMATION bb on bb.doc\_pt\_id = coh.pat\_id
+join DOC_INFORMATION bb on bb.doc_pt_id = coh.pat_id
 
-left join ZC\_DOC\_INFO\_TYPE bt on BB.DOC\_INFO\_TYPE\_C = BT.DOC\_INFO\_TYPE\_C
+left join ZC_DOC_INFO_TYPE bt on BB.DOC_INFO_TYPE_C = BT.DOC_INFO_TYPE_C
 
-WHERE BB.IS\_SCANNED\_YN = 'Y'
+WHERE BB.IS_SCANNED_YN = 'Y'
 
-and (bb.RECORD\_STATE\_C <> 2 OR bb.RECORD\_STATE\_C IS NULL) -- Deleted
+and (bb.RECORD_STATE_C <> 2 OR bb.RECORD_STATE_C IS NULL) -- Deleted
 
-and (bb.DOC\_STAT\_C <> 35 OR bb.DOC\_STAT\_C IS NULL) -- Error
+and (bb.DOC_STAT_C <> 35 OR bb.DOC_STAT_C IS NULL) -- Error
 
-and bb.DOC\_REVOK\_DT is null
+and bb.DOC_REVOK_DT is null
 
 ;
 
 Once this is created pull the list of files names into a CSV with the query:
 
-select distinct scan\_file from xdr\_prinv\_docs;
+select distinct scan_file from xdr_prinv_docs;
 
 Share the file with and notify Wen Ting ([wting@mednet.ucla.edu](mailto:wting@mednet.ucla.edu)), he is the one person that will pull the PDFs and place them in the same share Box.
 
@@ -6782,441 +6782,441 @@ Use the following for the Subject line and Box folder name: **PODS document requ
 
 – The following obtains data for PHQ9, PROMIS, SDOH, GAD7, AUDITC. When investigators ask for these, developers can deliver flowsheets and/or questionnaires.
 
-\----------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
 
-\-- Use i2b2.bip\_driver
+-- Use i2b2.bip_driver
 
-\----------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
 
-\--The following DDL defines how this driver was created.
+--The following DDL defines how this driver was created.
 
-drop table i2b2.bip\_driver purge;
+drop table i2b2.bip_driver purge;
 
-\--create table i2b2.bip\_driver as
+--create table i2b2.bip_driver as
 
-\--select distinct 'FLOWSHEET' driver\_source
+--select distinct 'FLOWSHEET' driver_source
 
-\-- ,'IP\_FLO\_GP\_DATA.FLO\_MEAS\_ID' driver\_column
+-- ,'IP_FLO_GP_DATA.FLO_MEAS_ID' driver_column
 
-\-- ,case
+-- ,case
 
-\-- when regexp\_like(gpd.flo\_meas\_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
+-- when regexp_like(gpd.flo_meas_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
 
-\-- when regexp\_like(gpd.flo\_meas\_name,'+(phq.+9)+','i') then 'PHQ9'
+-- when regexp_like(gpd.flo_meas_name,'+(phq.+9)+','i') then 'PHQ9'
 
-\-- when regexp\_like(gpd.flo\_meas\_name,'+(promis)+','i') then 'PROMIS'
+-- when regexp_like(gpd.flo_meas_name,'+(promis)+','i') then 'PROMIS'
 
-\-- when regexp\_like(gpd.flo\_meas\_name,'+(GAD7)+','i') then 'GAD7'
+-- when regexp_like(gpd.flo_meas_name,'+(GAD7)+','i') then 'GAD7'
 
-\-- when regexp\_like(gpd.flo\_meas\_name,'+(AUDITC)+','i') then 'AUDITC'
+-- when regexp_like(gpd.flo_meas_name,'+(AUDITC)+','i') then 'AUDITC'
 
-\-- end driver\_type
+-- end driver_type
 
-\-- ,gpd.flo\_meas\_id driver\_id
+-- ,gpd.flo_meas_id driver_id
 
-\-- ,gpd.flo\_meas\_name driver\_name
+-- ,gpd.flo_meas_name driver_name
 
-\-- FROM ip\_flo\_gp\_data gpd
+-- FROM ip_flo_gp_data gpd
 
-\-- where regexp\_like(flo\_meas\_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
+-- where regexp_like(flo_meas_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
 
-\--union
+--union
 
-\--select distinct 'QUESTIONNAIRE\_FORM' driver\_source
+--select distinct 'QUESTIONNAIRE_FORM' driver_source
 
-\-- ,'CL\_QFORM.FORM\_ID' driver\_column
+-- ,'CL_QFORM.FORM_ID' driver_column
 
-\-- ,case
+-- ,case
 
-\-- when regexp\_like(f.form\_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
+-- when regexp_like(f.form_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
 
-\-- when regexp\_like(f.form\_name,'+(phq.+9)+','i') then 'PHQ9'
+-- when regexp_like(f.form_name,'+(phq.+9)+','i') then 'PHQ9'
 
-\-- when regexp\_like(f.form\_name,'+(promis)+','i') then 'PROMIS'
+-- when regexp_like(f.form_name,'+(promis)+','i') then 'PROMIS'
 
-\-- when regexp\_like(f.form\_name,'+(GAD7)+','i') then 'GAD7'
+-- when regexp_like(f.form_name,'+(GAD7)+','i') then 'GAD7'
 
-\-- when regexp\_like(f.form\_name,'+(AUDITC)+','i') then 'AUDITC'
+-- when regexp_like(f.form_name,'+(AUDITC)+','i') then 'AUDITC'
 
-\-- end driver\_type
+-- end driver_type
 
-\-- ,f.form\_id driver\_id
+-- ,f.form_id driver_id
 
-\-- ,f.form\_name driver\_name
+-- ,f.form_name driver_name
 
-\-- from CL\_QFORM f
+-- from CL_QFORM f
 
-\-- where regexp\_like(f.form\_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
+-- where regexp_like(f.form_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
 
-\--union
+--union
 
-\--select distinct 'QUESTIONNAIRE\_QUESTION' driver\_source
+--select distinct 'QUESTIONNAIRE_QUESTION' driver_source
 
-\-- ,'CL\_QQUEST.QUEST\_NAME' driver\_column
+-- ,'CL_QQUEST.QUEST_NAME' driver_column
 
-\-- ,case
+-- ,case
 
-\-- when regexp\_like(quest\_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
+-- when regexp_like(quest_name,'+(sdoh|soc.+det)+','i') then 'SDOH'
 
-\-- when regexp\_like(quest\_name,'+(phq.+9)+','i') then 'PHQ9'
+-- when regexp_like(quest_name,'+(phq.+9)+','i') then 'PHQ9'
 
-\-- when regexp\_like(quest\_name,'+(promis)+','i') then 'PROMIS'
+-- when regexp_like(quest_name,'+(promis)+','i') then 'PROMIS'
 
-\-- when regexp\_like(quest\_name,'+(GAD7)+','i') then 'GAD7'
+-- when regexp_like(quest_name,'+(GAD7)+','i') then 'GAD7'
 
-\-- when regexp\_like(quest\_name,'+(AUDITC)+','i') then 'AUDITC'
+-- when regexp_like(quest_name,'+(AUDITC)+','i') then 'AUDITC'
 
-\-- end driver\_type
+-- end driver_type
 
-\-- ,quest\_id driver\_id
+-- ,quest_id driver_id
 
-\-- ,quest\_name driver\_name
+-- ,quest_name driver_name
 
-\-- from CL\_QQUEST
+-- from CL_QQUEST
 
-\-- where regexp\_like(quest\_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
+-- where regexp_like(quest_name,'+(sdoh|phq.+9|promis|gad7|auditc)+','i')
 
-\-- order by driver\_source, driver\_type, driver\_id
+-- order by driver_source, driver_type, driver_id
 
-\--;
+--;
 
-\--alter table bip\_driver add constraint bip\_driver\_pk primary key (driver\_source, driver\_type, driver\_id);
+--alter table bip_driver add constraint bip_driver_pk primary key (driver_source, driver_type, driver_id);
 
-\--
+--
 
-\--insert into i2b2.bip\_driver (driver\_source, driver\_column, driver\_type, driver\_id, driver\_name)
+--insert into i2b2.bip_driver (driver_source, driver_column, driver_type, driver_id, driver_name)
 
-\--select distinct 'FLOWSHEET','IP\_FLO\_GP\_DATA.FLO\_MEAS\_ID','SDOH',gpd.flo\_meas\_id, gpd.flo\_meas\_name
+--select distinct 'FLOWSHEET','IP_FLO_GP_DATA.FLO_MEAS_ID','SDOH',gpd.flo_meas_id, gpd.flo_meas_name
 
-\-- from ctsi\_research.lz\_flowsheet\_sdoh\_icl\_zc js --this is from JS SDOH subitem from Kruse 23-5190 (Project\_id=115824)
+-- from ctsi_research.lz_flowsheet_sdoh_icl_zc js --this is from JS SDOH subitem from Kruse 23-5190 (Project_id=115824)
 
-\-- join ip\_flo\_gp\_data gpd on js.flowsheetrowid = gpd.flo\_meas\_id
+-- join ip_flo_gp_data gpd on js.flowsheetrowid = gpd.flo_meas_id
 
-\-- left join i2b2.bip\_driver bd on js.flowsheetrowid = bd.driver\_id and bd.driver\_source = 'FLOWSHEET' and bd.driver\_type = 'SDOH'
+-- left join i2b2.bip_driver bd on js.flowsheetrowid = bd.driver_id and bd.driver_source = 'FLOWSHEET' and bd.driver_type = 'SDOH'
 
-\-- where bd.driver\_id is null
+-- where bd.driver_id is null
 
-\--; --210 rows inserted
+--; --210 rows inserted
 
-\--commit;
+--commit;
 
-\----------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
 
-\-- Using the standard bip driver, get flowsheets and questionnaires data.
+-- Using the standard bip driver, get flowsheets and questionnaires data.
 
-\----------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
 
-\-- Flowsheets
+-- Flowsheets
 
-SELECT DISTINCT coh.pat\_id
+SELECT DISTINCT coh.pat_id
 
-,enc.pat\_enc\_csn\_id
+,enc.pat_enc_csn_id
 
-,enc.inpatient\_data\_id
+,enc.inpatient_data_id
 
-,rec.fsd\_id
+,rec.fsd_id
 
-,meas.flt\_id
+,meas.flt_id
 
-,meas.flo\_meas\_id
+,meas.flo_meas_id
 
-,dta.display\_name
+,dta.display_name
 
-,dta.template\_name
+,dta.template_name
 
-,gpd.disp\_name measure\_name
+,gpd.disp_name measure_name
 
-,gpd.flo\_meas\_name
+,gpd.flo_meas_name
 
-,meas.meas\_value
+,meas.meas_value
 
-,meas.recorded\_time
+,meas.recorded_time
 
-,MAX(meas.recorded\_time) OVER (PARTITION BY enc.pat\_id, meas.flo\_meas\_id) latest\_measure
+,MAX(meas.recorded_time) OVER (PARTITION BY enc.pat_id, meas.flo_meas_id) latest_measure
 
-FROM xdr\_123456\_coh coh
+FROM xdr_123456_coh coh
 
-JOIN i2b2.lz\_clarity\_enc enc ON coh.pat\_id = enc.pat\_id
+JOIN i2b2.lz_clarity_enc enc ON coh.pat_id = enc.pat_id
 
-JOIN ip\_flwsht\_rec rec ON enc.inpatient\_data\_id = rec.inpatient\_data\_id
+JOIN ip_flwsht_rec rec ON enc.inpatient_data_id = rec.inpatient_data_id
 
-JOIN ip\_flwsht\_meas meas ON rec.fsd\_id = meas.fsd\_id
+JOIN ip_flwsht_meas meas ON rec.fsd_id = meas.fsd_id
 
-JOIN ip\_flo\_gp\_data gpd ON meas.flo\_meas\_id = gpd.flo\_meas\_id
+JOIN ip_flo_gp_data gpd ON meas.flo_meas_id = gpd.flo_meas_id
 
-JOIN ip\_flt\_data dta ON meas.flt\_id = dta.template\_id
+JOIN ip_flt_data dta ON meas.flt_id = dta.template_id
 
-JOIN i2b2.bip\_driver fd on meas.flo\_meas\_id = fd.driver\_id
+JOIN i2b2.bip_driver fd on meas.flo_meas_id = fd.driver_id
 
-and fd.driver\_source = 'FLOWSHEET'
+and fd.driver_source = 'FLOWSHEET'
 
-and fd.driver\_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
+and fd.driver_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
 
-\--NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
+--NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
 
-WHERE meas.recorded\_time IS NOT NULL
+WHERE meas.recorded_time IS NOT NULL
 
-AND meas.meas\_value IS NOT NULL
+AND meas.meas_value IS NOT NULL
 
 ;
 
-\-- Questionnaires
+-- Questionnaires
 
-select distinct coh.pat\_id
+select distinct coh.pat_id
 
-,f.form\_id
+,f.form_id
 
-,f.form\_name
+,f.form_name
 
-,q.quest\_id
+,q.quest_id
 
-,q.quest\_name
+,q.quest_name
 
-,qa.answer\_id
+,qa.answer_id
 
 ,qa.line
 
-,qa.quest\_answer
+,qa.quest_answer
 
-,qa.quest\_dat datetime\_answer
+,qa.quest_dat datetime_answer
 
-from xdr\_123456\_coh coh
+from xdr_123456_coh coh
 
-join CL\_QANSWER a on coh.pat\_id = a.pat\_id
+join CL_QANSWER a on coh.pat_id = a.pat_id
 
-join CL\_QANSWER\_QA qa on a.answer\_id = qa.answer\_id
+join CL_QANSWER_QA qa on a.answer_id = qa.answer_id
 
-join CL\_QQUEST q on qa.quest\_id = q.quest\_id
+join CL_QQUEST q on qa.quest_id = q.quest_id
 
-join CL\_QFORM\_QUEST fq on q.quest\_id = fq.quest\_id
+join CL_QFORM_QUEST fq on q.quest_id = fq.quest_id
 
-join CL\_QFORM f on fq.form\_id = f.form\_id
+join CL_QFORM f on fq.form_id = f.form_id
 
-join i2b2.bip\_driver qd on (fq.form\_id = qd.driver\_id
+join i2b2.bip_driver qd on (fq.form_id = qd.driver_id
 
-and qd.driver\_source = 'QUESTIONNAIRE\_FORM'
+and qd.driver_source = 'QUESTIONNAIRE_FORM'
 
-and qd.driver\_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
+and qd.driver_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
 
-\--NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
+--NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
 
 )
 
 or
 
-(fq.quest\_id = qd.driver\_id
+(fq.quest_id = qd.driver_id
 
-and qd.driver\_source = 'QUESTIONNAIRE\_QUESTION'
+and qd.driver_source = 'QUESTIONNAIRE_QUESTION'
 
-and qd.driver\_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
+and qd.driver_type in ('SDOH','PHQ9','PROMIS','GAD7') --Change according to your requirements
 
-\--NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
+--NOTE: For standard SDOH pulls, use 'SDOH' only unless specifically requested by PI
 
 )
 
 ;
 
-\-- Combine flowsheet and questionnaire results
+-- Combine flowsheet and questionnaire results
 
-select x.\* from (
+select x.* from (
 
-select pat\_id
+select pat_id
 
 ,'QUESTIONNAIRE' src
 
-, form\_name form\_or\_template\_name
+, form_name form_or_template_name
 
-, quest\_name question\_or\_display\_name
+, quest_name question_or_display_name
 
-, null measure\_name
+, null measure_name
 
-, to\_char(line) answer\_line\_or\_flow\_measure
+, to_char(line) answer_line_or_flow_measure
 
-, quest\_answer val
+, quest_answer val
 
-, datetime\_answer dt
+, datetime_answer dt
 
-from xdr\_123456\_quest
+from xdr_123456_quest
 
 union
 
-select pat\_id
+select pat_id
 
 ,'FLOWSHEET' src
 
-, template\_name form\_or\_template\_name
+, template_name form_or_template_name
 
-, display\_name question\_or\_display\_name
+, display_name question_or_display_name
 
-, measure\_name measure\_name
+, measure_name measure_name
 
-, vital\_sign\_type answer\_line\_or\_flow\_measure
+, vital_sign_type answer_line_or_flow_measure
 
-, vital\_sign\_value val
+, vital_sign_value val
 
-, to\_date(vital\_sign\_taken\_time) dt
+, to_date(vital_sign_taken_time) dt
 
-from xdr\_123456\_flow
+from xdr_123456_flow
 
 ) x
 
-order by ip\_patient\_id, sdoh\_date
+order by ip_patient_id, sdoh_date
 
 ;
 
-\----------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
 
-\-- For additional SDOH (Social Determinants of Health), developers can query Social History.
+-- For additional SDOH (Social Determinants of Health), developers can query Social History.
 
-\-- The following obtains SDOH data using Social History.
+-- The following obtains SDOH data using Social History.
 
-\-- Many times, social hx does not contain all the information requested for SDOH,
+-- Many times, social hx does not contain all the information requested for SDOH,
 
-\-- so flowsheets/questionnaires should also be queried.
+-- so flowsheets/questionnaires should also be queried.
 
-\----------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------
 
-select distinct coh.pat\_id, coh.study\_id
+select distinct coh.pat_id, coh.study_id
 
-,soc.contact\_date
+,soc.contact_date
 
-,xedu.name education\_level
+,xedu.name education_level
 
-,zfrs.name financial\_res\_strain
+,zfrs.name financial_res_strain
 
-,ziea.name ipv\_emotional\_abuse
+,ziea.name ipv_emotional_abuse
 
-,zfear.name ipv\_fear
+,zfear.name ipv_fear
 
-,zisa.name ipv\_sexual\_abuse
+,zisa.name ipv_sexual_abuse
 
-,zipa.name ipv\_physical
+,zipa.name ipv_physical
 
-,zaf.name alcohol\_freq
+,zaf.name alcohol_freq
 
-,zadpd.name alcohol\_drinks\_p\_day
+,zadpd.name alcohol_drinks_p_day
 
-,zbinge.name alcohol\_binge
+,zbinge.name alcohol_binge
 
-,zspouse.name living\_w\_spouse
+,zspouse.name living_w_spouse
 
-,zstress.name daily\_stress
+,zstress.name daily_stress
 
-,zphone.name phone\_communication
+,zphone.name phone_communication
 
-,zsocial.name socialize\_freq
+,zsocial.name socialize_freq
 
-,zchurch.name church\_attendance
+,zchurch.name church_attendance
 
-,zclub.name club\_mtg\_attend
+,zclub.name club_mtg_attend
 
-,zclubm.name club\_member
+,zclubm.name club_member
 
-,zpdpw.name phys\_act\_days\_p\_wk
+,zpdpw.name phys_act_days_p_wk
 
-,zpamps.name phys\_act\_min\_p\_sess
+,zpamps.name phys_act_min_p_sess
 
-,zfoods.name food\_insec\_scarce
+,zfoods.name food_insec_scarce
 
-,zfoodw.name food\_insec\_worry
+,zfoodw.name food_insec_worry
 
-,zmedtr.name med\_trans\_needs
+,zmedtr.name med_trans_needs
 
-,zothertr.name other\_trans\_needs
+,zothertr.name other_trans_needs
 
-from p\_coh coh
+from p_coh coh
 
-join social\_hx soc on coh.pat\_id = soc.pat\_id
+join social_hx soc on coh.pat_id = soc.pat_id
 
-left join zc\_edu\_level xedu on soc.edu\_level\_c = xedu.edu\_level\_c
+left join zc_edu_level xedu on soc.edu_level_c = xedu.edu_level_c
 
-left join zc\_fin\_resource\_strain zfrs on soc.fin\_resource\_strain\_c = zfrs.fin\_resource\_strain\_c
+left join zc_fin_resource_strain zfrs on soc.fin_resource_strain_c = zfrs.fin_resource_strain_c
 
-left join zc\_ipv\_emotional\_abuse ziea on soc.ipv\_emotional\_abuse\_c = ziea.ipv\_emotional\_abuse\_c
+left join zc_ipv_emotional_abuse ziea on soc.ipv_emotional_abuse_c = ziea.ipv_emotional_abuse_c
 
-left join zc\_ipv\_fear zfear on soc.ipv\_fear\_c = zfear.ipv\_fear\_c
+left join zc_ipv_fear zfear on soc.ipv_fear_c = zfear.ipv_fear_c
 
-left join zc\_ipv\_sexual\_abuse zisa on soc.ipv\_sexual\_abuse\_c = zisa.ipv\_sexual\_abuse\_c
+left join zc_ipv_sexual_abuse zisa on soc.ipv_sexual_abuse_c = zisa.ipv_sexual_abuse_c
 
-left join zc\_ipv\_physical\_abuse zipa on soc.ipv\_physical\_abuse\_c = zipa.ipv\_physical\_abuse\_c
+left join zc_ipv_physical_abuse zipa on soc.ipv_physical_abuse_c = zipa.ipv_physical_abuse_c
 
-left join ZC\_ALCOHOL\_FREQ zaf on soc.ALCOHOL\_FREQ\_C = zaf.ALCOHOL\_FREQ\_C
+left join ZC_ALCOHOL_FREQ zaf on soc.ALCOHOL_FREQ_C = zaf.ALCOHOL_FREQ_C
 
-left join zc\_alcohol\_drinks\_per\_day zadpd on soc.alcohol\_drinks\_per\_day\_c = zadpd.alcohol\_drinks\_per\_day\_c
+left join zc_alcohol_drinks_per_day zadpd on soc.alcohol_drinks_per_day_c = zadpd.alcohol_drinks_per_day_c
 
-left join zc\_alcohol\_binge zbinge on soc.alcohol\_binge\_c = zbinge.alcohol\_binge\_c
+left join zc_alcohol_binge zbinge on soc.alcohol_binge_c = zbinge.alcohol_binge_c
 
-left join zc\_living\_w\_spouse zspouse on soc.living\_w\_spouse\_c = zspouse.living\_w\_spouse\_c
+left join zc_living_w_spouse zspouse on soc.living_w_spouse_c = zspouse.living_w_spouse_c
 
-left join zc\_daily\_stress zstress on soc.daily\_stress\_c = zstress.daily\_stress\_c
+left join zc_daily_stress zstress on soc.daily_stress_c = zstress.daily_stress_c
 
-left join zc\_phone\_communication zphone on soc.phone\_communication\_c = zphone.phone\_communication\_c
+left join zc_phone_communication zphone on soc.phone_communication_c = zphone.phone_communication_c
 
-left join zc\_socialization\_freq zsocial on soc.socialization\_freq\_c = zsocial.socialization\_freq\_c
+left join zc_socialization_freq zsocial on soc.socialization_freq_c = zsocial.socialization_freq_c
 
-left join zc\_church\_attendance zchurch on soc.church\_attendance\_c = zchurch.sdoh\_church\_attendance\_c
+left join zc_church_attendance zchurch on soc.church_attendance_c = zchurch.sdoh_church_attendance_c
 
-left join zc\_clubmtg\_attendance zclub on soc.clubmtg\_attendance\_c = zclub.clubmtg\_attendance\_c
+left join zc_clubmtg_attendance zclub on soc.clubmtg_attendance_c = zclub.clubmtg_attendance_c
 
-left join zc\_club\_member zclubm on soc.club\_member\_c = zclubm.club\_member\_c
+left join zc_club_member zclubm on soc.club_member_c = zclubm.club_member_c
 
-left join zc\_phys\_act\_days\_per\_week zpdpw on soc.phys\_act\_days\_per\_week\_c = zpdpw.phys\_act\_days\_per\_week\_c
+left join zc_phys_act_days_per_week zpdpw on soc.phys_act_days_per_week_c = zpdpw.phys_act_days_per_week_c
 
-left join zc\_phys\_act\_min\_per\_sess zpamps on soc.phys\_act\_min\_per\_sess\_c = zpamps.phys\_act\_min\_per\_sess\_c
+left join zc_phys_act_min_per_sess zpamps on soc.phys_act_min_per_sess_c = zpamps.phys_act_min_per_sess_c
 
-left join zc\_food\_insecurity\_scarce zfoods on soc.food\_insecurity\_scarce\_c = zfoods.food\_insecurity\_scarce\_c
+left join zc_food_insecurity_scarce zfoods on soc.food_insecurity_scarce_c = zfoods.food_insecurity_scarce_c
 
-left join zc\_food\_insecurity\_worry zfoodw on soc.food\_insecurity\_worry\_c = zfoodw.food\_insecurity\_worry\_c
+left join zc_food_insecurity_worry zfoodw on soc.food_insecurity_worry_c = zfoodw.food_insecurity_worry_c
 
-left join zc\_med\_transport\_needs zmedtr on soc.med\_transport\_needs\_c = zmedtr.med\_transport\_needs\_c
+left join zc_med_transport_needs zmedtr on soc.med_transport_needs_c = zmedtr.med_transport_needs_c
 
-left join zc\_other\_transport\_needs zothertr on soc.other\_transport\_needs\_c = zothertr.other\_transport\_needs\_c
+left join zc_other_transport_needs zothertr on soc.other_transport_needs_c = zothertr.other_transport_needs_c
 
-WHERE soc.pat\_enc\_date\_real = (SELECT MAX(soc.pat\_enc\_date\_real) FROM social\_hx soc WHERE soc.pat\_id = coh.pat\_id)
+WHERE soc.pat_enc_date_real = (SELECT MAX(soc.pat_enc_date_real) FROM social_hx soc WHERE soc.pat_id = coh.pat_id)
 
-and (soc.edu\_level\_c is not null
+and (soc.edu_level_c is not null
 
-or soc.fin\_resource\_strain\_c is not null
+or soc.fin_resource_strain_c is not null
 
-or soc.ipv\_emotional\_abuse\_c is not null
+or soc.ipv_emotional_abuse_c is not null
 
-or soc.ipv\_fear\_c is not null
+or soc.ipv_fear_c is not null
 
-or soc.ipv\_sexual\_abuse\_c is not null
+or soc.ipv_sexual_abuse_c is not null
 
-or oc.ipv\_physical\_abuse\_c is not null
+or oc.ipv_physical_abuse_c is not null
 
-or soc.ALCOHOL\_FREQ\_C is not null
+or soc.ALCOHOL_FREQ_C is not null
 
-or soc.alcohol\_drinks\_per\_day\_c is not null
+or soc.alcohol_drinks_per_day_c is not null
 
-or soc.alcohol\_binge\_c is not null
+or soc.alcohol_binge_c is not null
 
-or soc.living\_w\_spouse\_c is not null
+or soc.living_w_spouse_c is not null
 
-or soc.daily\_stress\_c is not null
+or soc.daily_stress_c is not null
 
-or soc.phone\_communication\_c is not null
+or soc.phone_communication_c is not null
 
-or soc.socialization\_freq\_c is not null
+or soc.socialization_freq_c is not null
 
-or soc.church\_attendance\_c is not null
+or soc.church_attendance_c is not null
 
-or soc.clubmtg\_attendance\_c is not null
+or soc.clubmtg_attendance_c is not null
 
-or soc.club\_member\_c is not null
+or soc.club_member_c is not null
 
-or soc.phys\_act\_days\_per\_week\_c is not null
+or soc.phys_act_days_per_week_c is not null
 
-or soc.phys\_act\_min\_per\_sess\_c is not null
+or soc.phys_act_min_per_sess_c is not null
 
-or soc.food\_insecurity\_scarce\_c is not null
+or soc.food_insecurity_scarce_c is not null
 
-or soc.food\_insecurity\_worry\_c is not null
+or soc.food_insecurity_worry_c is not null
 
-or soc.med\_transport\_needs\_c is not null
+or soc.med_transport_needs_c is not null
 
-or soc.other\_transport\_needs\_c is not null
+or soc.other_transport_needs_c is not null
 
 )
 
@@ -7226,62 +7226,62 @@ or soc.other\_transport\_needs\_c is not null
 
 by [Cenan Pirani](https://uclabip.atlassian.net/wiki/people/5f5922bcff2fe2006fb700d8?ref=confluence) on 9/30/2025
 
-\-- STAGE TABLE
+-- STAGE TABLE
 
-DROP TABLE XDR\_PID\_MEDFILLALL PURGE;
+DROP TABLE XDR_PID_MEDFILLALL PURGE;
 
-CREATE TABLE XDR\_PID\_MEDFILLALL AS
+CREATE TABLE XDR_PID_MEDFILLALL AS
 
-select distinct docs.pat\_id
+select distinct docs.pat_id
 
-,ip\_patient\_id
+,ip_patient_id
 
-,disp.EXT\_MED\_ERX\_ID
+,disp.EXT_MED_ERX_ID
 
-,disp.EXT\_DRUG\_DISP\_INST\_DTTM
+,disp.EXT_DRUG_DISP_INST_DTTM
 
-,disp.EXT\_DRUG\_DESP
+,disp.EXT_DRUG_DESP
 
-,disp.EXT\_DRUG\_DISP\_AMT
+,disp.EXT_DRUG_DISP_AMT
 
-,disp.EXT\_DRUG\_DISP\_UNIT
+,disp.EXT_DRUG_DISP_UNIT
 
-,disp.EXT\_DRUG\_DOSE\_FORM
+,disp.EXT_DRUG_DOSE_FORM
 
-,disp.EXT\_MED\_DAY\_SUPPLY
+,disp.EXT_MED_DAY_SUPPLY
 
-\--,docs.TYPE\_C
+--,docs.TYPE_C
 
-,disp.EXT\_DRUG\_PROV\_NAME
+,disp.EXT_DRUG_PROV_NAME
 
-FROM xdr\_PID\_pat coh
+FROM xdr_PID_pat coh
 
-JOIN DOCS\_RCVD docs on docs.pat\_id = coh.pat\_id
+JOIN DOCS_RCVD docs on docs.pat_id = coh.pat_id
 
-JOIN MED\_DISPENSE disp on docs.document\_id = disp.document\_id
+JOIN MED_DISPENSE disp on docs.document_id = disp.document_id
 
 ;
 
-\-- PULL
+-- PULL
 
-select distinct ip\_patient\_id
+select distinct ip_patient_id
 
-,EXT\_MED\_ERX\_ID
+,EXT_MED_ERX_ID
 
-,to\_char(EXT\_DRUG\_DISP\_INST\_DTTM, 'mm/dd/yyyy hh24:mi') EXT\_DRUG\_DISP\_INST\_DTTM
+,to_char(EXT_DRUG_DISP_INST_DTTM, 'mm/dd/yyyy hh24:mi') EXT_DRUG_DISP_INST_DTTM
 
-,EXT\_DRUG\_DESP
+,EXT_DRUG_DESP
 
-,EXT\_DRUG\_DISP\_AMT
+,EXT_DRUG_DISP_AMT
 
-,EXT\_DRUG\_DISP\_UNIT
+,EXT_DRUG_DISP_UNIT
 
-,EXT\_DRUG\_DOSE\_FORM
+,EXT_DRUG_DOSE_FORM
 
-,EXT\_MED\_DAY\_SUPPLY
+,EXT_MED_DAY_SUPPLY
 
-,EXT\_DRUG\_PROV\_NAME
+,EXT_DRUG_PROV_NAME
 
-from XDR\_PID\_MEDFILLALL
+from XDR_PID_MEDFILLALL
 
 ;
