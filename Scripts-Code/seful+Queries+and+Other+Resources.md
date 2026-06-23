@@ -1549,7 +1549,7 @@ ORDER BY OBJECT_NAME
 -------------------------------------------------------------------------------
 
 SELECT case
-when regexp_like(ord_value,'+(\\.\\.)+','i') then ord_value
+when regexp_like(ord_value,'+(\.\.)+','i') then ord_value
 when LENGTH(TRIM(TRANSLATE(ord_value, '+-.0123456789',' '))) is null then 'value is numeric: ' || ord_value
 else ord_value
 end value_is_numeric
@@ -1941,93 +1941,49 @@ order by coh.study_id, pefa.qf_lqf_id, cqa.line;
 This code will obtain address history per patient encounter. Flags are set if the patient is currently homeless or homeless at the visit.
 
 select distinct enc.pat_id
-
-,enc.pat_enc_csn_id
-
-,enc.effective_date_dt
-
-,pat.add_line_1
-
-,case
-
-when pat2.pat_id is not null
-
-then 1
-
-else 0
-
-end homeless_currently
-
-,pe4.pat_homeless_yn
-
-,pahx.eff_start_date
-
-,pahx.eff_end_date
-
-,pahx.addr_hx_line1
-
-,case
-
-when pe4.pat_enc_csn_id is not null
-
-or pahx2.pat_id is not null
-
-then 1
-
-else 0
-
-end homeless_at_visit
-
+   ,enc.pat_enc_csn_id
+   ,enc.effective_date_dt
+   ,pat.add_line_1
+   ,case
+   when pat2.pat_id is not null
+   then 1
+   else 0
+   end homeless_currently
+   ,pe4.pat_homeless_yn
+   ,pahx.eff_start_date
+   ,pahx.eff_end_date
+   ,pahx.addr_hx_line1
+   ,case
+   when pe4.pat_enc_csn_id is not null
+   or pahx2.pat_id is not null
+   then 1
+   else 0
+   end homeless_at_visit
 from i2b2.lz_clarity_enc enc
-
 left join patient pat on enc.pat_id = pat.pat_id
-
 left join pat_addr_chng_hx pahx on enc.pat_id = pahx.pat_id
-
 and enc.effective_date_dt between pahx.eff_start_date
-
 and pahx.eff_end_date
-
 left join patient pat2 on pat.pat_id = pat2.pat_id
-
 and ((pat.add_line_1 = pat2.add_line_1
-
 and regexp_like(pat2.add_line_1,'+(homeless)+','i')
-
 )
-
 or
-
 (pat.city= pat2.city
-
 and regexp_like(pat2.city,'+(homeless)+','i')
-
 )
-
 )
-
 left join pat_enc_4 pe4 on enc.pat_enc_csn_id = pe4.pat_enc_csn_id
-
 and (nvl(pe4.pat_homeless_yn,'N') <> 'N')
-
 left join pat_addr_chng_hx pahx2 on pahx.pat_id = pahx2.pat_id
-
 and pahx.addr_hx_line1 = pahx2.addr_hx_line1
-
 and pahx.city_hx = pahx2.city_hx
-
 and pahx.eff_start_date = pahx2.eff_start_date
-
 and pahx.eff_end_date = pahx2.eff_end_date
-
 and (regexp_like(pahx2.addr_hx_line1,'+(homeless)+','i')
-
 or regexp_like(pahx2.city_hx,'+(homeless)+','i')
-
 )
-
 order by enc.pat_id, enc.effective_date_dt
-
 ;
 
 # Cause of Death
@@ -2039,31 +1995,18 @@ This code will obtain patient cause of death.
 --Cause of Death during an admission
 
 select distinct adm.pat_id,
-
-adm.pat_enc_csn_id,
-
-dpl10.code as icd_code,
-
-dpl10.icd_desc
-
+   adm.pat_enc_csn_id,
+   dpl10.code as icd_code,
+   dpl10.icd_desc
 from i2b2.lz_clarity_enc adm --or your cohort
-
 join patient_3 p3 on adm.pat_id = p3.pat_id --(left join if entire cohort is needed)
-
 left join edg_current_icd10 cit on p3.pcod_cause_dx_id = cit.dx_id
-
 and cit.line = 1
-
 left join i2b2.lz_dx_px_lookup dpl10 on cit.code = dpl10.code
-
 and dpl10.icd_type = 10
-
 and dpl10.code_type = 'DX'
-
 WHERE trunc(p3.PCOD_INST_REC_DTTM) between trunc(adm.hosp_admsn_time)
-
 and trunc(adm.hosp_dischrg_time);
-
 --Cause of Death for transplant donors: see Github Code Library (https://github.com/ctsidev/bipdata/blob/master/CodeLibrary/Transplant.sql)
 
 # GFR labs
@@ -2073,11 +2016,8 @@ and trunc(adm.hosp_dischrg_time);
 Code to calculate GFR results taking into account race. You will have to left join to patient table and lookup patient_race_c (2 = Black Afircan American)
 
 where
-
 (lab.component_id not in (2452, 11539, 3000375, 10000661, 10010349, 2453, 11540, 3000376, 10000660, 10010348)
-
 OR (lab.component_id in (2452, 11539, 3000375, 10000661, 10010349) and race.patient_race_c <> 2)
-
 OR (lab.component_id in (2453, 11540, 3000376, 10000660, 10010348) and race.patient_race_c = 2)
 
 # Kill Sessions
@@ -2087,13 +2027,9 @@ OR (lab.component_id in (2453, 11540, 3000376, 10000660, 10010348) and race.pati
 Code to find SQL Developer sessions open based on user’s schema, and statement to kill that session (this needs to be run by the DBA, but we can help them by providing this information).
 
 select INST_ID,SID,SERIAL#,USERNAME,STATUS,sql_exec_start,LOGON_TIME
-
 from gv$session
-
 where username='JSANZ'
-
 and program = 'SQL Developer'
-
 ;
 
 alter system kill session 'SID,SERIAL#';
@@ -2109,9 +2045,7 @@ alter system kill session '827, 24565';
 Code to find lock objects and even generate statement to kill the session that might be keeping it locked.
 
 SELECT SESSION_ID FROM DBA_DML_LOCKS WHERE NAME = 'OBSERVATION_FACT';
-
 SELECT SID, SERIAL# FROM V$SESSION WHERE SID IN (
-
 SELECT SESSION_ID FROM DBA_DML_LOCKS WHERE NAME = 'OBSERVATION_FACT'
 
 );
@@ -2119,37 +2053,21 @@ SELECT SESSION_ID FROM DBA_DML_LOCKS WHERE NAME = 'OBSERVATION_FACT'
 ALTER SYSTEM KILL SESSION '3669, 14655';
 
 SELECT a.session_id,
-
-a.oracle_username,
-
-a.os_user_name,
-
-b.owner,
-
-b.object_name,
-
-b.object_type,
-
-DECODE(a.locked_mode, 0, '0 - NONE: lock requested but not yet obtained',
-
-1, '1 - NULL',
-
-2, '2 - ROWS_S (SS): Row Share Lock',
-
-3, '3 - ROW_X (SX): Row Exclusive Table Lock',
-
-4, '4 - SHARE (S): Share Table Lock',
-
-5, '5 - S/ROW-X (SSX): Share Row Exclusive Table Lock',
-
-6, '6 - Exclusive (X): Exclusive Table Lock') LOCKED_MODE
-
+   a.oracle_username,
+   a.os_user_name,
+   b.owner,
+   b.object_name,
+   b.object_type,
+   DECODE(a.locked_mode, 0, '0 - NONE: lock requested but not yet obtained',
+   1, '1 - NULL',
+   2, '2 - ROWS_S (SS): Row Share Lock',
+   3, '3 - ROW_X (SX): Row Exclusive Table Lock',
+   4, '4 - SHARE (S): Share Table Lock',
+   5, '5 - S/ROW-X (SSX): Share Row Exclusive Table Lock',
+   6, '6 - Exclusive (X): Exclusive Table Lock') LOCKED_MODE
 FROM v$locked_object a,
-
 dba_objects b
-
 Where A.Object_Id = B.Object_Id
-
 and a.os_user_name = 'JavierS1';
 ```
 ## Recruitment Request Prioritization
@@ -2161,11 +2079,9 @@ Criteria to narrow down patient selection to meet disclousure criteria (count).
 
 /*******************************************************************************************
 
-1\. patients have the contact information field(s) completed
-
-2\. patients had a completed UCLA encounter in the last 12 months
-
-3\. After this, we will apply a randomization function and keep track of what patients have been sent to PI team already (and which ones are left to send)
+1. patients have the contact information field(s) completed
+2. patients had a completed UCLA encounter in the last 12 months
+3. After this, we will apply a randomization function and keep track of what patients have been sent to PI team already (and which ones are left to send)
 
 Once PI team goes through the list and request more, we will send another release (ex 499).
 
@@ -2174,43 +2090,24 @@ Once PI team goes through the list and request more, we will send another releas
 create table XDR_PRINV_COH_recruit_release as
 
 SELECT distinct coh.ip_patient_id
-
-,coh.pat_fist_name
-
-,coh.pat_last_name
-
-,coh.phone
-
-,coh.addr_line_1
-
-,coh.email
-
+   ,coh.pat_fist_name
+   ,coh.pat_last_name
+   ,coh.phone
+   ,coh.addr_line_1
+   ,coh.email
 FROM XDR_PRINV_COH coh
-
 left join i2b2.lz_clarity_enc enc on enc.pat_id = coh.pat_id
-
 -- UCLA encounter completed in the last 12 months
-
 and enc.effective_date_dt between current_time - 365.25 and current_time
-
 and ((enc.enc_type_c <> '5' --TT-4/11/2016: Exclude Canceled appointments
-
 OR enc.appt_status_c is null or enc.appt_status_c = 2)
-
 WHERE
-
 -- contant information available
-
 (PHONE IS NOT NULL
-
 ADDR_LINE1 IS NOT NULL
-
 AND EMAIL IS NOT NULL
-
 )
-
 and enc.pat_id is not null
-
 ;
 
 randomization (pending)
@@ -2223,23 +2120,14 @@ randomization (pending)
 Code to find the BMT records.
 
 select distinct coh.pat_id
-
-,ep.START_DATE as tx_date
-
-,'Bone marrow' as tx_name
-
+   ,ep.START_DATE as tx_date
+   ,'Bone marrow' as tx_name
 from xdr_prinv_coh coh
-
 join pat_enc enc on coh.pat_id = enc.pat_id and coh.deleted_yn is null
-
 join Episode_Link lnk on enc.pat_enc_csn_id = lnk.pat_enc_csn_id
-
 join Episode ep on lnk.episode_id = ep.episode_id
-
 left join BMT_INFO bmt on ep.episode_id = bmt.SUMMARY_BLOCK_ID
-
 where --64 cases
-
 lnk.SUM_BLK_TYPE_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
 
 ```
@@ -2254,121 +2142,66 @@ Code to find pregnancy data.
 --------------------------------------------------------------------------------
 
 -- This query results in all pregnancies per patient.
-
 -- To check for "current" pregnancies, see where clause.
 
 --------------------------------------------------------------------------------
 
 select distinct x.*
-
 from (select distinct coh.pat_id
-
 ,dx.contact_date dx_diagnosis_date
-
 ,dx2.effective_date dx2_diagnosis_date
-
 ,round(months_between(sysdate, dx.contact_date),2) dx_mos
-
 ,round(months_between(sysdate, dx2.effective_date),2) dx2_mos
-
 ,lab.specimn_taken_time
-
 ,round(months_between(sysdate, lab.specimn_taken_time),2) lab_mos
-
 ,preg.pat_id preg_pat_id
-
 ,prge.pat_enc_csn_id preg_pat_enc_csn_id
-
 ,prge.effective_date_dt preg_effective_date_dt
-
 ,round(months_between(sysdate, prge.effective_date_dt),2) preg_mos
-
 ,ob.mom_id mom_pat_id
-
 ,ob.del_dttm delivery_date
-
 ,max(ob.del_dttm) over (partition by coh.pat_id) delivery_date_last
-
 ,round(months_between(sysdate, ob.del_dttm),2) ob_mos
-
 ,ob.ga gestational_age
-
 ,ob.delmeth_c delivery_method_c
-
 ,zdt.name delivery_method
-
 from xdr_prinv_cohpat coh
-
 left join i2b2.lz_clarity_diagnosis_new dx on coh.pat_id = dx.pat_id
-
 and ((dx.icd_type = 9 --no need to check icd9 for current pregnancy
-
 and trunc(dx.contact_date) between to_date('01/01/2013','mm/dd/yyyy')
-
 and to_date('09/30/2015','mm/dd/yyyy')
-
 and dx.icd_code between '630' and '679.9999999999'
-
 )
-
 or
-
 (dx.icd_type = 10
-
 and trunc(dx.contact_date) >= to_date('10/01/2015','mm/dd/yyyy')
-
 and regexp_like(dx.icd_code,'^(O|Z3(4|A|7))','i')
-
 )
-
 )
-
 left join i2b2.int_dx dx2 on coh.pat_id = dx2.pat_id
-
 and trunc(dx2.effective_date) between to_date('01/01/2013','mm/dd/yyyy')
-
 and to_date('09/30/2015','mm/dd/yyyy')
-
 and dx2.icd9_code between '630' and '679.9999999999'
-
 left join i2b2.bip_encounter_pat_link enc on coh.pat_id = enc.pat_id
-
 left join i2b2.lz_clarity_labs lab on enc.pat_enc_csn_id = lab.pat_enc_csn_id
-
 and upper(lab.ord_value) = 'POSITIVE' and lab.proc_code in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
-
 -- driver being used by Covid registry ETL
-
 left join i2b2.xdr_covid_preg_lab_drv drv on lab.component_id = drv.component_id
-
 left join clarity.v_ob_enc_obgyn_stat preg on coh.pat_id = preg.pat_id
-
 and preg.obgyn_stat_c = 4 --pregnant at some point - for "current" pregnancies, see where clause below
-
 left join i2b2.lz_clarity_enc prge on preg.pat_enc_csn_id = prge.pat_enc_csn_id
-
 left join clarity.v_ob_del_records ob on coh.pat_id = ob.mom_id
-
 left join clarity.ZC_DELIVERY_TYPE zdt on ob.delmeth_c = zdt.DELIVERY_TYPE_C
-
 ) x
 
 --the following where clause is for "current" pregnancies
-
 -- where (dx_mos <= 9 --qualified for current pregnancy using dx codes (no need to check dx2 because icd-9 codes are before 10/1/2015)
-
 -- or lab_mos <= 9 --qualified for current pregnancy using lab results
-
 -- or preg_mos <= 9 --qualified for current pregnancy using ob data
-
 -- )
-
 -- and (ob_mos is null --if currently pregnant, has not delivered in the past 9 months
-
 -- or ob_mos > 9 --older deliveries
-
 -- )
-
 ;
 
 --------------------------------------------------------------------------------
@@ -2382,33 +2215,19 @@ left join clarity.ZC_DELIVERY_TYPE zdt on ob.delmeth_c = zdt.DELIVERY_TYPE_C
 --------------------------------------------------------------------------------
 
 select dx.pat_enc_csn_id
-
 from i2b2.lz_clarity_diagnosis_new dx
-
 where (dx.icd_type = 9
-
 and trunc(dx.contact_date) between to_date('01/01/2013','mm/dd/yyyy')
-
 and to_date('09/30/2015','mm/dd/yyyy')
-
 and dx.icd_code between '630' and '679.9999999999'
-
 )
-
 or (dx.icd_type = 10
-
 and trunc(dx.contact_date) >= to_date('10/01/2015','mm/dd/yyyy')
-
 and regexp_like(dx.icd_code,'^(O|Z3(4|A|7))','i')
-
 )
-
 union
-
 select dx.pat_enc_csn_id
-
 from i2b2.int_dx dx
-
 where trunc(dx.effective_date) between to_date('01/01/2013','mm/dd/yyyy')
 
 and to_date('09/30/2015','mm/dd/yyyy')
