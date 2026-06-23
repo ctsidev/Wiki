@@ -13,7 +13,7 @@
 *   [Chief Complaints](#Chief-Complaints)
 *   [Current Med List](#Current-Med-List)
 *   [Multiple Phone Numbers and Patient's preference](#Multiple-Phone-Numbers-and-Patient's-preference)
-*   [Beaker Text Reports (narratives, etc...)](#BeakerTe)
+*   [Beaker Text Reports (narratives, etc...)](#Beaker-Text-Reports)
 *   [Check Patient's Contact Information](#CheckPat)
 *   [All Flowsheet Questions on a Template](#AllFlows)
 *   [Past Medical History](#PastMedi)
