@@ -2145,63 +2145,111 @@ Code to find pregnancy data.
 -- To check for "current" pregnancies, see where clause.
 
 --------------------------------------------------------------------------------
-
-select distinct x.*
-from (select distinct coh.pat_id
-,dx.contact_date dx_diagnosis_date
-,dx2.effective_date dx2_diagnosis_date
-,round(months_between(sysdate, dx.contact_date),2) dx_mos
-,round(months_between(sysdate, dx2.effective_date),2) dx2_mos
-,lab.specimn_taken_time
-,round(months_between(sysdate, lab.specimn_taken_time),2) lab_mos
-,preg.pat_id preg_pat_id
-,prge.pat_enc_csn_id preg_pat_enc_csn_id
-,prge.effective_date_dt preg_effective_date_dt
-,round(months_between(sysdate, prge.effective_date_dt),2) preg_mos
-,ob.mom_id mom_pat_id
-,ob.del_dttm delivery_date
-,max(ob.del_dttm) over (partition by coh.pat_id) delivery_date_last
-,round(months_between(sysdate, ob.del_dttm),2) ob_mos
-,ob.ga gestational_age
-,ob.delmeth_c delivery_method_c
-,zdt.name delivery_method
-from xdr_prinv_cohpat coh
-left join i2b2.lz_clarity_diagnosis_new dx on coh.pat_id = dx.pat_id
-and ((dx.icd_type = 9 --no need to check icd9 for current pregnancy
-and trunc(dx.contact_date) between to_date('01/01/2013','mm/dd/yyyy')
-and to_date('09/30/2015','mm/dd/yyyy')
-and dx.icd_code between '630' and '679.9999999999'
-)
-or
-(dx.icd_type = 10
-and trunc(dx.contact_date) >= to_date('10/01/2015','mm/dd/yyyy')
-and regexp_like(dx.icd_code,'^(O|Z3(4|A|7))','i')
-)
-)
-left join i2b2.int_dx dx2 on coh.pat_id = dx2.pat_id
-and trunc(dx2.effective_date) between to_date('01/01/2013','mm/dd/yyyy')
-and to_date('09/30/2015','mm/dd/yyyy')
-and dx2.icd9_code between '630' and '679.9999999999'
-left join i2b2.bip_encounter_pat_link enc on coh.pat_id = enc.pat_id
-left join i2b2.lz_clarity_labs lab on enc.pat_enc_csn_id = lab.pat_enc_csn_id
-and upper(lab.ord_value) = 'POSITIVE' and lab.proc_code in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
--- driver being used by Covid registry ETL
-left join i2b2.xdr_covid_preg_lab_drv drv on lab.component_id = drv.component_id
-left join clarity.v_ob_enc_obgyn_stat preg on coh.pat_id = preg.pat_id
-and preg.obgyn_stat_c = 4 --pregnant at some point - for "current" pregnancies, see where clause below
-left join i2b2.lz_clarity_enc prge on preg.pat_enc_csn_id = prge.pat_enc_csn_id
-left join clarity.v_ob_del_records ob on coh.pat_id = ob.mom_id
-left join clarity.ZC_DELIVERY_TYPE zdt on ob.delmeth_c = zdt.DELIVERY_TYPE_C
-) x
-
+--------------------------------------------------------------------------------
+-- Get dxs
+--------------------------------------------------------------------------------
+drop table xdr_123456_cohpregdx purge;
+create table xdr_123456_cohpregdx as
+select distinct coh.pat_id
+               ,dx.contact_date dx_diagnosis_date
+               ,dx2.effective_date dx2_diagnosis_date
+               ,round(months_between(sysdate, dx.contact_date),2) dx_mos
+               ,round(months_between(sysdate, dx2.effective_date),2) dx2_mos
+               ,trunc(months_between(dx.contact_date,coh.birth_date)/12) dx_age
+               ,trunc(months_between(dx2.effective_date,coh.birth_date)/12) dx2_age
+  from xdr_prinv_coh                      coh
+  left join i2b2.lz_clarity_diagnosis_new dx   on coh.pat_id = dx.pat_id
+                                                  and ((dx.icd_type = 9   --no need to check icd9 for current pregnancy
+                                                        and  trunc(dx.contact_date) between to_date('01/01/2013','mm/dd/yyyy')
+                                                                                        and to_date('09/30/2015','mm/dd/yyyy')
+                                                        and dx.icd_code between '630' and '679.9999999999'
+                                                       )
+                                                       or 
+                                                       (dx.icd_type = 10 
+                                                        and trunc(dx.contact_date) >= to_date('10/01/2015','mm/dd/yyyy')
+                                                        and regexp_like(dx.icd_code,'^(O|Z3(4|A|7))','i')
+                                                       )
+                                                      )
+  left join i2b2.int_dx                   dx2  on coh.pat_id = dx2.pat_id 
+                                                  and trunc(dx2.effective_date) between to_date('01/01/2013','mm/dd/yyyy')
+                                                                                    and to_date('09/30/2015','mm/dd/yyyy')
+                                                  and dx2.icd9_code between '630' and '679.9999999999'
+  where dx.pat_id is not null
+     or dx2.pat_id is not null
+;
+--------------------------------------------------------------------------------
+-- Get labs
+--------------------------------------------------------------------------------
+select distinct l.proc_code, l.description, l.component_id, l.component_name
+  from i2b2.lz_clarity_labs l
+  join i2b2.xdr_covid_preg_lab_drv d on l.component_id = d.component_id
+  where l.proc_code not in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
+;
+--LAB3227	HCG,TOTAL,QL W/REFL TO QN	10010444	HCG, TOTAL, QL(QST)
+--  An hCG level above 25 milli-international units per milliliter (mIU/mL) usually means you're pregnant. But it's not a guarantee. 
+--  Your provider may recommend checking your hCG level again in a few days to see if the level rises, which would confirm a pregnancy.
+--  Conclusion: ok to exclude these from the list of proc_codes listed above.
+drop table xdr_123456_cohpreglab purge;
+create table xdr_123456_cohpreglab as
+select distinct coh.pat_id
+               ,lab.specimn_taken_time 
+               ,round(months_between(sysdate, lab.specimn_taken_time),2) lab_mos
+               ,trunc(months_between(lab.specimn_taken_time,coh.birth_date)/12) lab_age
+  from xdr_prinv_coh                 coh
+  join i2b2.bip_encounter_pat_link   enc  on coh.pat_id = enc.pat_id
+  join i2b2.lz_clarity_labs          lab  on enc.pat_enc_csn_id = lab.pat_enc_csn_id
+                                             and upper(lab.ord_value) = 'POSITIVE' 
+                                             and lab.proc_code in ('HIS2257','LAB144','HIS5747','LAB6256','HIS2256','HIS2258','POC1004','HIS2259','LAB437','OSL437','POC7')
+  join i2b2.xdr_covid_preg_lab_drv   drv  on lab.component_id = drv.component_id -- driver being used by Covid registry ETL
+;
+--------------------------------------------------------------------------------
+-- Get OB
+--------------------------------------------------------------------------------
+drop table xdr_123456_cohpregob purge;
+create table xdr_123456_cohpregob as
+select distinct coh.pat_id
+               ,prge.pat_enc_csn_id preg_pat_enc_csn_id
+               ,prge.effective_date_dt preg_effective_date_dt
+               ,round(months_between(sysdate, prge.effective_date_dt),2) preg_mos
+               ,ob.mom_id mom_pat_id
+               ,ob.del_dttm delivery_date
+               ,max(ob.del_dttm) over (partition by coh.pat_id) delivery_date_last
+               ,round(months_between(sysdate, ob.del_dttm),2) ob_mos
+               ,ob.ga gestational_age
+               ,ob.delmeth_c delivery_method_c
+               ,zdt.name delivery_method
+  from xdr_prinv_coh         coh
+  join v_ob_enc_obgyn_stat   preg on coh.pat_id = preg.pat_id 
+                                     and preg.obgyn_stat_c = 4 --pregnant at some point - for "current" pregnancies, see where clause below
+  join i2b2.lz_clarity_enc   prge on preg.pat_enc_csn_id = prge.pat_enc_csn_id 
+  left join v_ob_del_records ob   on coh.pat_id = ob.mom_id         
+  left join zc_delivery_type zdt  on ob.delmeth_c = zdt.delivery_type_c
+;
+--------------------------------------------------------------------------------
+-- Get final pregnancy cohort
+--------------------------------------------------------------------------------
+drop table xdr_119744_cohpregfin purge;
+create table xdr_119744_cohpregfin as
+select distinct coh.*
+               ,case when dx.pat_id is not null then 1 else 0 end dx
+               ,case when lab.pat_id is not null then 1 else 0 end lab
+               ,case when ob.pat_id is not null then 1 else 0 end ob
+  from xdr_prinv_coh              coh
+  left join xdr_119744_cohpregdx  dx    on coh.pat_id = dx.pat_id
+  left join xdr_119744_cohpreglab lab   on coh.pat_id = lab.pat_id
+  left join xdr_119744_cohpregob  ob    on coh.pat_id = ob.pat_id
+  where (dx.pat_id is not null
+         or lab.pat_id is not null
+         or ob.pat_id is not null
+        )
 --the following where clause is for "current" pregnancies
--- where (dx_mos <= 9 --qualified for current pregnancy using dx codes (no need to check dx2 because icd-9 codes are before 10/1/2015)
--- or lab_mos <= 9 --qualified for current pregnancy using lab results
--- or preg_mos <= 9 --qualified for current pregnancy using ob data
--- )
--- and (ob_mos is null --if currently pregnant, has not delivered in the past 9 months
--- or ob_mos > 9 --older deliveries
--- )
+--    and (dx.dx_mos <= 9          --qualified for current pregnancy using dx codes (no need to check dx2 because icd-9 codes are before 10/1/2015)
+--         or lab.lab_mos <= 9     --qualified for current pregnancy using lab results
+--         or ob.preg_mos <= 9     --qualified for current pregnancy using ob data
+--        )
+--    and (ob.ob_mos is null       --if currently pregnant, has not delivered in the past 9 months
+--         or ob.ob_mos > 9        --older deliveries
+--        )
 ;
 
 --------------------------------------------------------------------------------
