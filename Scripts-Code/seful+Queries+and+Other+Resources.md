@@ -2167,7 +2167,7 @@ select distinct coh.pat_id
                                                        or 
                                                        (dx.icd_type = 10 
                                                         and trunc(dx.contact_date) >= to_date('10/01/2015','mm/dd/yyyy')
-                                                        and regexp_like(dx.icd_code,'^(O|Z3(4|A|7))','i')
+                                                        and regexp_like(dx.icd_code,'^(O|Z3(4|5|A|7))','i')
                                                        )
                                                       )
   left join i2b2.int_dx                   dx2  on coh.pat_id = dx2.pat_id 
