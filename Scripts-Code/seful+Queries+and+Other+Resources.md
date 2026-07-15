@@ -2228,16 +2228,16 @@ select distinct coh.pat_id
 --------------------------------------------------------------------------------
 -- Get final pregnancy cohort
 --------------------------------------------------------------------------------
-drop table xdr_119744_cohpregfin purge;
-create table xdr_119744_cohpregfin as
+drop table xdr_123456_cohpregfin purge;
+create table xdr_123456_cohpregfin as
 select distinct coh.*
                ,case when dx.pat_id is not null then 1 else 0 end dx
                ,case when lab.pat_id is not null then 1 else 0 end lab
                ,case when ob.pat_id is not null then 1 else 0 end ob
   from xdr_prinv_coh              coh
-  left join xdr_119744_cohpregdx  dx    on coh.pat_id = dx.pat_id
-  left join xdr_119744_cohpreglab lab   on coh.pat_id = lab.pat_id
-  left join xdr_119744_cohpregob  ob    on coh.pat_id = ob.pat_id
+  left join xdr_123456_cohpregdx  dx    on coh.pat_id = dx.pat_id
+  left join xdr_123456_cohpreglab lab   on coh.pat_id = lab.pat_id
+  left join xdr_123456_cohpregob  ob    on coh.pat_id = ob.pat_id
   where (dx.pat_id is not null
          or lab.pat_id is not null
          or ob.pat_id is not null
