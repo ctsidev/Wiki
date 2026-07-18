@@ -61,6 +61,7 @@
 *   [PDF Scans from Clarity](#PDF-Scans-from-Clarity)
 *   [PHQ9, PROMIS, SDOH, GAD7, AUDITC](#PHQ9,PRO)
 *   [Dispensed Medications](#Dispensed-Medications)
+*   [Referrals](#Referrals)
 
 ## AD-POLST
 
