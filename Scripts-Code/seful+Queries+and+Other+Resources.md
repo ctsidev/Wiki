@@ -4851,3 +4851,31 @@ select distinct ip_patient_id
    ,EXT_DRUG_PROV_NAME
 from XDR_PID_MEDFILLALL
 ;
+
+# Referrals
+
+(by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 7/17/2026)
+select distinct cpo.study_id ip_patient_id
+               ,r.referral_id
+               ,r.ENTRY_DATE
+               ,rg.prov_name referring_provider
+               ,rl.prov_name referral_provider
+               ,dep.department_name
+               ,dep.specialty
+               ,zp.name priority
+               ,r.AUTH_NUM_OF_VISITS
+               ,r.SCHED_NUM_VISITS	
+               ,r.REQUEST_NUM_VISITS
+               ,zc.name class
+               ,zrsn.name reason
+  from xdr_prinv_coh cpo
+  join referral r on cpo.pat_id = r.pat_id
+  left join clarity_ser rg on r.referring_prov_id = rg.prov_id
+  left join clarity_ser rl on r.referral_prov_id = rl.prov_id
+  left join clarity_dep dep on r.REFD_TO_DEPT_ID = dep.department_id
+  left join zc_specialty zs on r.refd_to_spec_c = zs.specialty_c
+  left join ZC_RFL_PRIORITY zp on r.priority_c = zp.priority_c
+  left join zC_RFL_CLASS zc on r.RFL_CLASS_C = zc.RFL_CLASS_C
+  left join zC_RSN_FOR_RFL zrsn on r.RSN_FOR_RFL_C = zrsn.RSN_FOR_RFL_C
+  order by study_id
+;
