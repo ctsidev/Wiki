@@ -4854,7 +4854,8 @@ from XDR_PID_MEDFILLALL
 
 # Referrals
 
-(by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 7/17/2026)
+by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 7/17/2026
+
 select distinct cpo.study_id ip_patient_id
                ,r.referral_id
                ,r.ENTRY_DATE
