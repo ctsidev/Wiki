@@ -2252,6 +2252,50 @@ select distinct coh.*
 --         or ob.ob_mos > 9        --older deliveries
 --        )
 ;
+--------------------------------------------------------------------------------
+-- Pull some pregnancy variables
+--------------------------------------------------------------------------------
+alter table xdr_123456_cohpregfin add constraint xdr_123456_cohpregfin_pk primary key (pat_id);
+create index xdr_123456_cohpregdx_patidx on xdr_123456_cohpregdx (pat_id);
+create index xdr_123456_cohpreglab_patidx on xdr_123456_cohpreglab (pat_id);
+create index xdr_123456_cohpregob_patidx on xdr_123456_cohpregob (pat_id);
+drop table xdr_123456_preg purge;
+create table xdr_123456_preg as
+select distinct coh.*
+                       ,ob.DELREC_ID episode_id
+                       ,dx.dx_diagnosis_date
+                       ,dx.dx_mos
+                       ,lab.specimn_taken_time
+                       ,lab.lab_mos
+                       ,cob.pat_id preg_pat_id
+                       ,cob.preg_pat_enc_csn_id
+                       ,cob.preg_effective_date_dt
+                       ,cob.preg_mos
+                       ,cob.mom_pat_id
+                       ,cob.delivery_date
+                       ,cob.delivery_date_last
+                       ,cob.ob_mos
+                       ,cob.gestational_age
+                       ,cob.delivery_method_c
+                       ,cob.delivery_method
+                       ,ob.living_c
+                       ,zol.name living
+                       ,ohd.ob_hx_outcome_c
+                       ,zoc.name delivery_outcome
+                       ,ep.ob_wrk_edd_dt estimated_delivery_dt
+                       ,ep.SUM_BLK_TYPE_ID
+                       ,zet.name episode_category
+          from xdr_123456_cohpregfin              coh
+          left join xdr_123456_cohpregdx          dx   on coh.pat_id = dx.pat_id
+          left join xdr_123456_cohpreglab         lab  on coh.pat_id = lab.pat_id
+          left join xdr_123456_cohpregob          cob  on coh.pat_id = cob.pat_id
+          left join clarity.v_ob_del_records      ob   on coh.pat_id = ob.mom_id   
+          left join clarity.ob_hsb_delivery       ohd  on ob.DELREC_ID = ohd.SUMMARY_BLOCK_ID
+          left join clarity.episode               ep   on ob.delrec_id = ep.episode_id
+          left join clarity.ZC_OB_HX_IS_LIVING	  zol  on ob.LIVING_C	= zol.OB_HX_IS_LIVING_C
+          left join clarity.zc_ob_hx_outcome      zoc  on ohd.ob_hx_outcome_c=zoc.ob_hx_outcome_c
+          left join clarity.ZC_SUM_BLK_TYPE       zet  on ep.SUM_BLK_TYPE_ID=zet.SUM_BLK_TYPE_ID
+;
 
 --------------------------------------------------------------------------------
 
