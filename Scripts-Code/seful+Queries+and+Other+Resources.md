@@ -2138,7 +2138,16 @@ lnk.SUM_BLK_TYPE_ID = 2050001100 ----2050001100 "HSCT ALLOGENEIC RECIPIENT"
 (by [Theona Tacorda](https://uclabip.atlassian.net/wiki/people/557058:34b4a2e8-cda3-430c-9100-db2dd91cd39d?ref=confluence) on 9/10/2021)
 
 ```sql
-Code to find pregnancy data.
+Code to find pregnancy data. --NOTE: THIS HAS BEEN DEPRECATED, INSTEAD USE \GITHUB\CTSI_DEV\BIPDATA\CODELIBRARY\OBSTETRICS_PREGNANCIES
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+--NOTE: THIS HAS BEEN DEPRECATED, INSTEAD USE \GITHUB\CTSI_DEV\BIPDATA\CODELIBRARY\OBSTETRICS_PREGNANCIES
+--NOTE: THIS HAS BEEN DEPRECATED, INSTEAD USE \GITHUB\CTSI_DEV\BIPDATA\CODELIBRARY\OBSTETRICS_PREGNANCIES
+--NOTE: THIS HAS BEEN DEPRECATED, INSTEAD USE \GITHUB\CTSI_DEV\BIPDATA\CODELIBRARY\OBSTETRICS_PREGNANCIES
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
 
