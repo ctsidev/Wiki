@@ -43,15 +43,17 @@ Additionally, for all files ensure that double quotes ("") are removed throughou
 
 ---
 ## 2 Validate Cleaned Data
-- Use OHIA AI tool to analyze 10k records
-- Manually review 375 cases of the ones where no-PHI was found using the Notebook/script under the MlD schema in Databricks and called [De-identified LLM Validation]
-- See code for manual scrubbing in the Appendix at the end of this page
+- Once scrubbing is completed, we must perform a validation in 10k records
+- First follow OHIA's instructions to trigger the LLM_validation_service in the MLD schema
+- From that output, obtain the object name from ohiadev.ohia_deidentiication_notes in ohiaADBd001 (the table name will have the sufix 'llm_deidentification_YYYY_MM_DD_HH_MM)
+- Perform a manual review on 375 cases of the ones where PHI was found using the Notebook/script under the MlD schema in Databricks and called [De-identified LLM Validation] (See code for manual scrubbing in the Appendix at the end of this page)
+
 
 
 ---
 ## 3 Data Delivery 
 - You shall export directly into ULEAD from DataBricks and then copy the files to the PI IRB folder.
-- YOu might want to zip-copy-past-unzip to miminize time it takes to 'copy'
+- YOu might want to zip-copy-past-unzip to minimize time it takes to 'copy'
 - In exceptional cases When dataset exceeds XXGB, open an ISS ticket for OHIA to copy the data from DataBrick de-identified object into the PI ULEAD folder- 
 
 ---
