@@ -3,85 +3,8 @@
 The link to the full guide with screen shots from OHIA can be found
 [here](https://uclahs.app.box.com/s/xr9qy9pipvl4rbfj549pwx1cuks8gung)
 
-### The following is a quick guide including example snippets (all examples use PI – ‘Melissa Lechner’)
 
-## **<span class="underline">Steps 0,1 and 2 are left here as a reference but as of 02/21/23, the consultants/OHIA are in charge of these steps. However, we might have to assist occasionally and it’s good to be aware of the steps.</span>**
-
-**STEP 0: Get PI ULEAD information and preferences. As of 11/9/2022 and
-possibly earlier, the consultants complete this. **
-
-Contact PI to get info and preferences about users and tools. Example:
-
-Hi Dr. Lechner,
-
-I am starting the process to grant you access to the ULEAD system, since
-this process takes OHIA time to setup.
-
-I will need 3 pieces of information:
-
-1\) Do you already have access to OHIA's DDR? (Yes/No)
-
-2\) Please list the Mednet account emails of all the people that will
-need ULEAD access.
-
-3\) Please choose from the following list of tools that are needed:
-
-\- Database: MS Access
-
-\- Software: Python, R, SQL Server
-
-\- Applications: Anaconda, Jupyter Notebook, R Studio, Visual Studio,
-SSMS, MS Office (Word, Excel, Powerpoint, Access), PyCharm, PowerBI,
-Adobe Acrobat, SAS, MATLAB.
-
-(Note: SAS and MATLAB setup require user licenses).
-
-Once we gather this information, we will open a service request. And we
-will let you know when your data is finally available in your ULEAD
-environment.
-
-Thank you and looking forward to working with you on this project.
-
-**STEP 1: Open ticket to get ULEAD access for PI. As of 11/9/2022 and
-possibly earlier, the consultants complete this.**
-
-Add required info, and put Sanz, Javier in the ***Customer Watch List***
-section.
-
-Put the information in the following fields:
-
-***Short Description:***
-
-ULEAD Access
-
-***Description:***
-
-Please assign to OHIA Self-Service Engagement:
-
-Please create users:
-
-Melissa Lechner -- MLechner@mednet.ucla.edu
-
-Alexandra Drakaki -- ADrakaki@mednet.ucla.edu
-
-ULEAD folder name is: PI\_Mednet\_name\_year\_IRB (ex
-"DBELL\_22\_20-123123")
-
-Software tools:
-
-Database: MS Access
-
-Software: Python, R, SAS
-
-Applications: R Studio, MS Office, Adobe, SAS, MATLAB
-
-OS: Windows
-
-**STEP 2: Create PI folder in the CTSI folder inside ULEAD. As of
-02/21/2023 and possibly earlier, OHIA-ISS completes this. **
-
-Before the ticket from STEP 1 is completed, create a folder for data
-transfer.
+**STEP 1: Copy data into PI IRB ULEAD folder**
 
 Navigate to the location inside ULEAD: F:\\Data Transfer
 Folders\\Inbound\\ctsi and add a new folder.
@@ -89,8 +12,7 @@ Folders\\Inbound\\ctsi and add a new folder.
 The naming convention for folder is ‘\<PI AD username\>\_\<current year
 - 2 digit\>\_\<IRB\>’. Example: MLechner\_21\_20-000857.
 
-**STEP 3: Data transfer into ULEAD. As of 1/17/2023 the programmers
-complete this.**
+**STEP 3: Data transfer into ULEAD. As of 1/17/2023 the programmers complete this.**
 
 Open [ULEAD ](https://ulead.mednet.ucla.edu/)
 
@@ -150,24 +72,21 @@ outlines the meaning of every file and every field and how you can
 connect records across files using different keys/IDs for patients,
 encounters, providers, etc...
 
-If you have not already accessed ULEAD and ShareFile you can find
-instructions in  
-[How to Request Access to
-ULEAD](https://uclahs.app.box.com/file/1670923043323?s=22fc9r33x1lw1h5t6cyznp7juczpv8kt)
 
-[ULEAD User
-Guide](https://uclahs.app.box.com/file/997096403967?s=i5wkyg251tfivo03wu3wb4yvg776q2jb)
+ULEAD SUPORRT Inforamtion
 
-[ULEAD
-FAQs](https://uclahs.app.box.com/file/985594259779?s=d45cd2y3dmg9f8jbgp1fcte3oin9kd9x)
+This is the [ULEAD OHIA IT site](https://it.uclahealth.org/about/ohia/products/ulead) with all the information foor this product.
 
-[JMP Pro License Activation Tip
-Sheet](https://uclahs.app.box.com/file/2013049893064?s=i9gtvrpr7s2v4qdr5u1e5p43povkogc5)
-(this document will eventually be merged into the ULEAD User Guide so
-the link to the User Guide is important to have)
+Support highlights
+* For any questions about ULEAD, please submit a [ServiceNow ticket](https://uclahsprod.service-now.com/it_portal?id=sc_cat_item&sys_id=3f1dd0320a0a0b99000a53f7604a2ef9)
+* You are also welcome to attend ULEAD Office Hours, held every Tuesday from 2:00 – 2:30 pm and Thursday from 9:00 – 9:30 am, where the support team is available to answer questions, troubleshoot issues, and provide guidance.
+* Please contact Self Service Analytics or Customer Care at 310-267-CARE (2273). Specialists are available 24/7 to provide support.
+* Useful links:
+*     If you have not already accessed ULEAD and ShareFile you can find instructions in  [How to Request Access to ULEAD](https://uclahs.app.box.com/file/1670923043323?s=22fc9r33x1lw1h5t6cyznp7juczpv8kt)
+*     [ULEAD UserGuide](https://uclahs.app.box.com/file/997096403967?s=i5wkyg251tfivo03wu3wb4yvg776q2jb)
+*     [ULEADFAQs](https://uclahs.app.box.com/file/985594259779?s=d45cd2y3dmg9f8jbgp1fcte3oin9kd9x)
+*     [JMP Pro License Activation TipSheet](https://uclahs.app.box.com/file/2013049893064?s=i9gtvrpr7s2v4qdr5u1e5p43povkogc5)
 
-Ultimately, you can reach out to ULEAD Support Team with any ULEAD
-related issues: <ULEADSupportTeam@mednet.ucla.edu>
 
 One last tip, oftentimes investigators can't find the data when opening
 it with Excel. This is most typically due to  
