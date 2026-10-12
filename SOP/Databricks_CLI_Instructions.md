@@ -6,7 +6,7 @@ This repository contains instructions on how to download the Databricks CLI in U
 ## Download and Extract the CLI
 1. On your T1 account computer, open the Databricks CLI releases (https://github.com/databricks/cli/releases)
 2. Open the latest release and scroll down to the 'Assets' section
-3. Download the .zip file that matches ULEAD's operating system and CPU architecture. For standard 64-bit Windows ULEAD environment, downalod databricks_cli_<version>_windows_amd64.zip
+3. Download the .zip file that matches ULEAD's operating system and CPU architecture. For standard 64-bit Windows ULEAD environment, download 'databricks_cli_<version>_windows_amd64.zip'
 
 ## Copy the Executable into ULEAD
 1. Inside your ULEAD session, create a dedicated folder to hold the executable. For example: 'U:\Arashied\tools\databricks'
