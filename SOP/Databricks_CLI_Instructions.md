@@ -15,23 +15,23 @@ This repository contains instructions on how to download the Databricks CLI in U
 
 ## Add the CLI to your ULEAD Path
 1. Open AnacondaPrompt from your ULEAD environment
-2. Use the following command to set a path to the folder containing your 'databricks.exe' file: set PATH=%PATH%;<your-path-here> (ex. set PATH=%PATH%;U:\Arashied\tools\databricks)
+2. Use the following command to set a path to the folder containing your 'databricks.exe' file: set PATH=%PATH%;your-path-here (ex. set PATH=%PATH%;U:\Arashied\tools\databricks)
 
 ## Authenticate the CLI
-3. Run the following command: databricks auth login --host https://<your-workspace-url>
-  -- Note that <your-workspace-url> refers to the URL generated when you do the following: 
+3. Run the following command: 'databricks auth login --host https://your-workspace-url'
+  -- Note that 'your-workspace-url' refers to the URL generated when you do the following: 
       -- Open Databricks
       -- Navigate to 'ohiaADBp001' in the production environment
-      -- Click on 'Workspace' in the right navigation panel then copy that URL into <your-workspace-url>
+      -- Click on 'Workspace' in the right navigation panel then copy that URL into 'your-workspace-url'
 4. Once you run that above command, name your configuration profile when prompted (you can press Enter to accept the DEFAULT profile). For my runs I just use the screename associated with my mednet account (ex. arashied)
 5. A brower will then open inside ULEAD prompting you to log in and complete the authentication
-6. Verify that the authentication is working by running: databricks current-user me
+6. Verify that the authentication is working by running: 'databricks current-user me'
   -- If you've done it correctly, this should print your user details
 
 ## Upload Files and Folders
 -- Volume paths in the Unity Catalog follow this structure and require the 'dbfs:/' prefix for all commands.
 -- For 'ohiaADBp001' the following path should work for everyone 'dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base'. You can finish the path with your user/project folder inside jsl_deid_file_arrival_base (ex. 'dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base/arashied')
--- To upload a single file use the following: databricks fs cp "./file.csv" dbfs:/Volumes/<catalog>/<schema>/<volume>/<directory>/ --overwrite
--- To upload an entire folder directory recursively: databricks fs cp "./my_folder" dbfs:/Volumes/<catalog>/<schema>/<volume>/<directory> -r --overwrite
+-- To upload a single file use the following: databricks fs cp "./file.csv" dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base/ --overwrite
+-- To upload an entire folder directory recursively: databricks fs cp "./my_folder" dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base -r --overwrite
 -- To create a new folder inside the volume: databricks fs mkdir dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base/user-folder/new-directory
 -- To list the contents of a volume directory: databricks fs ls dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base -l
