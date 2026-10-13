@@ -22,19 +22,19 @@ This repository contains instructions on how to download the Databricks CLI in U
 ## Import Files and Folders
 ### Authenticate the CLI
 1. Run the following command: `databricks auth login --host https://<your-workspace-url>`
-  - Note that `<your-workspace-url>` refers to the URL generated when you do the following: 
-      - Open Databricks
-      - Navigate to `ohiaADBp001` in the production environment
-      - Click on `Workspace` in the left navigation panel then copy that URL into `<your-workspace-url>`
+     - Note that `<your-workspace-url>` refers to the URL generated when you do the following: 
+         - Open Databricks
+         - Navigate to `ohiaADBp001` in the production environment
+         - Click on `Workspace` in the left navigation panel then copy that URL into `<your-workspace-url>`
 2. Once you run that above command, name your configuration profile when prompted (you can press Enter to accept the DEFAULT profile). For my runs I just use the screename associated with my mednet account (ex. arashied)
 3. A brower will then open inside ULEAD prompting you to log in and complete the authentication
 4. Verify that the authentication is working by running: `databricks current-user me`
-  - If you've done it correctly, this should print your user details
+     - If you've done it correctly, this should print your user details
 
 ### Uploads
 1. Volume paths in the Unity Catalog follow this structure and require the `dbfs:/` prefix for all commands.
 2. For `ohiaADBp001` the following path should work for everyone `dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base`.
-   - Ex. `dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base/arashied/<project_folder>`
+      - Ex. `dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base/arashied/<project_folder>`
 3. To upload a single file use the following: `databricks fs cp "<ulead_folder_path>/file.csv" dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base/ --overwrite`
 4. To upload an entire folder directory recursively: `databricks fs cp "<ulead_folder_path>" dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base -r --overwrite`
 5. To create a new folder inside the volume: `databricks fs mkdir dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base/user-folder/new-directory`
@@ -43,14 +43,14 @@ This repository contains instructions on how to download the Databricks CLI in U
 ## Export Files and Folders
 ### Authenticate the CLI
 1. Run the following command: `databricks auth login --host https://<your-workspace-url>`
-  - Note that `<your-workspace-url>` refers to the URL generated when you do the following: 
-      - Open Databricks
-      - Navigate to `ohiaADBmld001` in the development environment
-      - Click on `Workspace` in the right navigation panel then copy that URL into `<your-workspace-url>`
+     - Note that `<your-workspace-url>` refers to the URL generated when you do the following: 
+         - Open Databricks
+         - Navigate to `ohiaADBmld001` in the development environment
+         - Click on `Workspace` in the right navigation panel then copy that URL into `<your-workspace-url>`
 2. Once you run that above command, name your configuration profile when prompted (you can press Enter to accept the DEFAULT profile). For my runs I just use the screename associated with my mednet account (ex. arashied)
 3. A brower will then open inside ULEAD prompting you to log in and complete the authentication
 4. Verify that the authentication is working by running: `databricks current-user me`
-  - If you've done it correctly, this should print your user details
+     - If you've done it correctly, this should print your user details
 
 ### Exports
 1. Take your de-identified notes and create a spark data frame for each (see example):
@@ -90,10 +90,10 @@ This repository contains instructions on how to download the Databricks CLI in U
 
       write_single_csv(df, filename)
     ```
-    - Note 1: df.coalesce will create a new directory nested in your base_path that incudes metadata and .csv file. Shutil then moves the .csv file into the base_path directory and removes the metadata file and temp directory.
-    - Note 2: I've written the function to write out 1 file at a time, and then I use the for loop to recursively move through the provider notes files I want to have outputted. You can update the above as you see fit
+       - Note 1: df.coalesce will create a new directory nested in your base_path that incudes metadata and .csv file. Shutil then moves the .csv file into the base_path directory and removes the metadata file and temp directory.
+       - Note 2: I've written the function to write out 1 file at a time, and then I use the for loop to recursively move through the provider notes files I want to have outputted. You can update the above as you see fit
 4. To upload a single file into ULEAD: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/<user-folder>/<sub-folder>/<export_file_here>.csv" "<designated_ULEAD_path_here>"`
-     - Ex: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/arashied/Savage/savage_provider_notes_1.csv" "F:\Inbound\ARashied\PHI Scrubbing\25-0134_Savage\OHIA Results\savage_provider_notes_1.csv"`
+        - Ex: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/arashied/Savage/savage_provider_notes_1.csv" "F:\Inbound\ARashied\PHI Scrubbing\25-0134_Savage\OHIA Results\savage_provider_notes_1.csv"`
 5. To upload an entire folder directly into ULEAD: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/<user-folder>/<sub-folder>/" "<designated_ULEAD_path_here>" -r`
-     - Ex: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/arashied/Savage/" "F:\Inbound\ARashied\PHI Scrubbing\25-0134_Savage\OHIA Results" -r`
+        - Ex: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/arashied/Savage/" "F:\Inbound\ARashied\PHI Scrubbing\25-0134_Savage\OHIA Results" -r`
 
