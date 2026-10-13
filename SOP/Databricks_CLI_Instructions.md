@@ -90,10 +90,10 @@ This repository contains instructions on how to download the Databricks CLI in U
 
       write_single_csv(df, filename)
     ```
-       - Note 1: df.coalesce will create a new directory nested in your base_path that incudes metadata and .csv file. Shutil then moves the .csv file into the base_path directory and removes the metadata file and temp directory.
-       - Note 2: I've written the function to write out 1 file at a time, and then I use the for loop to recursively move through the provider notes files I want to have outputted. You can update the above as you see fit
+      - Note 1: df.coalesce will create a new directory nested in your base_path that incudes metadata and .csv file. Shutil then moves the .csv file into the base_path directory and removes the metadata file and temp directory.
+      - Note 2: I've written the function to write out 1 file at a time, and then I use the for loop to recursively move through the provider notes files I want to have outputted. You can update the above as you see fit
 4. To upload a single file into ULEAD: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/<user-folder>/<sub-folder>/<export_file_here>.csv" "<designated_ULEAD_path_here>"`
-        - Ex: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/arashied/Savage/savage_provider_notes_1.csv" "F:\Inbound\ARashied\PHI Scrubbing\25-0134_Savage\OHIA Results\savage_provider_notes_1.csv"`
+      - Ex: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/arashied/Savage/savage_provider_notes_1.csv" "F:\Inbound\ARashied\PHI Scrubbing\25-0134_Savage\OHIA Results\savage_provider_notes_1.csv"`
 5. To upload an entire folder directly into ULEAD: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/<user-folder>/<sub-folder>/" "<designated_ULEAD_path_here>" -r`
-        - Ex: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/arashied/Savage/" "F:\Inbound\ARashied\PHI Scrubbing\25-0134_Savage\OHIA Results" -r`
+      - Ex: `databricks fs cp "dbfs:/Volumes/ohiadev/ctsi/demo/arashied/Savage/" "F:\Inbound\ARashied\PHI Scrubbing\25-0134_Savage\OHIA Results" -r`
 
