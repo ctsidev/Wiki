@@ -31,7 +31,7 @@ This repository contains instructions on how to download the Databricks CLI in U
 4. Verify that the authentication is working by running: `databricks current-user me`
   - If you've done it correctly, this should print your user details
 
-### Upload Files and Folders
+### Uploads
 1. Volume paths in the Unity Catalog follow this structure and require the `dbfs:/` prefix for all commands.
 2. For `ohiaADBp001` the following path should work for everyone `dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base`.
    - Ex. `dbfs:/Volumes/ohiaprd/ucvolume/jsl_deid_file_arrival_base/arashied/<project_folder>`
