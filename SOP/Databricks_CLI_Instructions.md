@@ -17,7 +17,9 @@ This repository contains instructions on how to download the Databricks CLI in U
 
 ## Add the CLI to your ULEAD Path
 1. Open AnacondaPrompt from your ULEAD environment
-2. Use the following command to set a path to the folder containing your `databricks.exe` file: `set PATH=%PATH%;<your-path-here>` (ex. `set PATH=%PATH%;U:\Arashied\tools\databricks`)
+2. Use the following command to set a path to the folder containing your `databricks.exe`
+      - Code: `set PATH=%PATH%;<your-path-here>`
+      - Ex. `set PATH=%PATH%;U:\Arashied\tools\databricks`
 
 ## Import Files and Folders
 ### Authenticate the CLI
