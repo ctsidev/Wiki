@@ -55,27 +55,16 @@ ULEAD Data Transfer Complete - Bell IRB\#:23-000516
 
 ***Message:***
 
-Your data has now been provisioned. Your data has now been provisioned.
-Please note that we require your review of this data within the next two
-weeks.  At this time, if you discover any discrepancies, we will make
-every attempt to prioritize your findings and resolve any issues. 
-However, if no feedback is provided within this timeframe, we will
-conclude your project. Any requests or findings afterwards will result
-in a new project.  Thank you for your understanding.
+Your data has now been provisioned. Please note that we require your review of this data within the next two weeks.  At this time, if you discover any discrepancies, we will make every attempt to prioritize your findings and resolve any issues.  However, if no feedback is provided within this timeframe, we will conclude your project. Any requests or findings afterwards will result in a new project.  Thank you for your understanding.
 
-You can find it within ULEAD in the ShareFile application at the
-following path:  
+You can find it within ULEAD in the ShareFile application at the following path:
 F:\\Inbound\\CTSI\\DBell\_23\_23-000516
 
-Along with your data files, you shall find a data dictionary that
-outlines the meaning of every file and every field and how you can
-connect records across files using different keys/IDs for patients,
-encounters, providers, etc...
-
+Along with your data files, you shall find a data dictionary that outlines the definition of every file and variable and how you can connect records across files using different keys/IDs for patients, encounters, providers, etc.
 
 ULEAD SUPORRT Inforamtion
 
-This is the [ULEAD OHIA IT site](https://it.uclahealth.org/about/ohia/products/ulead) with all the information foor this product.
+This is the [ULEAD OHIA IT site](https://it.uclahealth.org/about/ohia/products/ulead) with all the information for this product.
 
 Support highlights
 * For any questions about ULEAD, please submit a [ServiceNow ticket](https://uclahsprod.service-now.com/it_portal?id=sc_cat_item&sys_id=3f1dd0320a0a0b99000a53f7604a2ef9)
@@ -87,12 +76,7 @@ Support highlights
 *     [ULEADFAQs](https://uclahs.app.box.com/file/985594259779?s=d45cd2y3dmg9f8jbgp1fcte3oin9kd9x)
 *     [JMP Pro License Activation TipSheet](https://uclahs.app.box.com/file/2013049893064?s=i9gtvrpr7s2v4qdr5u1e5p43povkogc5)
 
-
-One last tip, oftentimes investigators can't find the data when opening
-it with Excel. This is most typically due to  
-"file type" selection filter. You must change it to “All Files” to be
-able to see the dataset
-files.
+One last tip, oftentimes investigators can't find the data when opening it with Excel. This is most typically due to the "file type" selection filter. You must change it to “All Files” to be able to see the dataset files.
 
 ![](images/media/image6.tmp)
 
