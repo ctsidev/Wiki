@@ -62,7 +62,7 @@ F:\\Inbound\\CTSI\\DBell\_23\_23-000516
 
 Along with your data files, you shall find a data dictionary that outlines the definition of every file and variable and how you can connect records across files using different keys/IDs for patients, encounters, providers, etc.
 
-ULEAD SUPORRT Inforamtion
+ULEAD SUPPORT Inforamtion
 
 This is the [ULEAD OHIA IT site](https://it.uclahealth.org/about/ohia/products/ulead) with all the information for this product.
 
